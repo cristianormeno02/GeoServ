@@ -8,13 +8,11 @@
     </div>
 
     <div class="branding-overlay">
-      <!-- Muestra dinámica del logo de la empresa -->
       <div class="tenant-logo-container">
-        <!-- SVG o img tag; aquí usamos un placeholder textual si falla el logo, pero preparamos el src -->
-        <img [src]="tenantLogo" alt="Logo de {{tenantName}}" class="tenant-logo" (error)="tenantLogo = ''" *ngIf="tenantLogo">
-        <h1 class="tenant-name" *ngIf="!tenantLogo">{{ tenantName }}</h1>
+        <!-- Subdominio detectado -->
+        <h1 class="tenant-name">Workspace: {{ empresaConfig.obtenerSubdominioActual() }}</h1>
       </div>
-      <p class="branding-subtitle">Gestión inteligente de operaciones y finanzas mineras.</p>
+      <p class="branding-subtitle">Gestión inteligente de órdenes de servicio y finanzas para consultoras geológicas.</p>
     </div>
   </div>
 
@@ -22,8 +20,12 @@
   <div class="form-section">
     <div class="form-container">
       <div class="form-header">
+        <div class="form-logo-container">
+          <!-- Logo de la aplicación sobre "Iniciar Sesión" -->
+          <img src="/assets/geoserv-logo.svg" alt="Logo GeoServ" class="form-logo">
+        </div>
         <h2>Iniciar Sesión</h2>
-        <p>Ingresa a tu cuenta de {{ tenantName }}</p>
+        <p>Ingresa a tu cuenta de GeoServ</p>
       </div>
 
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
@@ -50,9 +52,13 @@
           </div>
         </div>
 
+        <div class="error-message" *ngIf="errorMessage">
+          {{ errorMessage }}
+        </div>
+
         <div class="form-actions">
-          <button mat-flat-button class="full-width login-button" type="submit" [disabled]="loginForm.invalid">
-            Ingresar
+          <button mat-flat-button class="full-width login-button" type="submit" [disabled]="loginForm.invalid || isLoading">
+            {{ isLoading ? 'Ingresando...' : 'Ingresar' }}
           </button>
         </div>
       </form>

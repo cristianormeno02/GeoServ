@@ -1,0 +1,16 @@
+<mat-toolbar class="custom-header">
+  <div class="logo-container">
+    <!-- Si hay SVG dinámico de la base de datos lo mostramos aquí -->
+    <div *ngIf="safeLogoSvg()" [innerHTML]="safeLogoSvg()" class="dynamic-logo"></div>
+    
+    <!-- Fallback si no hay logo dinámico -->
+    <img *ngIf="!safeLogoSvg()" src="assets/geoserv-logo.svg" alt="GeoServ Logo" class="logo-img" />
+    
+    <!-- Nombre de la empresa o GeoServ por defecto -->
+    <span class="company-name">{{ empresaConfig.empresaActual()?.nombre || 'GeoServ' }}</span>
+  </div>
+  <span class="spacer"></span>
+  <button mat-icon-button (click)="logout()" aria-label="Logout">
+    <mat-icon>logout</mat-icon>
+  </button>
+</mat-toolbar>

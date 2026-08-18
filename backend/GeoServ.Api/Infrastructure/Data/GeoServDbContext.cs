@@ -9,6 +9,7 @@ public class GeoServDbContext : DbContext
     {
     }
 
+    public DbSet<Empresa> Empresas { get; set; } = null!;
     public DbSet<Role> Roles { get; set; } = null!;
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<Client> Clients { get; set; } = null!;

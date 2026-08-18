@@ -123,3 +123,11 @@ E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\obj\Debug\net9.0\GeoServ.Api.ge
 E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\obj\Debug\net9.0\ref\GeoServ.Api.dll
 E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\obj\Debug\net9.0\GeoServ.Api.sourcelink.json
 E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\bin\Debug\net9.0\BCrypt-Net-Next.dll
+E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\bin\Debug\net9.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\bin\Debug\net9.0\Microsoft.IdentityModel.Abstractions.dll
+E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\bin\Debug\net9.0\Microsoft.IdentityModel.JsonWebTokens.dll
+E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\bin\Debug\net9.0\Microsoft.IdentityModel.Logging.dll
+E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.dll
+E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\bin\Debug\net9.0\Microsoft.IdentityModel.Tokens.dll
+E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\bin\Debug\net9.0\System.IdentityModel.Tokens.Jwt.dll

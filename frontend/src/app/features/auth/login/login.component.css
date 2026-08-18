@@ -35,7 +35,9 @@
 }
 
 .app-logo {
-  height: 32px;
+  height: 120px; /* Aún más grande */
+  width: auto;
+  display: block;
   object-fit: contain;
 }
 
@@ -66,7 +68,7 @@
   max-width: 400px;
 }
 
-.logo-container {
+.tenant-logo-container {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -114,7 +116,20 @@
 
 .form-header {
   margin-bottom: 32px;
-  text-align: left;
+  text-align: center; /* Centrar todo el header (logo, título, subtítulo) */
+}
+
+.form-logo-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.form-logo {
+  height: 80px; /* Aumentamos el tamaño significativamente */
+  width: auto;
+  display: block;
+  /* Quitamos el filtro invert para que se vea en su color natural (negro) sobre fondo blanco */
 }
 
 .form-header h2 {

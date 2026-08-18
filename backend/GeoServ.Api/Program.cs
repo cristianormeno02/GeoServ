@@ -8,8 +8,41 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<GeoServDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<GeoServ.Api.Infrastructure.Services.ITenantService, GeoServ.Api.Infrastructure.Services.TenantService>();
+
+builder.Services.AddDbContext<GeoServDbContext>((serviceProvider, options) =>
+{
+    var tenantService = serviceProvider.GetRequiredService<GeoServ.Api.Infrastructure.Services.ITenantService>();
+    var connectionString = tenantService.GetConnectionString();
+    options.UseNpgsql(connectionString);
+});
+
+// Configure Authentication (JWT)
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+var key = System.Text.Encoding.ASCII.GetBytes(jwtSettings["Key"] ?? throw new InvalidOperationException("Jwt Key is missing"));
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(key),
+        ValidateIssuer = true,
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidateAudience = true,
+        ValidAudience = jwtSettings["Audience"],
+        ValidateLifetime = true
+    };
+});
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -69,6 +102,13 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Map custom endpoints
+GeoServ.Api.Endpoints.AuthEndpoints.MapAuthEndpoints(app, builder.Configuration);
+GeoServ.Api.Endpoints.EmpresaEndpoints.MapEmpresaEndpoints(app);
 
 var summaries = new[]
 {
