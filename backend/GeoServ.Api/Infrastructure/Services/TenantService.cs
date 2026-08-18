@@ -51,14 +51,15 @@ public class TenantService : ITenantService
                 throw new InvalidOperationException("DefaultConnection is missing.");
             }
             
-            // Reemplazamos la base de datos por defecto ("postgres" o cualquiera) por la del tenant "geoserv_[tenantId]"
-            // Asumimos formato simple; para un parseo más robusto en Npgsql se puede usar NpgsqlConnectionStringBuilder
+            // Para Supabase, no podemos crear múltiples bases de datos.
+            // En su lugar, usamos Esquemas (Schemas) separados dentro de la misma base "postgres".
+            // Al configurar SearchPath, todas las consultas y tablas irán a ese esquema.
             var builder = new Npgsql.NpgsqlConnectionStringBuilder(defaultConn);
             
-            // Si el tenant es el default, lo dejamos apuntar a postgres, si no, al tenant
             if (tenantId != _defaultTenant)
             {
-                builder.Database = $"geoserv_{tenantId}";
+                // Mantenemos Database = postgres, pero cambiamos el esquema
+                builder.SearchPath = $"geoserv_{tenantId}";
             }
             
             connectionString = builder.ToString();

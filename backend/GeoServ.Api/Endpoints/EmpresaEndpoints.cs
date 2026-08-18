@@ -40,6 +40,14 @@ public static class EmpresaEndpoints
         // usarse scripts u otro mecanismo.
         group.MapPost("/inicializar", async (GeoServDbContext context) =>
         {
+            var tenantService = context.GetService<GeoServ.Api.Infrastructure.Services.ITenantService>();
+            var tenantId = tenantService?.GetTenantId() ?? "default";
+            if (tenantId != "default")
+            {
+                var schemaName = $"geoserv_{tenantId}";
+                await context.Database.ExecuteSqlRawAsync($"CREATE SCHEMA IF NOT EXISTS \"{schemaName}\"");
+            }
+
             await context.Database.MigrateAsync();
 
             if (!await context.Empresas.AnyAsync())
