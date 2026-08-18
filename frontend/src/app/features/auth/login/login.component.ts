@@ -62,7 +62,9 @@ export class LoginComponent implements OnInit {
         tenantId: this.empresaConfig.obtenerSubdominioActual() // Subdominio extraído
       };
 
-      this.http.post<any>('https://localhost:7119/api/login', loginData).subscribe({
+      this.http.post<any>('https://localhost:7119/api/login', loginData, {
+        headers: { 'X-Tenant-Id': this.empresaConfig.obtenerSubdominioActual() }
+      }).subscribe({
         next: (response) => {
           localStorage.setItem('jwt_token', response.token);
           // Cargar configuración de la empresa para tenerla disponible globalmente
