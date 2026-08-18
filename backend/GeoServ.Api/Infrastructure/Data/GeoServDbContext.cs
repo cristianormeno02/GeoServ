@@ -77,5 +77,36 @@ public class GeoServDbContext : DbContext
             .HasOne(s => s.RevenueDistribution)
             .WithOne(r => r.ServiceOrder)
             .HasForeignKey<RevenueDistribution>(r => r.ServiceOrderId);
+
+        // --- Seed Data ---
+        // Seeding dinámico de Roles y Usuario Administrador movido al endpoint de inicialización
+
+
+        modelBuilder.Entity<ServiceOrderStatus>().HasData(
+            new ServiceOrderStatus { Id = Guid.Parse("A1111111-1111-1111-1111-111111111111"), Name = "Alta", Description = "Orden recién registrada", OrderIndex = 1 },
+            new ServiceOrderStatus { Id = Guid.Parse("A2222222-2222-2222-2222-222222222222"), Name = "Presupuestada", Description = "Presupuesto enviado al cliente", OrderIndex = 2 },
+            new ServiceOrderStatus { Id = Guid.Parse("A3333333-3333-3333-3333-333333333333"), Name = "Aprobada", Description = "Presupuesto aprobado por el cliente", OrderIndex = 3 },
+            new ServiceOrderStatus { Id = Guid.Parse("A4444444-4444-4444-4444-444444444444"), Name = "Iniciada", Description = "Trabajo en ejecución", OrderIndex = 4 },
+            new ServiceOrderStatus { Id = Guid.Parse("A5555555-5555-5555-5555-555555555555"), Name = "Entregada", Description = "Trabajo entregado al cliente", OrderIndex = 5 },
+            new ServiceOrderStatus { Id = Guid.Parse("A6666666-6666-6666-6666-666666666666"), Name = "Cobrada", Description = "Orden pagada en su totalidad", OrderIndex = 6 },
+            new ServiceOrderStatus { Id = Guid.Parse("A7777777-7777-7777-7777-777777777777"), Name = "Cancelada", Description = "Orden anulada o cancelada", OrderIndex = 7 }
+        );
+
+        modelBuilder.Entity<ServiceType>().HasData(
+            new ServiceType { Id = Guid.Parse("B1111111-1111-1111-1111-111111111111"), Name = "Levantamiento Topográfico", Description = "Medición y representación gráfica del terreno" },
+            new ServiceType { Id = Guid.Parse("B2222222-2222-2222-2222-222222222222"), Name = "Mensura", Description = "Determinación de límites de propiedad" },
+            new ServiceType { Id = Guid.Parse("B3333333-3333-3333-3333-333333333333"), Name = "Estudio Geodésico", Description = "Posicionamiento de alta precisión" },
+            new ServiceType { Id = Guid.Parse("B4444444-4444-4444-4444-444444444444"), Name = "Fotogrametría", Description = "Levantamiento mediante drones o imágenes satelitales" },
+            new ServiceType { Id = Guid.Parse("B5555555-5555-5555-5555-555555555555"), Name = "Consultoría Técnica", Description = "Asesoramiento en proyectos de ingeniería" }
+        );
+
+        modelBuilder.Entity<FixedCostCategory>().HasData(
+            new FixedCostCategory { Id = Guid.Parse("C1111111-1111-1111-1111-111111111111"), Name = "Alquileres", Description = "Pagos de alquiler de oficina o locales" },
+            new FixedCostCategory { Id = Guid.Parse("C2222222-2222-2222-2222-222222222222"), Name = "Sueldos y Cargas Sociales", Description = "Nómina de empleados fijos" },
+            new FixedCostCategory { Id = Guid.Parse("C3333333-3333-3333-3333-333333333333"), Name = "Servicios Básicos", Description = "Luz, agua, internet, telefonía" },
+            new FixedCostCategory { Id = Guid.Parse("C4444444-4444-4444-4444-444444444444"), Name = "Software e IT", Description = "Suscripciones, licencias, hosting" },
+            new FixedCostCategory { Id = Guid.Parse("C5555555-5555-5555-5555-555555555555"), Name = "Impuestos y Seguros", Description = "Tasas municipales, seguros de responsabilidad, etc." },
+            new FixedCostCategory { Id = Guid.Parse("C6666666-6666-6666-6666-666666666666"), Name = "Honorarios Profesionales", Description = "Contadores, abogados (fijos)" }
+        );
     }
 }

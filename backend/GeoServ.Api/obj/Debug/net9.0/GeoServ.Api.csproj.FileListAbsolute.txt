@@ -121,3 +121,5 @@ E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\obj\Debug\net9.0\refint\GeoServ
 E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\obj\Debug\net9.0\GeoServ.Api.pdb
 E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\obj\Debug\net9.0\GeoServ.Api.genruntimeconfig.cache
 E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\obj\Debug\net9.0\ref\GeoServ.Api.dll
+E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\obj\Debug\net9.0\GeoServ.Api.sourcelink.json
+E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\bin\Debug\net9.0\BCrypt-Net-Next.dll

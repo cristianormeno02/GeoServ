@@ -13,21 +13,53 @@ builder.Services.AddDbContext<GeoServDbContext>(options =>
 
 var app = builder.Build();
 
-// Apply migrations at startup
-using (var scope = app.Services.CreateScope())
+// Endpoint para inicializar el sistema
+app.MapPost("/api/system/init", async (GeoServDbContext context) =>
 {
-    var services = scope.ServiceProvider;
     try
     {
-        var context = services.GetRequiredService<GeoServDbContext>();
-        context.Database.Migrate();
+        // 1. Crear tablas / aplicar migraciones pendientes (incluye catálogos de OnModelCreating)
+        await context.Database.MigrateAsync();
+
+        // 2. Crear roles si no existen
+        var adminRoleId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        if (!await context.Roles.AnyAsync(r => r.Id == adminRoleId))
+        {
+            context.Roles.AddRange(
+                new GeoServ.Api.Domain.Entities.Role { Id = adminRoleId, Name = "Administrador", Description = "Acceso total al sistema" },
+                new GeoServ.Api.Domain.Entities.Role { Id = Guid.Parse("22222222-2222-2222-2222-222222222222"), Name = "Operador", Description = "Acceso operativo a órdenes de servicio" },
+                new GeoServ.Api.Domain.Entities.Role { Id = Guid.Parse("33333333-3333-3333-3333-333333333333"), Name = "Cliente", Description = "Acceso de lectura a órdenes propias" }
+            );
+            await context.SaveChangesAsync();
+        }
+
+        // 3. Crear usuario administrador por defecto si no existe
+        if (!await context.Users.AnyAsync(u => u.Email == "admin@geoserv.com"))
+        {
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword("GeoServAdmin.");
+            var adminUser = new GeoServ.Api.Domain.Entities.User
+            {
+                Id = Guid.Parse("99999999-9999-9999-9999-999999999999"),
+                RoleId = adminRoleId,
+                Name = "Administrador",
+                Email = "admin@geoserv.com",
+                PasswordHash = hashedPassword,
+                CreatedAt = DateTime.UtcNow,
+                IsActive = true
+            };
+            context.Users.Add(adminUser);
+            await context.SaveChangesAsync();
+        }
+
+        return Results.Ok(new { message = "Sistema inicializado correctamente. Tablas y usuario administrador creados." });
     }
     catch (Exception ex)
     {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while migrating the database.");
+        return Results.Problem($"Error al inicializar el sistema: {ex.Message}");
     }
-}
+})
+.WithName("InitSystem")
+.WithOpenApi();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
