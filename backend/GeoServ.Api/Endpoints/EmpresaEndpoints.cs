@@ -42,16 +42,17 @@ public static class EmpresaEndpoints
         {
             await context.Database.MigrateAsync();
 
-            if (!await context.Empresas.AnyAsync())
+            string logoSvgContent = string.Empty;
+            if (request.LogoFile is not null && request.LogoFile.Length > 0)
             {
-                string logoSvgContent = string.Empty;
+                using var reader = new StreamReader(request.LogoFile.OpenReadStream());
+                logoSvgContent = await reader.ReadToEndAsync();
+            }
 
-                if (request.LogoFile is not null && request.LogoFile.Length > 0)
-                {
-                    using var reader = new StreamReader(request.LogoFile.OpenReadStream());
-                    logoSvgContent = await reader.ReadToEndAsync();
-                }
+            var empresaExistente = await context.Empresas.FirstOrDefaultAsync();
 
+            if (empresaExistente == null)
+            {
                 var nuevaEmpresa = new Empresa
                 {
                     Id = Guid.NewGuid(),
@@ -67,8 +68,24 @@ public static class EmpresaEndpoints
                 await context.SaveChangesAsync();
                 return Results.Ok(new { message = $"Empresa {request.Nombre} inicializada correctamente." });
             }
+            else
+            {
+                // Actualizar los datos de la empresa existente
+                empresaExistente.Subdominio = request.Subdominio;
+                empresaExistente.Nombre = request.Nombre;
+                empresaExistente.Correo = request.Correo;
+                empresaExistente.Telefono = request.Telefono;
+                empresaExistente.Direccion = request.Direccion;
+                
+                // Solo actualizar el logo si se envió un archivo nuevo
+                if (!string.IsNullOrEmpty(logoSvgContent))
+                {
+                    empresaExistente.LogoSvg = logoSvgContent;
+                }
 
-            return Results.Ok(new { message = "La empresa ya estaba inicializada." });
+                await context.SaveChangesAsync();
+                return Results.Ok(new { message = $"Empresa {request.Nombre} actualizada correctamente." });
+            }
         })
         .DisableAntiforgery()
         .WithName("InitEmpresa")
