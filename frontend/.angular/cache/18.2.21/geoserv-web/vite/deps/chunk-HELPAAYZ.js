@@ -5529,8 +5529,10 @@ export {
   ErrorStateMatcher,
   RippleRenderer,
   MAT_RIPPLE_GLOBAL_OPTIONS,
+  MatRipple,
   MatRippleModule,
   MatPseudoCheckboxModule,
-  MatRippleLoader
+  MatRippleLoader,
+  _MatInternalFormField
 };
-//# sourceMappingURL=chunk-QKYNEJ6Y.js.map
+//# sourceMappingURL=chunk-HELPAAYZ.js.map

@@ -1,15 +1,40 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection, APP_INITIALIZER } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { AuthService } from './core/services/auth.service';
+import { EmpresaConfigService } from './core/services/empresa-config.service';
+import { catchError, of } from 'rxjs';
+
+export function initializeAppFactory(authService: AuthService, empresaConfigService: EmpresaConfigService) {
+  return () => {
+    // Si hay un token guardado, intentamos cargar la configuración de la empresa antes de iniciar la app
+    if (authService.isLoggedIn()) {
+      return empresaConfigService.cargarConfiguracion().pipe(
+        catchError(() => {
+          // Si falla (ej. token expirado), podemos limpiar la sesión o simplemente dejar que cargue
+          // authService.logout(); 
+          return of(null);
+        })
+      );
+    }
+    return of(null);
+  };
+}
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideAnimationsAsync(),
-    provideHttpClient(withInterceptors([authInterceptor]))
+    provideHttpClient(withInterceptors([authInterceptor])),
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeAppFactory,
+      deps: [AuthService, EmpresaConfigService],
+      multi: true
+    }
   ]
 };
