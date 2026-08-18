@@ -6,9 +6,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { EmpresaConfigService } from '../../../core/services/empresa-config.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -37,9 +37,9 @@ export class LoginComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private http: HttpClient,
     private router: Router,
-    public empresaConfig: EmpresaConfigService
+    public empresaConfig: EmpresaConfigService,
+    private authService: AuthService
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -56,18 +56,16 @@ export class LoginComponent implements OnInit {
       this.isLoading = true;
       this.errorMessage = '';
       
+      const tenantId = this.empresaConfig.obtenerSubdominioActual() || 'default'; // Subdominio extraído
       const loginData = {
         email: this.loginForm.value.email,
         password: this.loginForm.value.password,
-        tenantId: this.empresaConfig.obtenerSubdominioActual() // Subdominio extraído
+        tenantId: tenantId 
       };
 
-      this.http.post<any>('https://localhost:7119/api/login', loginData, {
-        headers: { 'X-Tenant-Id': this.empresaConfig.obtenerSubdominioActual() }
-      }).subscribe({
-        next: (response) => {
-          localStorage.setItem('jwt_token', response.token);
-          // Cargar configuración de la empresa para tenerla disponible globalmente
+      this.authService.login(loginData, tenantId).subscribe({
+        next: () => {
+          // El AuthService ya guarda el token. Ahora cargamos la configuración:
           this.empresaConfig.cargarConfiguracion().subscribe({
             next: () => {
               this.router.navigate(['/']); // Redirigir al inicio/dashboard
@@ -79,9 +77,9 @@ export class LoginComponent implements OnInit {
           });
         },
         error: (err) => {
-          console.error(err);
+          console.error('Error de login:', err);
           this.isLoading = false;
-          this.errorMessage = 'Credenciales incorrectas o empresa no encontrada.';
+          this.errorMessage = 'Credenciales incorrectas o problema de conexión.';
         }
       });
     }

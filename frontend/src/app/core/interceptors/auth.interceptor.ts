@@ -1,8 +1,11 @@
 import { HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { AuthService } from '../services/auth.service';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  // Obtenemos el token desde localStorage
-  const token = localStorage.getItem('jwt_token');
+  // Obtenemos el servicio mediante inject() al ser un interceptor funcional
+  const authService = inject(AuthService);
+  const token = authService.getToken();
 
   if (token) {
     // Clonamos la petición y agregamos el header de Authorization

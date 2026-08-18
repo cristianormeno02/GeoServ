@@ -18,6 +18,17 @@ builder.Services.AddDbContext<GeoServDbContext>((serviceProvider, options) =>
     options.UseNpgsql(connectionString);
 });
 
+// Configure CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 // Configure Authentication (JWT)
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = System.Text.Encoding.ASCII.GetBytes(jwtSettings["Key"] ?? throw new InvalidOperationException("Jwt Key is missing"));
@@ -102,6 +113,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();
