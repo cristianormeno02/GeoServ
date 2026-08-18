@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { catchError, Observable, tap, throwError } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface EmpresaConfig {
   nombre: string;
@@ -18,8 +19,8 @@ export class EmpresaConfigService {
   // Usamos Signals de Angular 18+ para reactividad
   public empresaActual = signal<EmpresaConfig | null>(null);
 
-  // URL base de la API (en un proyecto real vendría de environment.ts)
-  private apiUrl = 'https://localhost:7119/api';
+  // URL base de la API desde environment
+  private apiUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) { }
 
