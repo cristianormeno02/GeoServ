@@ -6,6 +6,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { Router } from '@angular/router';
 import { EmpresaConfigService } from '../../../core/services/empresa-config.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -20,7 +21,8 @@ import { AuthService } from '../../../core/services/auth.service';
     MatInputModule,
     MatButtonModule,
     MatIconModule,
-    MatFormFieldModule
+    MatFormFieldModule,
+    MatCheckboxModule
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
@@ -43,7 +45,8 @@ export class LoginComponent implements OnInit {
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
-      password: ['', Validators.required]
+      password: ['', Validators.required],
+      rememberMe: [false]
     });
   }
 
@@ -62,8 +65,10 @@ export class LoginComponent implements OnInit {
         password: this.loginForm.value.password,
         tenantId: tenantId 
       };
+      
+      const rememberMe = this.loginForm.value.rememberMe;
 
-      this.authService.login(loginData, tenantId).subscribe({
+      this.authService.login(loginData, tenantId, rememberMe).subscribe({
         next: () => {
           // El AuthService ya guarda el token. Ahora cargamos la configuración:
           this.empresaConfig.cargarConfiguracion().subscribe({

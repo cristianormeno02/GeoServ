@@ -20,8 +20,9 @@ export class AuthService {
    * Realiza la petición de login al backend
    * @param credentials Datos de inicio de sesión (email, password, etc)
    * @param tenantId ID del tenant/subdominio actual
+   * @param rememberMe Indica si la sesión debe persistir al cerrar el navegador
    */
-  login(credentials: any, tenantId: string): Observable<LoginResponse> {
+  login(credentials: any, tenantId: string, rememberMe: boolean = false): Observable<LoginResponse> {
     const headers = new HttpHeaders({
       'X-Tenant-Id': tenantId
     });
@@ -29,31 +30,40 @@ export class AuthService {
     return this.http.post<LoginResponse>(`${environment.apiUrl}/login`, credentials, { headers }).pipe(
       tap(response => {
         if (response && response.token) {
-          this.setToken(response.token);
+          this.setToken(response.token, rememberMe);
         }
       })
     );
   }
 
   /**
-   * Guarda el token en el almacenamiento local
+   * Guarda el token en el almacenamiento correspondiente
+   * @param token El JWT a almacenar
+   * @param rememberMe Si es true usa localStorage, si es false usa sessionStorage
    */
-  setToken(token: string): void {
-    localStorage.setItem(this.TOKEN_KEY, token);
+  setToken(token: string, rememberMe: boolean): void {
+    if (rememberMe) {
+      localStorage.setItem(this.TOKEN_KEY, token);
+      sessionStorage.removeItem(this.TOKEN_KEY);
+    } else {
+      sessionStorage.setItem(this.TOKEN_KEY, token);
+      localStorage.removeItem(this.TOKEN_KEY);
+    }
   }
 
   /**
-   * Obtiene el token del almacenamiento local
+   * Obtiene el token, buscando primero en localStorage y luego en sessionStorage
    */
   getToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY);
+    return localStorage.getItem(this.TOKEN_KEY) || sessionStorage.getItem(this.TOKEN_KEY);
   }
 
   /**
-   * Elimina el token del almacenamiento local y cierra la sesión
+   * Elimina el token de ambos almacenamientos y cierra la sesión
    */
   logout(): void {
     localStorage.removeItem(this.TOKEN_KEY);
+    sessionStorage.removeItem(this.TOKEN_KEY);
   }
 
   /**
