@@ -38,7 +38,7 @@ public static class EmpresaEndpoints
         // Endpoint auxiliar para inicializar la empresa en su propia base de datos
         // NOTA: Para producción este endpoint debería estar protegido o no existir, 
         // usarse scripts u otro mecanismo.
-        group.MapPost("/inicializar", async (GeoServDbContext context) =>
+        group.MapPost("/inicializar", async (EmpresaInitRequest request, GeoServDbContext context) =>
         {
             await context.Database.MigrateAsync();
 
@@ -47,17 +47,17 @@ public static class EmpresaEndpoints
                 var nuevaEmpresa = new Empresa
                 {
                     Id = Guid.NewGuid(),
-                    Subdominio = "geocobre",
-                    Nombre = "GeoCobre SpA",
-                    Correo = "contacto@geocobre.cl",
-                    Telefono = "+56912345678",
-                    Direccion = "Av. Minería 123",
-                    LogoSvg = "<svg width=\"100\" height=\"100\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"50\" cy=\"50\" r=\"40\" stroke=\"black\" stroke-width=\"3\" fill=\"#d2691e\"/></svg>"
+                    Subdominio = request.Subdominio,
+                    Nombre = request.Nombre,
+                    Correo = request.Correo,
+                    Telefono = request.Telefono,
+                    Direccion = request.Direccion,
+                    LogoSvg = request.LogoSvg
                 };
 
                 context.Empresas.Add(nuevaEmpresa);
                 await context.SaveChangesAsync();
-                return Results.Ok(new { message = "Empresa geocobre inicializada correctamente." });
+                return Results.Ok(new { message = $"Empresa {request.Nombre} inicializada correctamente." });
             }
 
             return Results.Ok(new { message = "La empresa ya estaba inicializada." });
@@ -65,4 +65,14 @@ public static class EmpresaEndpoints
         .WithName("InitEmpresa")
         .WithOpenApi();
     }
+}
+
+public class EmpresaInitRequest
+{
+    public string Nombre { get; set; } = string.Empty;
+    public string Correo { get; set; } = string.Empty;
+    public string Telefono { get; set; } = string.Empty;
+    public string Direccion { get; set; } = string.Empty;
+    public string LogoSvg { get; set; } = string.Empty;
+    public string Subdominio { get; set; } = string.Empty;
 }
