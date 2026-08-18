@@ -51,14 +51,6 @@ app.MapPost("/api/system/init", async (GeoServDbContext context) =>
 {
     try
     {
-        var tenantService = context.GetService<GeoServ.Api.Infrastructure.Services.ITenantService>();
-        var tenantId = tenantService?.GetTenantId() ?? "default";
-        if (tenantId != "default")
-        {
-            var schemaName = $"geoserv_{tenantId}";
-            await context.Database.ExecuteSqlRawAsync($"CREATE SCHEMA IF NOT EXISTS \"{schemaName}\"");
-        }
-
         // 1. Crear tablas / aplicar migraciones pendientes (incluye catálogos de OnModelCreating)
         await context.Database.MigrateAsync();
 
