@@ -6,7 +6,6 @@ import { RouterOutlet } from '@angular/router';
   standalone: true,
   imports: [RouterOutlet],
   template: `
-    <h1>Bienvenido a GeoServ Web</h1>
     <router-outlet></router-outlet>
   `,
   styles: []

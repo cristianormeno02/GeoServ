@@ -1,0 +1,213 @@
+/* 
+  Paleta de Colores Geo Modern 
+  Primario: #1E293B (Slate 800)
+  Secundario/Acento: #D97706 (Amber 600)
+  Fondo general: #F8FAFC (Slate 50)
+*/
+
+.login-wrapper {
+  display: flex;
+  flex-direction: column; /* Mobile first: stack vertically */
+  min-height: 100vh;
+  background-color: #F8FAFC;
+}
+
+/* --- Left/Top Section (Branding) --- */
+.branding-section {
+  background-color: #1E293B;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 24px;
+  /* Add an abstract geometric background image or gradient */
+  background-image: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.app-logo-container {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  z-index: 2;
+}
+
+.app-logo {
+  height: 32px;
+  object-fit: contain;
+}
+
+.app-name-fallback {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  letter-spacing: -0.01em;
+}
+
+/* Pseudo-element for abstract pattern */
+.branding-section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at center, rgba(217, 119, 6, 0.15) 0%, transparent 50%),
+              radial-gradient(circle at bottom right, rgba(5, 150, 105, 0.1) 0%, transparent 40%);
+  pointer-events: none;
+}
+
+.branding-overlay {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  max-width: 400px;
+}
+
+.logo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.tenant-logo {
+  max-width: 120px;
+  max-height: 80px;
+  object-fit: contain;
+}
+
+.tenant-name {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.branding-subtitle {
+  font-size: 1.1rem;
+  line-height: 1.5;
+  color: #CBD5E1; /* Slate 300 */
+}
+
+/* --- Right/Bottom Section (Form) --- */
+.form-section {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 24px;
+  flex: 1;
+}
+
+.form-container {
+  width: 100%;
+  max-width: 400px;
+  background-color: #FFFFFF;
+  padding: 32px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+}
+
+.form-header {
+  margin-bottom: 32px;
+  text-align: left;
+}
+
+.form-header h2 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #1E293B;
+  margin: 0 0 8px 0;
+}
+
+.form-header p {
+  color: #64748B; /* Slate 500 */
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* Espaciado entre inputs */
+}
+
+.full-width {
+  width: 100%;
+}
+
+.password-field-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.password-input {
+  margin-bottom: -16px; /* Mat-form-field trae un margin-bottom default que queremos achicar para el link */
+}
+
+.forgot-password-link {
+  text-align: right;
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+
+.forgot-password-link a {
+  font-size: 0.85rem;
+  color: #1E293B;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.forgot-password-link a:hover {
+  text-decoration: underline;
+  color: #D97706; /* Amber 600 */
+}
+
+.form-actions {
+  margin-top: 8px;
+}
+
+.login-button {
+  background-color: #D97706 !important; /* Acento Cobre */
+  color: white !important;
+  padding: 8px 0 !important;
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  transition: background-color 0.2s ease;
+}
+
+.login-button:hover:not([disabled]) {
+  background-color: #B45309 !important; /* Amber 700 */
+}
+
+/* --- Responsive Layout (Desktop) --- */
+@media (min-width: 768px) {
+  .login-wrapper {
+    flex-direction: row; /* Side-by-side in desktop */
+  }
+
+  .branding-section {
+    flex: 1;
+    padding: 60px;
+    justify-content: center;
+  }
+  
+  .branding-overlay {
+    text-align: left;
+    margin-left: 10%;
+  }
+
+  .logo-container {
+    align-items: flex-start;
+  }
+
+  .form-section {
+    flex: 1;
+    max-width: 50vw; /* Asegura que no tome más de la mitad */
+  }
+}
