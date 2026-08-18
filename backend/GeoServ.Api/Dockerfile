@@ -20,4 +20,7 @@ COPY --from=build /app/publish .
 # En .NET 8 y 9 el puerto por defecto es 8080.
 EXPOSE 8080
 
+# Desactivar la recarga de configuración para evitar errores de inotify en Render
+ENV DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false
+
 ENTRYPOINT ["dotnet", "GeoServ.Api.dll"]
