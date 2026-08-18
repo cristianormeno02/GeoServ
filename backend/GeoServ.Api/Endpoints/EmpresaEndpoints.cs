@@ -38,12 +38,20 @@ public static class EmpresaEndpoints
         // Endpoint auxiliar para inicializar la empresa en su propia base de datos
         // NOTA: Para producción este endpoint debería estar protegido o no existir, 
         // usarse scripts u otro mecanismo.
-        group.MapPost("/inicializar", async (EmpresaInitRequest request, GeoServDbContext context) =>
+        group.MapPost("/inicializar", async ([Microsoft.AspNetCore.Mvc.FromForm] EmpresaInitFormRequest request, GeoServDbContext context) =>
         {
             await context.Database.MigrateAsync();
 
             if (!await context.Empresas.AnyAsync())
             {
+                string logoSvgContent = string.Empty;
+
+                if (request.LogoFile is not null && request.LogoFile.Length > 0)
+                {
+                    using var reader = new StreamReader(request.LogoFile.OpenReadStream());
+                    logoSvgContent = await reader.ReadToEndAsync();
+                }
+
                 var nuevaEmpresa = new Empresa
                 {
                     Id = Guid.NewGuid(),
@@ -52,7 +60,7 @@ public static class EmpresaEndpoints
                     Correo = request.Correo,
                     Telefono = request.Telefono,
                     Direccion = request.Direccion,
-                    LogoSvg = request.LogoSvg
+                    LogoSvg = logoSvgContent
                 };
 
                 context.Empresas.Add(nuevaEmpresa);
@@ -62,17 +70,18 @@ public static class EmpresaEndpoints
 
             return Results.Ok(new { message = "La empresa ya estaba inicializada." });
         })
+        .DisableAntiforgery()
         .WithName("InitEmpresa")
         .WithOpenApi();
     }
 }
 
-public class EmpresaInitRequest
+public class EmpresaInitFormRequest
 {
     public string Nombre { get; set; } = string.Empty;
     public string Correo { get; set; } = string.Empty;
     public string Telefono { get; set; } = string.Empty;
     public string Direccion { get; set; } = string.Empty;
-    public string LogoSvg { get; set; } = string.Empty;
     public string Subdominio { get; set; } = string.Empty;
+    public Microsoft.AspNetCore.Http.IFormFile? LogoFile { get; set; }
 }
