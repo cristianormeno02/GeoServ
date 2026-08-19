@@ -26,7 +26,7 @@ public static class ProjectEndpoints
 
             return Results.Ok(projects);
         })
-        .WithName("GetProjects")
+        .WithName("GetAllProjects")
         .WithOpenApi();
 
         // 2. Get project by id
