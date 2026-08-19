@@ -1,4 +1,4 @@
 export const environment = {
   production: false,
-  apiUrl: 'https://localhost:7119/api' // URL de desarrollo local
+  apiUrl: 'https://geoserv-api.onrender.com/api' // URL de Render
 };
