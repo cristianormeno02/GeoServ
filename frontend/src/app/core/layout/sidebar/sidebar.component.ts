@@ -20,6 +20,7 @@ export class SidebarComponent implements OnInit {
     { name: 'Órdenes de Servicio', path: '/ordenes', icon: 'build' },
     { name: 'Finanzas', path: '/finanzas', icon: 'attach_money' },
     { name: 'Clientes', path: '/clientes', icon: 'people' },
+    { name: 'Tipos de Compañía', path: '/tipos-compania', icon: 'category' },
     { name: 'Inventario', path: '/inventario', icon: 'inventory' }
   ];
 
