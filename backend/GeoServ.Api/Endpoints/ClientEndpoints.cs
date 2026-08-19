@@ -20,7 +20,9 @@ public static class ClientEndpoints
                     c.Id,
                     c.CompanyName,
                     c.TaxId,
+                    c.CompanyTypeId,
                     CompanyTypeName = c.CompanyType != null ? c.CompanyType.Name : null,
+                    c.UserId,
                     c.ContactEmail,
                     c.ContactPhone
                 })

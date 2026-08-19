@@ -40,7 +40,7 @@ import { ClientDialogComponent } from '../client-dialog/client-dialog.component'
 
       <mat-form-field appearance="outline" class="search-field">
         <mat-label>Buscar cliente...</mat-label>
-        <input matInput (keyup)="applyFilter($event)" placeholder="Ej. Empresa X, 12345678" #input>
+        <input matInput (input)="applyFilter($event)" placeholder="Ej. Empresa X, 12345678" #input>
         <mat-icon matSuffix>search</mat-icon>
       </mat-form-field>
 
@@ -69,12 +69,14 @@ import { ClientDialogComponent } from '../client-dialog/client-dialog.component'
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef> Acciones </th>
             <td mat-cell *matCellDef="let element">
-              <button mat-icon-button color="primary" (click)="openDialog(element)">
-                <mat-icon>edit</mat-icon>
-              </button>
-              <button mat-icon-button color="warn" (click)="deleteClient(element)">
-                <mat-icon>delete</mat-icon>
-              </button>
+              <div class="action-buttons">
+                <button mat-icon-button color="primary" (click)="openDialog(element)">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" (click)="deleteClient(element)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
             </td>
           </ng-container>
 
@@ -116,6 +118,12 @@ import { ClientDialogComponent } from '../client-dialog/client-dialog.component'
       width: 120px;
       text-align: center;
     }
+    .action-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
   `]
 })
 export class ClientListComponent implements OnInit {
@@ -139,6 +147,12 @@ export class ClientListComponent implements OnInit {
         this.dataSource = new MatTableDataSource(data);
         this.dataSource.paginator = this.paginator;
         this.dataSource.sort = this.sort;
+        
+        // Custom filter to search across specific fields easily
+        this.dataSource.filterPredicate = (client: Client, filter: string) => {
+          const searchStr = `${client.companyName || ''} ${client.taxId || ''} ${client.companyTypeName || ''}`.toLowerCase();
+          return searchStr.includes(filter.toLowerCase());
+        };
       },
       error: (err) => {
         this.showError('Error al cargar clientes');

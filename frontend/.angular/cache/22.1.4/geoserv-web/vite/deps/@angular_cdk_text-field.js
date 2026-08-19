@@ -1,0 +1,397 @@
+import { $n as Output, Dr as ViewEncapsulation, En as ElementRef, Hl as _defineProperty, Ic as NgZone, In as Input, Jo as ɵɵlistener, O as booleanAttribute, Ol as ɵɵdefineInjector, Ui as setClassMetadata, ar as RendererFactory2, cl as inject, cn as Component, dr as Service, eo as ɵɵdefineComponent, hc as DOCUMENT, io as ɵɵdefineService, ir as Renderer2, no as ɵɵdefineNgModule, qn as NgModule, to as ɵɵdefineDirective, wn as Directive, xc as EventEmitter } from "./core-M0Zz4fa8.js";
+import { In as EMPTY, Qn as Subject, Ut as auditTime } from "./esm5-ChK3bs0s.js";
+import { t as Platform } from "./_platform-chunk-Db8QDAu7.js";
+import { n as coerceElement, r as coerceNumberProperty } from "./_element-chunk-DeJvSPMD.js";
+import { t as _CdkPrivateStyleLoader } from "./_style-loader-chunk-s8TJL8za.js";
+//#region node_modules/@angular/cdk/fesm2022/text-field.mjs
+var _CdkTextFieldStyleLoader2;
+var _AutofillMonitor;
+var _CdkAutofill;
+var _CdkTextareaAutosize;
+var _TextFieldModule;
+var _CdkTextFieldStyleLoader = class {};
+_CdkTextFieldStyleLoader2 = _CdkTextFieldStyleLoader;
+_defineProperty(_CdkTextFieldStyleLoader, "ɵfac", function _CdkTextFieldStyleLoader_Factory(__ngFactoryType__) {
+	return new (__ngFactoryType__ || _CdkTextFieldStyleLoader2)();
+});
+_defineProperty(_CdkTextFieldStyleLoader, "ɵcmp", /* @__PURE__ */ ɵɵdefineComponent({
+	type: _CdkTextFieldStyleLoader2,
+	selectors: [["ng-component"]],
+	hostAttrs: ["cdk-text-field-style-loader", ""],
+	decls: 0,
+	vars: 0,
+	template: function _CdkTextFieldStyleLoader_Template(rf, ctx) {},
+	styles: ["textarea.cdk-textarea-autosize {\n  resize: none;\n}\n\ntextarea.cdk-textarea-autosize-measuring {\n  padding: 2px 0 !important;\n  box-sizing: content-box !important;\n  height: auto !important;\n  overflow: hidden !important;\n}\n\ntextarea.cdk-textarea-autosize-measuring-firefox {\n  padding: 2px 0 !important;\n  box-sizing: content-box !important;\n  height: 0 !important;\n}\n\n@keyframes cdk-text-field-autofill-start { /*!*/ }\n@keyframes cdk-text-field-autofill-end { /*!*/ }\n.cdk-text-field-autofill-monitored:-webkit-autofill {\n  animation: cdk-text-field-autofill-start 0s 1ms;\n}\n\n.cdk-text-field-autofill-monitored:not(:-webkit-autofill) {\n  animation: cdk-text-field-autofill-end 0s 1ms;\n}\n"],
+	encapsulation: 2
+}));
+(() => {
+	(typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(_CdkTextFieldStyleLoader, [{
+		type: Component,
+		args: [{
+			template: "",
+			encapsulation: ViewEncapsulation.None,
+			host: { "cdk-text-field-style-loader": "" },
+			styles: ["textarea.cdk-textarea-autosize {\n  resize: none;\n}\n\ntextarea.cdk-textarea-autosize-measuring {\n  padding: 2px 0 !important;\n  box-sizing: content-box !important;\n  height: auto !important;\n  overflow: hidden !important;\n}\n\ntextarea.cdk-textarea-autosize-measuring-firefox {\n  padding: 2px 0 !important;\n  box-sizing: content-box !important;\n  height: 0 !important;\n}\n\n@keyframes cdk-text-field-autofill-start { /*!*/ }\n@keyframes cdk-text-field-autofill-end { /*!*/ }\n.cdk-text-field-autofill-monitored:-webkit-autofill {\n  animation: cdk-text-field-autofill-start 0s 1ms;\n}\n\n.cdk-text-field-autofill-monitored:not(:-webkit-autofill) {\n  animation: cdk-text-field-autofill-end 0s 1ms;\n}\n"]
+		}]
+	}], null, null);
+})();
+var listenerOptions = { passive: true };
+var AutofillMonitor = class {
+	constructor() {
+		_defineProperty(this, "_platform", inject(Platform));
+		_defineProperty(this, "_ngZone", inject(NgZone));
+		_defineProperty(this, "_renderer", inject(RendererFactory2).createRenderer(null, null));
+		_defineProperty(this, "_styleLoader", inject(_CdkPrivateStyleLoader));
+		_defineProperty(this, "_monitoredElements", /* @__PURE__ */ new Map());
+	}
+	monitor(elementOrRef) {
+		if (!this._platform.isBrowser) return EMPTY;
+		this._styleLoader.load(_CdkTextFieldStyleLoader);
+		const element = coerceElement(elementOrRef);
+		const info = this._monitoredElements.get(element);
+		if (info) return info.subject;
+		const subject = new Subject();
+		const cssClass = "cdk-text-field-autofilled";
+		const listener = (event) => {
+			if (event.animationName === "cdk-text-field-autofill-start" && !element.classList.contains(cssClass)) {
+				element.classList.add(cssClass);
+				this._ngZone.run(() => subject.next({
+					target: event.target,
+					isAutofilled: true
+				}));
+			} else if (event.animationName === "cdk-text-field-autofill-end" && element.classList.contains(cssClass)) {
+				element.classList.remove(cssClass);
+				this._ngZone.run(() => subject.next({
+					target: event.target,
+					isAutofilled: false
+				}));
+			}
+		};
+		const unlisten = this._ngZone.runOutsideAngular(() => {
+			element.classList.add("cdk-text-field-autofill-monitored");
+			return this._renderer.listen(element, "animationstart", listener, listenerOptions);
+		});
+		this._monitoredElements.set(element, {
+			subject,
+			unlisten
+		});
+		return subject;
+	}
+	stopMonitoring(elementOrRef) {
+		const element = coerceElement(elementOrRef);
+		const info = this._monitoredElements.get(element);
+		if (info) {
+			info.unlisten();
+			info.subject.complete();
+			element.classList.remove("cdk-text-field-autofill-monitored");
+			element.classList.remove("cdk-text-field-autofilled");
+			this._monitoredElements.delete(element);
+		}
+	}
+	ngOnDestroy() {
+		this._monitoredElements.forEach((_info, element) => this.stopMonitoring(element));
+	}
+};
+_AutofillMonitor = AutofillMonitor;
+_defineProperty(AutofillMonitor, "ɵfac", function AutofillMonitor_Factory(__ngFactoryType__) {
+	return new (__ngFactoryType__ || _AutofillMonitor)();
+});
+_defineProperty(AutofillMonitor, "ɵprov", /* @__PURE__ */ ɵɵdefineService({
+	token: _AutofillMonitor,
+	factory: _AutofillMonitor.ɵfac
+}));
+(() => {
+	(typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(AutofillMonitor, [{ type: Service }], null, null);
+})();
+var CdkAutofill = class {
+	constructor() {
+		_defineProperty(this, "_elementRef", inject(ElementRef));
+		_defineProperty(this, "_autofillMonitor", inject(AutofillMonitor));
+		_defineProperty(this, "cdkAutofill", new EventEmitter());
+	}
+	ngOnInit() {
+		this._autofillMonitor.monitor(this._elementRef).subscribe((event) => this.cdkAutofill.emit(event));
+	}
+	ngOnDestroy() {
+		this._autofillMonitor.stopMonitoring(this._elementRef);
+	}
+};
+_CdkAutofill = CdkAutofill;
+_defineProperty(CdkAutofill, "ɵfac", function CdkAutofill_Factory(__ngFactoryType__) {
+	return new (__ngFactoryType__ || _CdkAutofill)();
+});
+_defineProperty(CdkAutofill, "ɵdir", /* @__PURE__ */ ɵɵdefineDirective({
+	type: _CdkAutofill,
+	selectors: [[
+		"",
+		"cdkAutofill",
+		""
+	]],
+	outputs: { cdkAutofill: "cdkAutofill" }
+}));
+(() => {
+	(typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(CdkAutofill, [{
+		type: Directive,
+		args: [{ selector: "[cdkAutofill]" }]
+	}], null, { cdkAutofill: [{ type: Output }] });
+})();
+var CdkTextareaAutosize = class {
+	get minRows() {
+		return this._minRows;
+	}
+	set minRows(value) {
+		this._minRows = coerceNumberProperty(value);
+		this._setMinHeight();
+	}
+	get maxRows() {
+		return this._maxRows;
+	}
+	set maxRows(value) {
+		this._maxRows = coerceNumberProperty(value);
+		this._setMaxHeight();
+	}
+	get enabled() {
+		return this._enabled;
+	}
+	set enabled(value) {
+		if (this._enabled !== value) (this._enabled = value) ? this.resizeToFitContent(true) : this.reset();
+	}
+	get placeholder() {
+		return this._textareaElement.placeholder;
+	}
+	set placeholder(value) {
+		this._cachedPlaceholderHeight = void 0;
+		if (value) this._textareaElement.setAttribute("placeholder", value);
+		else this._textareaElement.removeAttribute("placeholder");
+		this._cacheTextareaPlaceholderHeight();
+	}
+	constructor() {
+		_defineProperty(this, "_elementRef", inject(ElementRef));
+		_defineProperty(this, "_platform", inject(Platform));
+		_defineProperty(this, "_ngZone", inject(NgZone));
+		_defineProperty(this, "_renderer", inject(Renderer2));
+		_defineProperty(this, "_resizeEvents", new Subject());
+		_defineProperty(this, "_previousValue", void 0);
+		_defineProperty(this, "_initialHeight", void 0);
+		_defineProperty(this, "_destroyed", new Subject());
+		_defineProperty(this, "_listenerCleanups", void 0);
+		_defineProperty(this, "_minRows", void 0);
+		_defineProperty(this, "_maxRows", void 0);
+		_defineProperty(this, "_enabled", true);
+		_defineProperty(this, "_previousMinRows", -1);
+		_defineProperty(this, "_textareaElement", void 0);
+		_defineProperty(this, "_cachedLineHeight", void 0);
+		_defineProperty(this, "_cachedPlaceholderHeight", void 0);
+		_defineProperty(this, "_document", inject(DOCUMENT));
+		_defineProperty(this, "_hasFocus", false);
+		_defineProperty(this, "_isViewInited", false);
+		_defineProperty(this, "_handleFocusEvent", (event) => {
+			this._hasFocus = event.type === "focus";
+		});
+		inject(_CdkPrivateStyleLoader).load(_CdkTextFieldStyleLoader);
+		this._textareaElement = this._elementRef.nativeElement;
+	}
+	_setMinHeight() {
+		const minHeight = this.minRows && this._cachedLineHeight ? `${this.minRows * this._cachedLineHeight}px` : null;
+		if (minHeight) this._textareaElement.style.minHeight = minHeight;
+	}
+	_setMaxHeight() {
+		const maxHeight = this.maxRows && this._cachedLineHeight ? `${this.maxRows * this._cachedLineHeight}px` : null;
+		if (maxHeight) this._textareaElement.style.maxHeight = maxHeight;
+	}
+	ngAfterViewInit() {
+		if (this._platform.isBrowser) {
+			this._initialHeight = this._textareaElement.style.height;
+			this.resizeToFitContent();
+			this._ngZone.runOutsideAngular(() => {
+				this._listenerCleanups = [
+					this._renderer.listen("window", "resize", () => this._resizeEvents.next()),
+					this._renderer.listen(this._textareaElement, "focus", this._handleFocusEvent),
+					this._renderer.listen(this._textareaElement, "blur", this._handleFocusEvent)
+				];
+				this._resizeEvents.pipe(auditTime(16)).subscribe(() => {
+					this._cachedLineHeight = this._cachedPlaceholderHeight = void 0;
+					this.resizeToFitContent(true);
+				});
+			});
+			this._isViewInited = true;
+			this.resizeToFitContent(true);
+		}
+	}
+	ngOnDestroy() {
+		var _this$_listenerCleanu;
+		(_this$_listenerCleanu = this._listenerCleanups) === null || _this$_listenerCleanu === void 0 || _this$_listenerCleanu.forEach((cleanup) => cleanup());
+		this._resizeEvents.complete();
+		this._destroyed.next();
+		this._destroyed.complete();
+	}
+	_cacheTextareaLineHeight() {
+		if (this._cachedLineHeight) return;
+		const textareaClone = this._textareaElement.cloneNode(false);
+		const cloneStyles = textareaClone.style;
+		textareaClone.rows = 1;
+		cloneStyles.position = "absolute";
+		cloneStyles.visibility = "hidden";
+		cloneStyles.border = "none";
+		cloneStyles.padding = "0";
+		cloneStyles.height = "";
+		cloneStyles.minHeight = "";
+		cloneStyles.maxHeight = "";
+		cloneStyles.top = cloneStyles.bottom = cloneStyles.left = cloneStyles.right = "auto";
+		cloneStyles.overflow = "hidden";
+		this._textareaElement.parentNode.appendChild(textareaClone);
+		this._cachedLineHeight = textareaClone.clientHeight;
+		textareaClone.remove();
+		this._setMinHeight();
+		this._setMaxHeight();
+	}
+	_measureScrollHeight() {
+		const element = this._textareaElement;
+		const previousMargin = element.style.marginBottom || "";
+		const isFirefox = this._platform.FIREFOX;
+		const needsMarginFiller = this._hasFocus;
+		const measuringClass = isFirefox ? "cdk-textarea-autosize-measuring-firefox" : "cdk-textarea-autosize-measuring";
+		if (needsMarginFiller) element.style.marginBottom = `${element.clientHeight}px`;
+		element.classList.add(measuringClass);
+		const scrollHeight = element.scrollHeight - 4;
+		element.classList.remove(measuringClass);
+		if (needsMarginFiller) element.style.marginBottom = previousMargin;
+		return scrollHeight;
+	}
+	_cacheTextareaPlaceholderHeight() {
+		if (!this._isViewInited || this._cachedPlaceholderHeight != void 0) return;
+		if (!this.placeholder) {
+			this._cachedPlaceholderHeight = 0;
+			return;
+		}
+		const value = this._textareaElement.value;
+		this._textareaElement.value = this._textareaElement.placeholder;
+		this._cachedPlaceholderHeight = this._measureScrollHeight();
+		this._textareaElement.value = value;
+	}
+	ngDoCheck() {
+		if (this._platform.isBrowser) this.resizeToFitContent();
+	}
+	resizeToFitContent(force = false) {
+		if (!this._enabled) return;
+		this._cacheTextareaLineHeight();
+		this._cacheTextareaPlaceholderHeight();
+		if (!this._cachedLineHeight) return;
+		const textarea = this._elementRef.nativeElement;
+		const value = textarea.value;
+		if (!force && this._minRows === this._previousMinRows && value === this._previousValue) return;
+		const scrollHeight = this._measureScrollHeight();
+		const height = Math.max(scrollHeight, this._cachedPlaceholderHeight || 0);
+		textarea.style.height = `${height}px`;
+		this._ngZone.runOutsideAngular(() => {
+			if (typeof requestAnimationFrame !== "undefined") requestAnimationFrame(() => this._scrollToCaretPosition(textarea));
+			else setTimeout(() => this._scrollToCaretPosition(textarea));
+		});
+		this._previousValue = value;
+		this._previousMinRows = this._minRows;
+	}
+	reset() {
+		if (this._initialHeight !== void 0) this._textareaElement.style.height = this._initialHeight;
+	}
+	_noopInputHandler() {}
+	_scrollToCaretPosition(textarea) {
+		const { selectionStart, selectionEnd } = textarea;
+		if (!this._destroyed.isStopped && this._hasFocus) textarea.setSelectionRange(selectionStart, selectionEnd);
+	}
+};
+_CdkTextareaAutosize = CdkTextareaAutosize;
+_defineProperty(CdkTextareaAutosize, "ɵfac", function CdkTextareaAutosize_Factory(__ngFactoryType__) {
+	return new (__ngFactoryType__ || _CdkTextareaAutosize)();
+});
+_defineProperty(CdkTextareaAutosize, "ɵdir", /* @__PURE__ */ ɵɵdefineDirective({
+	type: _CdkTextareaAutosize,
+	selectors: [[
+		"textarea",
+		"cdkTextareaAutosize",
+		""
+	]],
+	hostAttrs: [
+		"rows",
+		"1",
+		1,
+		"cdk-textarea-autosize"
+	],
+	hostBindings: function CdkTextareaAutosize_HostBindings(rf, ctx) {
+		if (rf & 1) ɵɵlistener("input", function CdkTextareaAutosize_input_HostBindingHandler() {
+			return ctx._noopInputHandler();
+		});
+	},
+	inputs: {
+		minRows: [
+			0,
+			"cdkAutosizeMinRows",
+			"minRows"
+		],
+		maxRows: [
+			0,
+			"cdkAutosizeMaxRows",
+			"maxRows"
+		],
+		enabled: [
+			2,
+			"cdkTextareaAutosize",
+			"enabled",
+			booleanAttribute
+		],
+		placeholder: "placeholder"
+	},
+	exportAs: ["cdkTextareaAutosize"]
+}));
+(() => {
+	(typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(CdkTextareaAutosize, [{
+		type: Directive,
+		args: [{
+			selector: "textarea[cdkTextareaAutosize]",
+			exportAs: "cdkTextareaAutosize",
+			host: {
+				"class": "cdk-textarea-autosize",
+				"rows": "1",
+				"(input)": "_noopInputHandler()"
+			}
+		}]
+	}], () => [], {
+		minRows: [{
+			type: Input,
+			args: ["cdkAutosizeMinRows"]
+		}],
+		maxRows: [{
+			type: Input,
+			args: ["cdkAutosizeMaxRows"]
+		}],
+		enabled: [{
+			type: Input,
+			args: [{
+				alias: "cdkTextareaAutosize",
+				transform: booleanAttribute
+			}]
+		}],
+		placeholder: [{ type: Input }]
+	});
+})();
+var TextFieldModule = class {};
+_TextFieldModule = TextFieldModule;
+_defineProperty(TextFieldModule, "ɵfac", function TextFieldModule_Factory(__ngFactoryType__) {
+	return new (__ngFactoryType__ || _TextFieldModule)();
+});
+_defineProperty(TextFieldModule, "ɵmod", /* @__PURE__ */ ɵɵdefineNgModule({
+	type: _TextFieldModule,
+	imports: [CdkAutofill, CdkTextareaAutosize],
+	exports: [CdkAutofill, CdkTextareaAutosize]
+}));
+_defineProperty(TextFieldModule, "ɵinj", /* @__PURE__ */ ɵɵdefineInjector({}));
+(() => {
+	(typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(TextFieldModule, [{
+		type: NgModule,
+		args: [{
+			imports: [CdkAutofill, CdkTextareaAutosize],
+			exports: [CdkAutofill, CdkTextareaAutosize]
+		}]
+	}], null, null);
+})();
+//#endregion
+export { AutofillMonitor, CdkAutofill, CdkTextareaAutosize, TextFieldModule };

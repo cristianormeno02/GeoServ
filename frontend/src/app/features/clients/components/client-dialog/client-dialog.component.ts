@@ -47,7 +47,7 @@ import { Client, CompanyType, AvailableUser } from '../../models/client.model';
 
         <mat-form-field appearance="outline">
           <mat-label>Tipo de Compañía</mat-label>
-          <mat-select formControlName="companyTypeId">
+          <mat-select formControlName="companyTypeId" [compareWith]="compareIds">
             <mat-option *ngFor="let type of companyTypes" [value]="type.id">
               {{ type.name }}
             </mat-option>
@@ -131,6 +131,9 @@ export class ClientDialogComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    console.log('--- DEBUG DIALOG ---');
+    console.log('Client Data received from table:', this.data?.client);
+    
     this.loadCompanyTypes();
     this.loadAvailableUsers();
 
@@ -147,6 +150,11 @@ export class ClientDialogComponent implements OnInit {
     this.clientService.getCompanyTypes().subscribe({
       next: (types) => {
         this.companyTypes = types;
+        // Forzar re-selección del valor en caso de que las opciones hayan cargado después de inicializar el form
+        if (this.isEdit && this.data?.client?.companyTypeId) {
+          const typeId = this.data.client.companyTypeId.toLowerCase();
+          this.clientForm.patchValue({ companyTypeId: typeId });
+        }
       },
       error: (err) => {
         console.error('Error loading company types', err);
@@ -175,6 +183,11 @@ export class ClientDialogComponent implements OnInit {
       user.name.toLowerCase().includes(filterValue) || 
       user.email.toLowerCase().includes(filterValue)
     );
+  }
+
+  compareIds(c1: any, c2: any): boolean {
+    if (!c1 || !c2) return c1 === c2;
+    return c1.toString().toLowerCase() === c2.toString().toLowerCase();
   }
 
   displayUserFn(user: AvailableUser | null): string {

@@ -7,6 +7,8 @@ import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { AuthService } from './core/services/auth.service';
 import { EmpresaConfigService } from './core/services/empresa-config.service';
 import { catchError, of } from 'rxjs';
+import { MatPaginatorIntl } from '@angular/material/paginator';
+import { CustomMatPaginatorIntl } from './core/providers/custom-mat-paginator-intl';
 
 export function initializeAppFactory(authService: AuthService, empresaConfigService: EmpresaConfigService) {
   return () => {
@@ -35,6 +37,7 @@ export const appConfig: ApplicationConfig = {
       useFactory: initializeAppFactory,
       deps: [AuthService, EmpresaConfigService],
       multi: true
-    }
+    },
+    { provide: MatPaginatorIntl, useClass: CustomMatPaginatorIntl }
   ]
 };
