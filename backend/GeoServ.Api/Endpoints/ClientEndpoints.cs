@@ -59,6 +59,11 @@ public static class ClientEndpoints
         // 3. Create client
         group.MapPost("/", async (CreateClientRequest request, GeoServDbContext context) =>
         {
+            if (await context.Clients.AnyAsync(c => c.TaxId == request.TaxId))
+            {
+                return Results.BadRequest(new { message = "Ya existe un cliente con este ID Fiscal." });
+            }
+
             var client = new Client
             {
                 Id = Guid.NewGuid(),
@@ -82,6 +87,11 @@ public static class ClientEndpoints
         // 4. Update client
         group.MapPut("/{id:guid}", async (Guid id, UpdateClientRequest request, GeoServDbContext context) =>
         {
+            if (await context.Clients.AnyAsync(c => c.TaxId == request.TaxId && c.Id != id))
+            {
+                return Results.BadRequest(new { message = "Ya existe otro cliente con este ID Fiscal." });
+            }
+
             var client = await context.Clients.FindAsync(id);
             if (client is null) return Results.NotFound();
 
