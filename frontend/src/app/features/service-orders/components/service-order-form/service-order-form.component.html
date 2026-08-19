@@ -1,0 +1,193 @@
+<div class="container">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{ isEditMode ? 'Editar' : 'Nueva' }} Orden de Servicio</mat-card-title>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <form [formGroup]="orderForm" (ngSubmit)="onSubmit()" class="form-container">
+        
+        <h3>Datos Principales</h3>
+        <div class="row">
+          <mat-form-field appearance="outline">
+            <mat-label>Número de Orden</mat-label>
+            <input matInput formControlName="orderNumber" placeholder="Ej. OS-0001">
+            <mat-error *ngIf="orderForm.get('orderNumber')?.hasError('required')">Requerido</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Cliente</mat-label>
+            <mat-select formControlName="clientId">
+              <mat-option *ngFor="let client of clients" [value]="client.id">{{client.companyName}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Proyecto</mat-label>
+            <mat-select formControlName="projectId">
+              <mat-option [value]="null">-- Ninguno --</mat-option>
+              <mat-option *ngFor="let proj of projects" [value]="proj.id">{{proj.name}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="row">
+          <mat-form-field appearance="outline">
+            <mat-label>Tipo de Servicio</mat-label>
+            <mat-select formControlName="serviceTypeId">
+              <mat-option *ngFor="let st of serviceTypes" [value]="st.id">{{st.name}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Estado</mat-label>
+            <mat-select formControlName="statusId">
+              <mat-option *ngFor="let status of statuses" [value]="status.id">{{status.name}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Prioridad</mat-label>
+            <mat-select formControlName="priority">
+              <mat-option *ngFor="let p of priorities" [value]="p.value">{{p.label}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Descripción</mat-label>
+          <textarea matInput formControlName="description" rows="3"></textarea>
+        </mat-form-field>
+
+        <hr>
+        <h3>Fechas</h3>
+        <div class="row">
+          <mat-form-field appearance="outline">
+            <mat-label>Inicio Estimado</mat-label>
+            <input matInput [matDatepicker]="picker1" formControlName="estimatedStartDate">
+            <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
+            <mat-datepicker #picker1></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Fin Estimado</mat-label>
+            <input matInput [matDatepicker]="picker2" formControlName="estimatedEndDate">
+            <mat-datepicker-toggle matSuffix [for]="picker2"></mat-datepicker-toggle>
+            <mat-datepicker #picker2></mat-datepicker>
+          </mat-form-field>
+        </div>
+
+        <div class="row" *ngIf="isEditMode">
+          <mat-form-field appearance="outline">
+            <mat-label>Inicio Real</mat-label>
+            <input matInput [matDatepicker]="picker3" formControlName="actualStartDate">
+            <mat-datepicker-toggle matSuffix [for]="picker3"></mat-datepicker-toggle>
+            <mat-datepicker #picker3></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Fin Real</mat-label>
+            <input matInput [matDatepicker]="picker4" formControlName="actualEndDate">
+            <mat-datepicker-toggle matSuffix [for]="picker4"></mat-datepicker-toggle>
+            <mat-datepicker #picker4></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Fecha de Cobro</mat-label>
+            <input matInput [matDatepicker]="picker5" formControlName="collectionDate">
+            <mat-datepicker-toggle matSuffix [for]="picker5"></mat-datepicker-toggle>
+            <mat-datepicker #picker5></mat-datepicker>
+          </mat-form-field>
+        </div>
+
+        <hr>
+        <h3>Finanzas</h3>
+        <div class="row">
+          <mat-form-field appearance="outline">
+            <mat-label>Monto Presupuestado</mat-label>
+            <input matInput type="number" formControlName="budgetedAmount">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Descuento</mat-label>
+            <input matInput type="number" formControlName="discount">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Total (Auto-calculado)</mat-label>
+            <input matInput type="number" formControlName="totalAmount" readonly>
+          </mat-form-field>
+        </div>
+
+        <hr>
+        <div class="section-header">
+          <h3>Distribución de Cobro</h3>
+          <button type="button" mat-stroked-button color="primary" (click)="addDistribution()">+ Agregar Concepto</button>
+        </div>
+        
+        <div formArrayName="distributions">
+          <div *ngFor="let dist of distributions.controls; let i=index" [formGroupName]="i" class="dynamic-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Concepto</mat-label>
+              <mat-select formControlName="distributionConceptId">
+                <mat-option *ngFor="let c of distributionConcepts" [value]="c.id">{{c.name}}</mat-option>
+              </mat-select>
+            </mat-form-field>
+            
+            <mat-form-field appearance="outline">
+              <mat-label>Porcentaje (%)</mat-label>
+              <input matInput type="number" formControlName="percentage">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Monto Esperado</mat-label>
+              <input matInput type="number" formControlName="expectedAmount">
+            </mat-form-field>
+
+            <button type="button" mat-icon-button color="warn" (click)="removeDistribution(i)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <hr>
+        <div class="section-header">
+          <h3>Responsables</h3>
+          <button type="button" mat-stroked-button color="primary" (click)="addResponsible()">+ Agregar Responsable</button>
+        </div>
+
+        <div formArrayName="responsibles">
+          <div *ngFor="let resp of responsibles.controls; let j=index" [formGroupName]="j" class="dynamic-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Nombre</mat-label>
+              <input matInput formControlName="name">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Cargo</mat-label>
+              <input matInput formControlName="position">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Usuario en Sistema (Opcional)</mat-label>
+              <mat-select formControlName="userId">
+                <mat-option [value]="null">-- Ninguno --</mat-option>
+                <mat-option *ngFor="let u of users" [value]="u.id">{{u.name}} ({{u.email}})</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <button type="button" mat-icon-button color="warn" (click)="removeResponsible(j)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </mat-card-content>
+    
+    <mat-card-actions align="end">
+      <button mat-button (click)="cancel()">Cancelar</button>
+      <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="orderForm.invalid">Guardar</button>
+    </mat-card-actions>
+  </mat-card>
+</div>

@@ -1,0 +1,166 @@
+<div class="container" *ngIf="isLoading">
+  <mat-spinner></mat-spinner>
+</div>
+
+<div class="container" *ngIf="!isLoading && order">
+  <div class="header-actions">
+    <button mat-icon-button (click)="goBack()" color="primary">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h2>Detalle de Orden: {{ order.orderNumber }}</h2>
+    <span class="spacer"></span>
+    <button mat-raised-button color="accent" (click)="editOrder()">
+      <mat-icon>edit</mat-icon> Editar
+    </button>
+  </div>
+
+  <div class="cards-grid">
+    <!-- Información Principal -->
+    <mat-card class="info-card">
+      <mat-card-header>
+        <mat-card-title>Información General</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-list>
+          <mat-list-item>
+            <span matListItemTitle>Cliente</span>
+            <span matListItemLine>{{ order.clientName }}</span>
+          </mat-list-item>
+          <mat-list-item>
+            <span matListItemTitle>Proyecto</span>
+            <span matListItemLine>{{ order.projectName || 'Sin Proyecto' }}</span>
+          </mat-list-item>
+          <mat-list-item>
+            <span matListItemTitle>Tipo de Servicio</span>
+            <span matListItemLine>{{ order.serviceTypeName }}</span>
+          </mat-list-item>
+          <mat-list-item>
+            <span matListItemTitle>Estado actual</span>
+            <span matListItemLine class="badge status-badge">{{ order.statusName }}</span>
+          </mat-list-item>
+          <mat-list-item>
+            <span matListItemTitle>Prioridad</span>
+            <span matListItemLine>{{ order.priority }}</span>
+          </mat-list-item>
+        </mat-list>
+        
+        <p *ngIf="order.description" class="description-text">
+          <strong>Descripción:</strong><br>
+          {{ order.description }}
+        </p>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Finanzas y Fechas -->
+    <mat-card class="info-card">
+      <mat-card-header>
+        <mat-card-title>Finanzas y Fechas</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-list>
+          <mat-list-item>
+            <span matListItemTitle>Monto Total</span>
+            <span matListItemLine>{{ order.totalAmount | currency }}</span>
+          </mat-list-item>
+          <mat-list-item>
+            <span matListItemTitle>Monto Cobrado</span>
+            <span matListItemLine>{{ order.collectedAmount | currency }}</span>
+          </mat-list-item>
+          <mat-list-item>
+            <span matListItemTitle>Inicio Estimado</span>
+            <span matListItemLine>{{ (order.estimatedStartDate | date:'dd/MM/yyyy') || 'N/A' }}</span>
+          </mat-list-item>
+          <mat-list-item>
+            <span matListItemTitle>Fin Real</span>
+            <span matListItemLine>{{ (order.actualEndDate | date:'dd/MM/yyyy') || 'N/A' }}</span>
+          </mat-list-item>
+        </mat-list>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Documentos Adjuntos -->
+  <mat-card class="documents-card">
+    <mat-card-header>
+      <mat-card-title>Documentos Adjuntos</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      
+      <!-- Zona de subida -->
+      <div class="upload-section">
+        <input type="file" id="fileInput" (change)="onFileSelected($event)">
+        <mat-checkbox [(ngModel)]="isVisibleToClient" color="primary">
+          Visible para el Cliente
+        </mat-checkbox>
+        <button mat-raised-button color="primary" [disabled]="!selectedFile || isUploading" (click)="uploadDocument()">
+          <mat-icon>upload</mat-icon> Subir Documento
+        </button>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <!-- Lista de documentos -->
+      <div *ngIf="order.documents && order.documents.length > 0; else noDocs">
+        <mat-list>
+          <mat-list-item *ngFor="let doc of order.documents" class="doc-item">
+            <mat-icon matListItemIcon>description</mat-icon>
+            <div matListItemTitle>{{ doc.fileName }}</div>
+            <div matListItemLine>
+              Subido: {{ doc.uploadedAt | date:'short' }} 
+              | Visible al cliente: <strong>{{ doc.isVisibleToClient ? 'Sí' : 'No' }}</strong>
+            </div>
+            
+            <div class="doc-actions" matListItemMeta>
+              <button mat-icon-button color="primary" matTooltip="Descargar" (click)="downloadDocument(doc)">
+                <mat-icon>download</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" matTooltip="Eliminar" (click)="deleteDocument(doc.id)">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </mat-list-item>
+        </mat-list>
+      </div>
+      <ng-template #noDocs>
+        <p class="no-data">No hay documentos adjuntos en esta orden.</p>
+      </ng-template>
+
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Responsables y Distribuciones -->
+  <div class="cards-grid">
+    <mat-card class="info-card">
+      <mat-card-header>
+        <mat-card-title>Responsables</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-list *ngIf="order.responsibles.length > 0; else noResp">
+          <mat-list-item *ngFor="let resp of order.responsibles">
+            <mat-icon matListItemIcon>person</mat-icon>
+            <div matListItemTitle>{{ resp.name }}</div>
+            <div matListItemLine>{{ resp.position || 'Sin cargo' }}</div>
+          </mat-list-item>
+        </mat-list>
+        <ng-template #noResp><p class="no-data">Sin responsables asignados.</p></ng-template>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="info-card">
+      <mat-card-header>
+        <mat-card-title>Distribución de Cobro</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-list *ngIf="order.distributions.length > 0; else noDist">
+          <mat-list-item *ngFor="let dist of order.distributions">
+            <mat-icon matListItemIcon>pie_chart</mat-icon>
+            <div matListItemTitle>{{ dist.conceptName }}</div>
+            <div matListItemLine>{{ dist.percentage }}% (Esperado: {{ dist.expectedAmount | currency }})</div>
+          </mat-list-item>
+        </mat-list>
+        <ng-template #noDist><p class="no-data">Sin distribución definida.</p></ng-template>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+</div>

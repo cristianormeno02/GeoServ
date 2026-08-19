@@ -1,0 +1,82 @@
+<div class="container">
+  <div class="header-container">
+    <h2>Órdenes de Servicio</h2>
+    <button mat-raised-button color="primary" (click)="createOrder()">
+      <mat-icon>add</mat-icon> Nueva Orden
+    </button>
+  </div>
+
+  <mat-form-field appearance="outline" class="search-field">
+    <mat-label>Buscar...</mat-label>
+    <input matInput (keyup)="applyFilter($event)" placeholder="Ej. OS-00001, Empresa SA..." #input>
+    <mat-icon matSuffix>search</mat-icon>
+  </mat-form-field>
+
+  <div class="mat-elevation-z8 table-container">
+    <table mat-table [dataSource]="dataSource" matSort>
+
+      <!-- Número Columna -->
+      <ng-container matColumnDef="orderNumber">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Nro Orden </th>
+        <td mat-cell *matCellDef="let row">
+          <strong>{{row.orderNumber}}</strong>
+        </td>
+      </ng-container>
+
+      <!-- Cliente Columna -->
+      <ng-container matColumnDef="clientName">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Cliente </th>
+        <td mat-cell *matCellDef="let row"> {{row.clientName}} </td>
+      </ng-container>
+
+      <!-- Proyecto Columna -->
+      <ng-container matColumnDef="projectName">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Proyecto </th>
+        <td mat-cell *matCellDef="let row"> {{row.projectName || '-'}} </td>
+      </ng-container>
+
+      <!-- Estado Columna -->
+      <ng-container matColumnDef="statusName">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Estado </th>
+        <td mat-cell *matCellDef="let row"> 
+          <span class="status-badge">{{row.statusName}}</span>
+        </td>
+      </ng-container>
+
+      <!-- Fecha Alta Columna -->
+      <ng-container matColumnDef="createdAt">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Fecha Alta </th>
+        <td mat-cell *matCellDef="let row"> {{row.createdAt | date:'dd/MM/yyyy'}} </td>
+      </ng-container>
+
+      <!-- Monto Columna -->
+      <ng-container matColumnDef="budgetedAmount">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Presupuestado </th>
+        <td mat-cell *matCellDef="let row"> {{row.budgetedAmount | currency}} </td>
+      </ng-container>
+
+      <!-- Acciones Columna -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef> Acciones </th>
+        <td mat-cell *matCellDef="let row">
+          <button mat-icon-button color="primary" matTooltip="Ver detalles" (click)="viewDetails(row.id)">
+            <mat-icon>visibility</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" matTooltip="Eliminar" (click)="deleteOrder(row.id)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="element-row"></tr>
+
+      <!-- Row shown when there is no matching data. -->
+      <tr class="mat-row" *matNoDataRow>
+        <td class="mat-cell" colspan="7">No hay datos que coincidan con "{{input.value}}"</td>
+      </tr>
+    </table>
+
+    <mat-paginator [pageSizeOptions]="[10, 25, 50, 100]" aria-label="Seleccionar página"></mat-paginator>
+  </div>
+</div>

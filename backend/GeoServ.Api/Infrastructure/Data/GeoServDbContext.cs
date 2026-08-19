@@ -17,7 +17,15 @@ public class GeoServDbContext : DbContext
     public DbSet<ServiceType> ServiceTypes { get; set; } = null!;
     public DbSet<ServiceOrderStatus> ServiceOrderStatuses { get; set; } = null!;
     public DbSet<ServiceOrder> ServiceOrders { get; set; } = null!;
-    public DbSet<RevenueDistribution> RevenueDistributions { get; set; } = null!;
+    
+    // Nuevas entidades del dominio de Orden de Servicio
+    public DbSet<Project> Projects { get; set; } = null!;
+    public DbSet<Responsible> Responsibles { get; set; } = null!;
+    public DbSet<ServiceOrderActivity> ServiceOrderActivities { get; set; } = null!;
+    public DbSet<DistributionConcept> DistributionConcepts { get; set; } = null!;
+    public DbSet<ServiceOrderDistribution> ServiceOrderDistributions { get; set; } = null!;
+    public DbSet<ServiceOrderDocument> ServiceOrderDocuments { get; set; } = null!;
+    
     public DbSet<DirectCost> DirectCosts { get; set; } = null!;
     public DbSet<FixedCostCategory> FixedCostCategories { get; set; } = null!;
     public DbSet<FixedCost> FixedCosts { get; set; } = null!;
@@ -35,22 +43,14 @@ public class GeoServDbContext : DbContext
         modelBuilder.Entity<ServiceOrder>()
             .Property(o => o.TotalAmount).HasPrecision(18, 2);
         modelBuilder.Entity<ServiceOrder>()
-            .Property(o => o.ExpensePercentage).HasPrecision(5, 2);
-        modelBuilder.Entity<ServiceOrder>()
-            .Property(o => o.CapitalizationPercentage).HasPrecision(5, 2);
-        modelBuilder.Entity<ServiceOrder>()
-            .Property(o => o.FeePercentage).HasPrecision(5, 2);
+            .Property(o => o.CollectedAmount).HasPrecision(18, 2);
 
-        modelBuilder.Entity<RevenueDistribution>()
-            .Property(r => r.CalculatedExpenseAmount).HasPrecision(18, 2);
-        modelBuilder.Entity<RevenueDistribution>()
-            .Property(r => r.CalculatedCapitalizationAmount).HasPrecision(18, 2);
-        modelBuilder.Entity<RevenueDistribution>()
-            .Property(r => r.CalculatedFeeAmount).HasPrecision(18, 2);
-        modelBuilder.Entity<RevenueDistribution>()
-            .Property(r => r.ActualCapitalizationAmount).HasPrecision(18, 2);
-        modelBuilder.Entity<RevenueDistribution>()
-            .Property(r => r.ActualFeePaidAmount).HasPrecision(18, 2);
+        modelBuilder.Entity<ServiceOrderDistribution>()
+            .Property(d => d.Percentage).HasPrecision(5, 2);
+        modelBuilder.Entity<ServiceOrderDistribution>()
+            .Property(d => d.ExpectedAmount).HasPrecision(18, 2);
+        modelBuilder.Entity<ServiceOrderDistribution>()
+            .Property(d => d.ActualAmount).HasPrecision(18, 2);
 
         modelBuilder.Entity<DirectCost>()
             .Property(d => d.Amount).HasPrecision(18, 2);
@@ -66,6 +66,10 @@ public class GeoServDbContext : DbContext
             .HasIndex(u => u.Email)
             .IsUnique();
 
+        modelBuilder.Entity<ServiceOrder>()
+            .HasIndex(s => s.OrderNumber)
+            .IsUnique();
+
         // Relaciones específicas
         // Un cliente puede estar vinculado a un usuario (acceso a portal)
         modelBuilder.Entity<Client>()
@@ -74,15 +78,39 @@ public class GeoServDbContext : DbContext
             .HasForeignKey(c => c.UserId)
             .IsRequired(false);
             
-        // Relación 1:1 entre ServiceOrder y RevenueDistribution
+        // Relaciones con Cascade Delete
         modelBuilder.Entity<ServiceOrder>()
-            .HasOne(s => s.RevenueDistribution)
+            .HasMany(s => s.Responsibles)
             .WithOne(r => r.ServiceOrder)
-            .HasForeignKey<RevenueDistribution>(r => r.ServiceOrderId);
+            .HasForeignKey(r => r.ServiceOrderId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ServiceOrder>()
+            .HasMany(s => s.Activities)
+            .WithOne(a => a.ServiceOrder)
+            .HasForeignKey(a => a.ServiceOrderId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ServiceOrder>()
+            .HasMany(s => s.Distributions)
+            .WithOne(d => d.ServiceOrder)
+            .HasForeignKey(d => d.ServiceOrderId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ServiceOrder>()
+            .HasMany(s => s.Documents)
+            .WithOne(d => d.ServiceOrder)
+            .HasForeignKey(d => d.ServiceOrderId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         // --- Seed Data ---
-        // Seeding dinámico de Roles y Usuario Administrador movido al endpoint de inicialización
-
+        
+        modelBuilder.Entity<DistributionConcept>().HasData(
+            new DistributionConcept { Id = Guid.Parse("E1111111-1111-1111-1111-111111111111"), Name = "Amortización Gastos" },
+            new DistributionConcept { Id = Guid.Parse("E2222222-2222-2222-2222-222222222222"), Name = "Capitalización" },
+            new DistributionConcept { Id = Guid.Parse("E3333333-3333-3333-3333-333333333333"), Name = "Honorarios" },
+            new DistributionConcept { Id = Guid.Parse("E4444444-4444-4444-4444-444444444444"), Name = "Utilidad" }
+        );
 
         modelBuilder.Entity<ServiceOrderStatus>().HasData(
             new ServiceOrderStatus { Id = Guid.Parse("A1111111-1111-1111-1111-111111111111"), Name = "Alta", Description = "Orden recién registrada", OrderIndex = 1 },
