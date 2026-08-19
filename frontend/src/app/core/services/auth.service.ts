@@ -5,7 +5,11 @@ import { environment } from '../../../environments/environment';
 
 export interface LoginResponse {
   token: string;
-  // Añade aquí otras propiedades que devuelva el backend, como user info
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
 }
 
 @Injectable({
@@ -13,6 +17,7 @@ export interface LoginResponse {
 })
 export class AuthService {
   private readonly TOKEN_KEY = 'jwt_token';
+  private readonly USER_NAME_KEY = 'user_name';
 
   constructor(private http: HttpClient) {}
 
@@ -31,6 +36,9 @@ export class AuthService {
       tap(response => {
         if (response && response.token) {
           this.setToken(response.token, rememberMe);
+          if (response.user && response.user.name) {
+             this.setUserName(response.user.name, rememberMe);
+          }
         }
       })
     );
@@ -51,11 +59,45 @@ export class AuthService {
     }
   }
 
+  setUserName(name: string, rememberMe: boolean): void {
+    if (rememberMe) {
+      localStorage.setItem(this.USER_NAME_KEY, name);
+      sessionStorage.removeItem(this.USER_NAME_KEY);
+    } else {
+      sessionStorage.setItem(this.USER_NAME_KEY, name);
+      localStorage.removeItem(this.USER_NAME_KEY);
+    }
+  }
+
   /**
    * Obtiene el token, buscando primero en localStorage y luego en sessionStorage
    */
   getToken(): string | null {
     return localStorage.getItem(this.TOKEN_KEY) || sessionStorage.getItem(this.TOKEN_KEY);
+  }
+
+  getUserName(): string {
+    const storedName = localStorage.getItem(this.USER_NAME_KEY) || sessionStorage.getItem(this.USER_NAME_KEY);
+    if (storedName) {
+      return storedName;
+    }
+    
+    // Fallback: intentar extraer el nombre o email del token si no hay nombre guardado
+    const token = this.getToken();
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const nameClaim = payload.name || payload.unique_name || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'];
+        if (nameClaim) return nameClaim;
+        
+        // ClaimTypes.Email en .NET
+        return payload.email || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || 'Usuario';
+      } catch (e) {
+        return 'Usuario';
+      }
+    }
+    
+    return 'Usuario';
   }
 
   /**
@@ -64,6 +106,8 @@ export class AuthService {
   logout(): void {
     localStorage.removeItem(this.TOKEN_KEY);
     sessionStorage.removeItem(this.TOKEN_KEY);
+    localStorage.removeItem(this.USER_NAME_KEY);
+    sessionStorage.removeItem(this.USER_NAME_KEY);
   }
 
   /**

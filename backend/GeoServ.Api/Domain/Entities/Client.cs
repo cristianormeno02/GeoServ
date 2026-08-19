@@ -6,6 +6,10 @@ public class Client
     public Guid? UserId { get; set; }
     public User? User { get; set; }
     public string CompanyName { get; set; } = string.Empty;
+    
+    public Guid? CompanyTypeId { get; set; }
+    public CompanyType? CompanyType { get; set; }
+    
     public string TaxId { get; set; } = string.Empty;
     public string ContactEmail { get; set; } = string.Empty;
     public string ContactPhone { get; set; } = string.Empty;

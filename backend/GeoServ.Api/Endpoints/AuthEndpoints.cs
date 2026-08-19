@@ -38,6 +38,7 @@ public static class AuthEndpoints
                 {
                     new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                     new Claim(ClaimTypes.Email, user.Email),
+                    new Claim(ClaimTypes.Name, user.Name ?? ""),
                     new Claim("TenantId", tenantId) // Inyectamos el tenant en el token
                 }),
                 Expires = DateTime.UtcNow.AddHours(8),

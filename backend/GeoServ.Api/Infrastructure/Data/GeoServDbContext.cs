@@ -13,6 +13,7 @@ public class GeoServDbContext : DbContext
     public DbSet<Role> Roles { get; set; } = null!;
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<Client> Clients { get; set; } = null!;
+    public DbSet<CompanyType> CompanyTypes { get; set; } = null!;
     public DbSet<ServiceType> ServiceTypes { get; set; } = null!;
     public DbSet<ServiceOrderStatus> ServiceOrderStatuses { get; set; } = null!;
     public DbSet<ServiceOrder> ServiceOrders { get; set; } = null!;
@@ -108,6 +109,16 @@ public class GeoServDbContext : DbContext
             new FixedCostCategory { Id = Guid.Parse("C4444444-4444-4444-4444-444444444444"), Name = "Software e IT", Description = "Suscripciones, licencias, hosting" },
             new FixedCostCategory { Id = Guid.Parse("C5555555-5555-5555-5555-555555555555"), Name = "Impuestos y Seguros", Description = "Tasas municipales, seguros de responsabilidad, etc." },
             new FixedCostCategory { Id = Guid.Parse("C6666666-6666-6666-6666-666666666666"), Name = "Honorarios Profesionales", Description = "Contadores, abogados (fijos)" }
+        );
+
+        modelBuilder.Entity<CompanyType>().HasData(
+            new CompanyType { Id = Guid.Parse("D1111111-1111-1111-1111-111111111111"), Name = "Proyecto Minero" },
+            new CompanyType { Id = Guid.Parse("D2222222-2222-2222-2222-222222222222"), Name = "Consultora Minera" },
+            new CompanyType { Id = Guid.Parse("D3333333-3333-3333-3333-333333333333"), Name = "Contratista Minero" },
+            new CompanyType { Id = Guid.Parse("D4444444-4444-4444-4444-444444444444"), Name = "Establecimiento Gubernamental" },
+            new CompanyType { Id = Guid.Parse("D5555555-5555-5555-5555-555555555555"), Name = "Académico / Universitario" },
+            new CompanyType { Id = Guid.Parse("D6666666-6666-6666-6666-666666666666"), Name = "Particular / Inversionista" },
+            new CompanyType { Id = Guid.Parse("D7777777-7777-7777-7777-777777777777"), Name = "Otro" }
         );
     }
 }
