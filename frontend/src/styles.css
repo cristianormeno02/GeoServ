@@ -105,6 +105,11 @@ body {
 }
 
 /* Spinner (mat-spinner) primary color */
-.mat-mdc-progress-spinner.mat-primary {
+.mat-mdc-progress-spinner {
   --mdc-circular-progress-active-indicator-color: #D97706 !important;
+}
+
+.mat-mdc-progress-spinner circle,
+.mdc-circular-progress__indeterminate-circle-graphic {
+  stroke: #D97706 !important;
 }
