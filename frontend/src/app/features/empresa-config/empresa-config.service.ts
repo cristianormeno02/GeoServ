@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../../environments/environment';
+import { environment } from '../../../environments/environment';
 
 export interface EmpresaConfigData {
   nombre: string;
@@ -18,7 +18,7 @@ export interface EmpresaConfigData {
 })
 export class EmpresaConfigService {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/api/empresa`;
+  private apiUrl = `${environment.apiUrl}/empresa`;
 
   getConfig(): Observable<EmpresaConfigData> {
     return this.http.get<EmpresaConfigData>(`${this.apiUrl}/config`);

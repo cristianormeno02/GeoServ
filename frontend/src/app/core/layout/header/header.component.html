@@ -4,7 +4,7 @@
   </button>
   <div class="logo-container">
     <!-- Si hay SVG dinámico de la base de datos lo mostramos aquí -->
-    <div *ngIf="safeLogoSvg()" [innerHTML]="safeLogoSvg()" class="dynamic-logo"></div>
+    <img *ngIf="safeLogoSvg()" [src]="safeLogoSvg()" class="dynamic-logo-img" alt="Logo de la Empresa" />
     
     <!-- Fallback si no hay logo dinámico -->
     <img *ngIf="!safeLogoSvg()" src="assets/geoserv-logo.svg" alt="GeoServ Logo" class="logo-img" />

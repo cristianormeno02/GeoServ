@@ -21,8 +21,10 @@ export class SidebarComponent implements OnInit {
     { name: 'Finanzas', path: '/finanzas', icon: 'attach_money' },
     { name: 'Clientes', path: '/clientes', icon: 'people' },
     { name: 'Tipos de Compañía', path: '/tipos-compania', icon: 'category' },
+    { name: 'Tipos de Servicio', path: '/tipos-servicio', icon: 'miscellaneous_services' },
     { name: 'Usuarios', path: '/usuarios', icon: 'manage_accounts' },
-    { name: 'Inventario', path: '/inventario', icon: 'inventory' }
+    { name: 'Inventario', path: '/inventario', icon: 'inventory' },
+    { name: 'Configuración', path: '/configuracion', icon: 'settings' }
   ];
 
   constructor(private authService: AuthService, private router: Router) {}

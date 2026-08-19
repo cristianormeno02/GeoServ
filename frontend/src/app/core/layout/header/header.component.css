@@ -17,8 +17,10 @@
 .spacer {
   flex: 1 1 auto;
 }
-.dynamic-logo svg {
-  max-height: 40px; 
+.dynamic-logo-img {
+  height: 40px; 
+  width: auto;
   max-width: 150px; 
-  fill: currentColor;
+  object-fit: contain;
+  display: block;
 }

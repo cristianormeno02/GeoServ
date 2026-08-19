@@ -56,7 +56,7 @@
             <div class="logo-preview-container">
               <h3>Logo de la Empresa (SVG)</h3>
               
-              <div class="logo-preview" *ngIf="currentLogoSvg" [innerHTML]="currentLogoSvg"></div>
+              <img class="logo-preview-img" *ngIf="currentLogoSvg" [src]="currentLogoSvg" alt="Logo de la Empresa" />
               <div class="logo-placeholder" *ngIf="!currentLogoSvg && !selectedFile">
                 <mat-icon>business</mat-icon>
                 <p>Sin logo asignado</p>

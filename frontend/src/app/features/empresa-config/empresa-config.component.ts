@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { ChangeDetectorRef } from '@angular/core';
 
 import { EmpresaConfigService, EmpresaConfigData } from './empresa-config.service';
 
@@ -32,6 +33,7 @@ export class EmpresaConfigComponent implements OnInit {
   private empresaService = inject(EmpresaConfigService);
   private snackBar = inject(MatSnackBar);
   private sanitizer = inject(DomSanitizer);
+  private cdr = inject(ChangeDetectorRef);
 
   configForm: FormGroup;
   selectedFile: File | null = null;
@@ -53,6 +55,11 @@ export class EmpresaConfigComponent implements OnInit {
     this.loadConfig();
   }
 
+  private prepareSvgUrl(svg: string): SafeHtml {
+    const base64 = btoa(unescape(encodeURIComponent(svg)));
+    return this.sanitizer.bypassSecurityTrustResourceUrl(`data:image/svg+xml;base64,${base64}`);
+  }
+
   loadConfig() {
     this.isLoading = true;
     this.empresaService.getConfig().subscribe({
@@ -66,9 +73,10 @@ export class EmpresaConfigComponent implements OnInit {
           subdominio: data.subdominio
         });
         if (data.logoSvg) {
-          this.currentLogoSvg = this.sanitizer.bypassSecurityTrustHtml(data.logoSvg);
+          this.currentLogoSvg = this.prepareSvgUrl(data.logoSvg);
         }
         this.isLoading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.isLoading = false;
@@ -76,6 +84,7 @@ export class EmpresaConfigComponent implements OnInit {
           this.showError('Error al cargar la configuración de la empresa');
           console.error(err);
         }
+        this.cdr.detectChanges();
       }
     });
   }
@@ -89,11 +98,10 @@ export class EmpresaConfigComponent implements OnInit {
       }
       this.selectedFile = file;
       
-      // Mostrar preview
       const reader = new FileReader();
       reader.onload = (e) => {
         if (e.target?.result) {
-          this.currentLogoSvg = this.sanitizer.bypassSecurityTrustHtml(e.target.result as string);
+          this.currentLogoSvg = this.prepareSvgUrl(e.target.result as string);
         }
       };
       reader.readAsText(file);
@@ -122,15 +130,18 @@ export class EmpresaConfigComponent implements OnInit {
 
     this.empresaService.saveConfig(formData).subscribe({
       next: (res) => {
+        console.log('Respuesta del servidor al guardar:', res);
         this.isLoading = false;
         this.showSuccess(res.message || 'Configuración guardada exitosamente');
-        this.selectedFile = null; // Reiniciar archivo seleccionado
+        this.selectedFile = null;
+        this.cdr.detectChanges();
       },
       error: (err) => {
+        console.error('Error capturado en save():', err);
         this.isLoading = false;
         const errorMsg = err.error?.message || err.error?.title || 'Error al guardar la configuración';
         this.showError(errorMsg);
-        console.error(err);
+        this.cdr.detectChanges();
       }
     });
   }

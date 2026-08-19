@@ -18,7 +18,9 @@ export class HeaderComponent {
 
   safeLogoSvg = computed(() => {
     const svg = this.empresaConfig.empresaActual()?.logoSvg;
-    return svg ? this.sanitizer.bypassSecurityTrustHtml(svg) : null;
+    if (!svg) return null;
+    const base64 = btoa(unescape(encodeURIComponent(svg)));
+    return this.sanitizer.bypassSecurityTrustResourceUrl(`data:image/svg+xml;base64,${base64}`);
   });
 
   constructor(
