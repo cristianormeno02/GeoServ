@@ -89,7 +89,7 @@ import { ClientDialogComponent } from '../client-dialog/client-dialog.component'
           </tr>
         </table>
         
-        <mat-paginator [pageSizeOptions]="[5, 10, 25, 100]" aria-label="Seleccionar página de clientes"></mat-paginator>
+        <mat-paginator [pageSize]="10" [pageSizeOptions]="[5, 10, 25, 100]" aria-label="Seleccionar página de clientes"></mat-paginator>
       </div>
     </div>
   `,

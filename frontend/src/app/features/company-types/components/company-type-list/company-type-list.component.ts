@@ -83,7 +83,7 @@ import { CompanyTypeDialogComponent } from '../company-type-dialog/company-type-
           </tr>
         </table>
         
-        <mat-paginator [pageSizeOptions]="[5, 10, 25, 100]" aria-label="Seleccionar página"></mat-paginator>
+        <mat-paginator [pageSize]="10" [pageSizeOptions]="[5, 10, 25, 100]" aria-label="Seleccionar página"></mat-paginator>
       </div>
     </div>
   `,
