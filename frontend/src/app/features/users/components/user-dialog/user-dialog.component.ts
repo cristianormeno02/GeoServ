@@ -7,6 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatIconModule } from '@angular/material/icon';
 
 import { UserService } from '../../services/user.service';
 import { User, Role } from '../../models/user.model';
@@ -22,7 +23,8 @@ import { User, Role } from '../../models/user.model';
     MatInputModule,
     MatSelectModule,
     MatButtonModule,
-    MatSlideToggleModule
+    MatSlideToggleModule,
+    MatIconModule
   ],
   template: `
     <h2 mat-dialog-title>{{ isEdit ? 'Modificar Usuario' : 'Nuevo Usuario' }}</h2>
@@ -51,13 +53,22 @@ import { User, Role } from '../../models/user.model';
 
         <mat-form-field appearance="outline" *ngIf="!isEdit">
           <mat-label>Contraseña</mat-label>
-          <input matInput type="password" formControlName="password" required>
+          <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" required>
+          <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" [attr.aria-label]="'Ocultar contraseña'" [attr.aria-pressed]="hidePassword" type="button">
+            <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+          </button>
+          <mat-error *ngIf="userForm.get('password')?.hasError('required')">Requerido</mat-error>
+          <mat-error *ngIf="userForm.get('password')?.hasError('pattern')">Mín 8, máx 30, mayúscula, minúscula, número y especial (.@#$&-_...)</mat-error>
         </mat-form-field>
         
         <mat-form-field appearance="outline" *ngIf="isEdit">
           <mat-label>Nueva Contraseña (Opcional)</mat-label>
-          <input matInput type="password" formControlName="password">
+          <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password">
+          <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" [attr.aria-label]="'Ocultar contraseña'" [attr.aria-pressed]="hidePassword" type="button">
+            <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+          </button>
           <mat-hint>Dejar en blanco para mantener la actual</mat-hint>
+          <mat-error *ngIf="userForm.get('password')?.hasError('pattern')">Mín 8, máx 30, mayúscula, minúscula, número y especial (.@#$&-_...)</mat-error>
         </mat-form-field>
 
         <div class="toggle-container">
@@ -98,6 +109,7 @@ export class UserDialogComponent implements OnInit {
   userForm: FormGroup;
   isEdit = false;
   roles: Role[] = [];
+  hidePassword = true;
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: { user?: User }) {
     this.isEdit = !!data?.user;
@@ -106,7 +118,11 @@ export class UserDialogComponent implements OnInit {
       name: [data?.user?.name || '', Validators.required],
       email: [data?.user?.email || '', [Validators.required, Validators.email]],
       roleId: [data?.user?.roleId || '', Validators.required],
-      password: [this.isEdit ? '' : '', this.isEdit ? [] : [Validators.required]],
+      password: [this.isEdit ? '' : '', 
+        this.isEdit 
+          ? [Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,30}$/)] 
+          : [Validators.required, Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,30}$/)]
+      ],
       isActive: [this.isEdit ? data.user!.isActive : true]
     });
   }
@@ -119,6 +135,10 @@ export class UserDialogComponent implements OnInit {
     this.userService.getRoles().subscribe({
       next: (roles) => {
         this.roles = roles;
+        if (this.isEdit && this.data?.user?.roleId) {
+          const roleId = this.data.user.roleId.toLowerCase();
+          this.userForm.patchValue({ roleId: roleId });
+        }
       },
       error: (err) => console.error('Error loading roles', err)
     });

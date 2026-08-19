@@ -163,7 +163,7 @@ export class UserListComponent implements OnInit {
         this.dataSource.sort = this.sort;
         
         this.dataSource.filterPredicate = (user: User, filter: string) => {
-          const searchStr = \`\${user.name || ''} \${user.email || ''} \${user.roleName || ''}\`.toLowerCase();
+          const searchStr = `${user.name || ''} ${user.email || ''} ${user.roleName || ''}`.toLowerCase();
           return searchStr.includes(filter.toLowerCase());
         };
       },
@@ -223,7 +223,7 @@ export class UserListComponent implements OnInit {
   }
 
   deleteUser(user: User) {
-    if (confirm(\`¿Estás seguro de que deseas eliminar al usuario \${user.name}?\`)) {
+    if (confirm(`¿Estás seguro de que deseas eliminar al usuario ${user.name}?`)) {
       this.userService.deleteUser(user.id).subscribe({
         next: () => {
           this.showSuccess('Usuario eliminado exitosamente');

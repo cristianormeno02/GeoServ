@@ -1,13 +1,13 @@
 import { A as contentChild, Bt as computed, Dc as InjectionToken, Dr as ViewEncapsulation, Ea as ɵɵcontentQuerySignal, En as ElementRef, Hl as _defineProperty, Hs as ɵɵtemplateRefExtractor, Ic as NgZone, In as Input, Jo as ɵɵlistener, S as ViewChild, Sa as ɵɵconditional, Sl as signal, T as afterRenderEffect, Ta as ɵɵcontentQuery, Ui as setClassMetadata, Us as ɵɵtext, Vs as ɵɵtemplate, Ws as ɵɵtextInterpolate, Xo as ɵɵnextContext, Yo as ɵɵloadQuery, _s as ɵɵqueryRefresh, a as ContentChildren, ar as RendererFactory2, as as ɵɵproperty, ba as ɵɵclassProp, bo as ɵɵelementStart, cl as inject, cn as Component, do as ɵɵdomElementStart, dr as Service, eo as ɵɵdefineComponent, gs as ɵɵqueryAdvance, gt as viewChild, ho as ɵɵelement, i as ContentChild, il as forwardRef, io as ɵɵdefineService, ir as Renderer2, is as ɵɵprojectionDef, la as ɵɵProvidersFeature, nl as effect, oc as ɵɵviewQuery, oo as ɵɵdomElement, po as ɵɵdomProperty, r as ChangeDetectorRef, rs as ɵɵprojection, sc as ɵɵviewQuerySignal, to as ɵɵdefineDirective, ua as ɵɵadvance, uo as ɵɵdomElementEnd, va as ɵɵattribute, wa as ɵɵconditionalCreate, wn as Directive, yo as ɵɵelementEnd, ys as ɵɵreference } from "./core-M0Zz4fa8.js";
 import { D as shareReplay, Qn as Subject, U as pairwise, Xt as filter, g as takeUntil, rr as Observable, tn as merge, ur as Subscription, vn as map, x as startWith } from "./esm5-ChK3bs0s.js";
 import { Y as NgTemplateOutlet } from "./common-BlXOtcti.js";
+import "./a11y-C_BIZKfg.js";
 import { t as Platform } from "./_platform-chunk-Db8QDAu7.js";
 import { t as _animationsDisabled } from "./_animation-chunk-CeaQkWGK.js";
-import { i as Directionality } from "./bidi-DzTqcHeT.js";
-import "./a11y-BTqgvA7r.js";
 import { t as _IdGenerator } from "./_id-generator-chunk-Cnm3ZUPn.js";
 import "./platform-Dcm7u2Id.js";
 import { t as coerceBooleanProperty } from "./coercion-BM5FQA51.js";
+import { i as Directionality } from "./bidi-DzTqcHeT.js";
 //#region node_modules/@angular/cdk/fesm2022/observers-private.mjs
 var _SharedResizeObserver;
 var loopLimitExceededErrorHandler = (e) => {

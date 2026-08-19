@@ -27,6 +27,7 @@ public static class EmpresaEndpoints
                 empresa.Correo,
                 empresa.Telefono,
                 empresa.Direccion,
+                empresa.TaxId,
                 empresa.LogoSvg,
                 empresa.Subdominio
             });
@@ -61,6 +62,7 @@ public static class EmpresaEndpoints
                     Correo = request.Correo,
                     Telefono = request.Telefono,
                     Direccion = request.Direccion,
+                    TaxId = request.TaxId,
                     LogoSvg = logoSvgContent
                 };
 
@@ -76,6 +78,7 @@ public static class EmpresaEndpoints
                 empresaExistente.Correo = request.Correo;
                 empresaExistente.Telefono = request.Telefono;
                 empresaExistente.Direccion = request.Direccion;
+                empresaExistente.TaxId = request.TaxId;
                 
                 // Solo actualizar el logo si se envió un archivo nuevo
                 if (!string.IsNullOrEmpty(logoSvgContent))
@@ -100,5 +103,6 @@ public class EmpresaInitFormRequest
     public string Telefono { get; set; } = string.Empty;
     public string Direccion { get; set; } = string.Empty;
     public string Subdominio { get; set; } = string.Empty;
+    public string TaxId { get; set; } = string.Empty;
     public Microsoft.AspNetCore.Http.IFormFile? LogoFile { get; set; }
 }

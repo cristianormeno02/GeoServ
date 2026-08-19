@@ -1,0 +1,86 @@
+<div class="empresa-config-container">
+  <div class="header">
+    <h1>Configuración de la Empresa</h1>
+  </div>
+
+  <mat-card class="form-card mat-elevation-z8">
+    <mat-card-content>
+      <div *ngIf="isLoading" class="loading-overlay">
+        Cargando... <!-- Puedes usar mat-spinner si lo importas -->
+      </div>
+
+      <form [formGroup]="configForm" class="config-form" (ngSubmit)="save()">
+        
+        <div class="form-grid">
+          <!-- Columna Izquierda: Datos de la Empresa -->
+          <div class="form-column">
+            <mat-form-field appearance="outline">
+              <mat-label>Nombre de la Empresa</mat-label>
+              <input matInput formControlName="nombre" required maxlength="150" #nombreInput>
+              <mat-hint align="end">{{nombreInput.value.length}} / 150</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>ID Fiscal / RUT / CUIT</mat-label>
+              <input matInput formControlName="taxId" maxlength="50" #taxIdInput>
+              <mat-hint align="end">{{taxIdInput.value.length}} / 50</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Subdominio</mat-label>
+              <input matInput formControlName="subdominio" required maxlength="50" #subdominioInput>
+              <mat-hint align="end">{{subdominioInput.value.length}} / 50</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Correo Electrónico</mat-label>
+              <input matInput type="email" formControlName="correo" required maxlength="100" #correoInput>
+              <mat-hint align="end">{{correoInput.value.length}} / 100</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Teléfono</mat-label>
+              <input matInput formControlName="telefono" maxlength="50" #telefonoInput>
+              <mat-hint align="end">{{telefonoInput.value.length}} / 50</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Dirección</mat-label>
+              <textarea matInput formControlName="direccion" rows="3" maxlength="250" #direccionInput></textarea>
+              <mat-hint align="end">{{direccionInput.value.length}} / 250</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <!-- Columna Derecha: Logo -->
+          <div class="form-column logo-column">
+            <div class="logo-preview-container">
+              <h3>Logo de la Empresa (SVG)</h3>
+              
+              <div class="logo-preview" *ngIf="currentLogoSvg" [innerHTML]="currentLogoSvg"></div>
+              <div class="logo-placeholder" *ngIf="!currentLogoSvg && !selectedFile">
+                <mat-icon>business</mat-icon>
+                <p>Sin logo asignado</p>
+              </div>
+              
+              <div class="file-upload-section">
+                <input type="file" id="logoFileInput" accept=".svg" (change)="onFileSelected($event)" class="file-input">
+                <button type="button" mat-stroked-button color="primary" (click)="fileInput.click()">
+                  <mat-icon>cloud_upload</mat-icon> 
+                  {{ currentLogoSvg ? 'Reemplazar Logo' : 'Cargar Logo' }}
+                </button>
+                <input type="file" #fileInput style="display: none;" accept="image/svg+xml" (change)="onFileSelected($event)" />
+                <p class="file-name" *ngIf="selectedFile">{{ selectedFile.name }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button mat-raised-button color="primary" type="submit" [disabled]="configForm.invalid || isLoading">
+            <mat-icon>save</mat-icon> Guardar
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

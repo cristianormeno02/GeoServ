@@ -1,6 +1,6 @@
 import { Dr as ViewEncapsulation, Hl as _defineProperty, In as Input, Ol as ɵɵdefineInjector, Ui as setClassMetadata, ba as ɵɵclassProp, cn as Component, eo as ɵɵdefineComponent, no as ɵɵdefineNgModule, qn as NgModule, va as ɵɵattribute } from "./core-M0Zz4fa8.js";
-import { t as BidiModule } from "./bidi-DzTqcHeT.js";
 import { t as coerceBooleanProperty } from "./coercion-BM5FQA51.js";
+import { t as BidiModule } from "./bidi-DzTqcHeT.js";
 //#region node_modules/@angular/material/fesm2022/divider.mjs
 var _MatDivider;
 var _MatDividerModule;

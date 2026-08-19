@@ -215,6 +215,10 @@ namespace GeoServ.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("TaxId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("Telefono")
                         .IsRequired()
                         .HasColumnType("text");

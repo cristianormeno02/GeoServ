@@ -10,6 +10,7 @@ export const routes: Routes = [
       { path: 'clientes', loadComponent: () => import('./features/clients/components/client-list/client-list.component').then(m => m.ClientListComponent) },
       { path: 'tipos-compania', loadComponent: () => import('./features/company-types/components/company-type-list/company-type-list.component').then(m => m.CompanyTypeListComponent) },
       { path: 'usuarios', loadComponent: () => import('./features/users/components/user-list/user-list.component').then(m => m.UserListComponent) },
+      { path: 'configuracion', loadComponent: () => import('./features/empresa-config/empresa-config.component').then(m => m.EmpresaConfigComponent) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },
