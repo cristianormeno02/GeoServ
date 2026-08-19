@@ -17,9 +17,10 @@ export class SidebarComponent implements OnInit {
   userName = 'Usuario';
   links = [
     { name: 'Dashboard', path: '/dashboard', icon: 'dashboard' },
-    { name: 'Órdenes de Servicio', path: '/ordenes', icon: 'build' },
+    { name: 'Órdenes de Servicio', path: '/ordenes-servicio', icon: 'build' },
     { name: 'Finanzas', path: '/finanzas', icon: 'attach_money' },
     { name: 'Clientes', path: '/clientes', icon: 'people' },
+    { name: 'Proyectos', path: '/proyectos', icon: 'folder' },
     { name: 'Tipos de Compañía', path: '/tipos-compania', icon: 'category' },
     { name: 'Tipos de Servicio', path: '/tipos-servicio', icon: 'miscellaneous_services' },
     { name: 'Usuarios', path: '/usuarios', icon: 'manage_accounts' },

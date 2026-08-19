@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "e:\\Proyectos Propios\\GeoServ\\backend\\GeoServ.Api\\GeoServ.Api.csproj": {}
+    "E:\\Proyectos Propios\\GeoServ\\backend\\GeoServ.Api\\GeoServ.Api.csproj": {}
   },
   "projects": {
-    "e:\\Proyectos Propios\\GeoServ\\backend\\GeoServ.Api\\GeoServ.Api.csproj": {
+    "E:\\Proyectos Propios\\GeoServ\\backend\\GeoServ.Api\\GeoServ.Api.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "e:\\Proyectos Propios\\GeoServ\\backend\\GeoServ.Api\\GeoServ.Api.csproj",
+        "projectUniqueName": "E:\\Proyectos Propios\\GeoServ\\backend\\GeoServ.Api\\GeoServ.Api.csproj",
         "projectName": "GeoServ.Api",
-        "projectPath": "e:\\Proyectos Propios\\GeoServ\\backend\\GeoServ.Api\\GeoServ.Api.csproj",
+        "projectPath": "E:\\Proyectos Propios\\GeoServ\\backend\\GeoServ.Api\\GeoServ.Api.csproj",
         "packagesPath": "C:\\Users\\Crist\\.nuget\\packages\\",
-        "outputPath": "e:\\Proyectos Propios\\GeoServ\\backend\\GeoServ.Api\\obj\\",
+        "outputPath": "E:\\Proyectos Propios\\GeoServ\\backend\\GeoServ.Api\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",

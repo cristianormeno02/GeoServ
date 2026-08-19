@@ -1,15 +1,15 @@
 import { $n as Output, Dc as InjectionToken, Dr as ViewEncapsulation, En as ElementRef, Fl as ɵɵnamespaceSVG, Hl as _defineProperty, Ic as NgZone, In as Input, Jo as ɵɵlistener, Nl as ɵɵnamespaceHTML, O as booleanAttribute, Ol as ɵɵdefineInjector, S as ViewChild, Sl as signal, Ui as setClassMetadata, Yo as ɵɵloadQuery, _s as ɵɵqueryRefresh, as as ɵɵproperty, ba as ɵɵclassProp, bo as ɵɵelementStart, ca as ɵɵNgOnChangesFeature, cl as inject, cn as Component, eo as ɵɵdefineComponent, f as HostAttributeToken, ho as ɵɵelement, il as forwardRef, is as ɵɵprojectionDef, la as ɵɵProvidersFeature, no as ɵɵdefineNgModule, oc as ɵɵviewQuery, po as ɵɵdomProperty, qn as NgModule, r as ChangeDetectorRef, rs as ɵɵprojection, rt as numberAttribute, ua as ɵɵadvance, va as ɵɵattribute, xc as EventEmitter, ya as ɵɵclassMap, yo as ɵɵelementEnd, ys as ɵɵreference } from "./core-M0Zz4fa8.js";
-import { NG_VALIDATORS, NG_VALUE_ACCESSOR } from "./@angular_forms.js";
-import "./a11y-C_BIZKfg.js";
+import "./a11y-CkxbZcag.js";
 import { t as _CdkPrivateStyleLoader } from "./_style-loader-chunk-s8TJL8za.js";
 import "./private-D5SPIAUl.js";
-import { t as _animationsDisabled } from "./_animation-chunk-CeaQkWGK.js";
+import { n as _animationsDisabled } from "./_animation-chunk-BUWdZVzP.js";
 import { t as _IdGenerator } from "./_id-generator-chunk-Cnm3ZUPn.js";
-import { t as _MatInternalFormField } from "./_internal-form-field-chunk-BXNN_p7f.js";
-import { t as _StructuralStylesLoader } from "./_structural-styles-chunk-CDrCiK1E.js";
-import "./platform-Dcm7u2Id.js";
-import { n as MatRipple } from "./_ripple-chunk-BsV6QNhP.js";
 import { t as BidiModule } from "./bidi-DzTqcHeT.js";
+import "./platform-Dcm7u2Id.js";
+import { t as _StructuralStylesLoader } from "./_structural-styles-chunk-CDrCiK1E.js";
+import { n as MatRipple } from "./_ripple-chunk-BZO5QKW7.js";
+import { NG_VALIDATORS, NG_VALUE_ACCESSOR } from "./@angular_forms.js";
+import { t as _MatInternalFormField } from "./_internal-form-field-chunk-BXNN_p7f.js";
 //#region node_modules/@angular/material/fesm2022/checkbox.mjs
 var _MatCheckbox;
 var _MatCheckboxModule;

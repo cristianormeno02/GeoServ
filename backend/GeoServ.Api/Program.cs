@@ -127,6 +127,7 @@ GeoServ.Api.Endpoints.CompanyTypeEndpoints.MapCompanyTypeEndpoints(app);
 GeoServ.Api.Endpoints.UserEndpoints.MapUserEndpoints(app);
 GeoServ.Api.Endpoints.ServiceTypeEndpoints.MapServiceTypeEndpoints(app);
 GeoServ.Api.Endpoints.ServiceOrderEndpoints.MapServiceOrderEndpoints(app);
+GeoServ.Api.Endpoints.ProjectEndpoints.MapProjectEndpoints(app);
 
 var summaries = new[]
 {
