@@ -21,6 +21,7 @@ export class SidebarComponent implements OnInit {
     { name: 'Finanzas', path: '/finanzas', icon: 'attach_money' },
     { name: 'Clientes', path: '/clientes', icon: 'people' },
     { name: 'Tipos de Compañía', path: '/tipos-compania', icon: 'category' },
+    { name: 'Usuarios', path: '/usuarios', icon: 'manage_accounts' },
     { name: 'Inventario', path: '/inventario', icon: 'inventory' }
   ];
 
