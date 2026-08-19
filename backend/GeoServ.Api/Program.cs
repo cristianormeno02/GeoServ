@@ -122,6 +122,7 @@ app.UseAuthorization();
 // Map custom endpoints
 GeoServ.Api.Endpoints.AuthEndpoints.MapAuthEndpoints(app, builder.Configuration);
 GeoServ.Api.Endpoints.EmpresaEndpoints.MapEmpresaEndpoints(app);
+GeoServ.Api.Endpoints.ClientEndpoints.MapClientEndpoints(app);
 
 var summaries = new[]
 {
