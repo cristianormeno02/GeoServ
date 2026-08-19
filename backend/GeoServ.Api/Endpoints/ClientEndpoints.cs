@@ -15,6 +15,7 @@ public static class ClientEndpoints
         {
             var clients = await context.Clients
                 .Include(c => c.CompanyType)
+                .OrderBy(c => c.CompanyName)
                 .Select(c => new
                 {
                     c.Id,
@@ -142,6 +143,7 @@ public static class ClientEndpoints
             // Si estamos editando un cliente, permitimos que el usuario actual del cliente también aparezca
             var availableUsers = await query
                 .Where(u => !context.Clients.Any(c => c.UserId == u.Id) || (currentUserId.HasValue && u.Id == currentUserId.Value))
+                .OrderBy(u => u.Name)
                 .Select(u => new
                 {
                     u.Id,
@@ -159,6 +161,7 @@ public static class ClientEndpoints
         group.MapGet("/company-types", async (GeoServDbContext context) =>
         {
             var types = await context.CompanyTypes
+                .OrderBy(ct => ct.Name)
                 .Select(ct => new { ct.Id, ct.Name })
                 .ToListAsync();
 
