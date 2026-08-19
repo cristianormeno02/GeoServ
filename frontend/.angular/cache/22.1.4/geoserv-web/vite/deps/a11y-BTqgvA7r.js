@@ -1,6 +1,7 @@
-import { $n as Output, Dc as InjectionToken, En as ElementRef, Hl as _defineProperty, Ic as NgZone, In as Input, Mr as afterNextRender, O as booleanAttribute, Oc as Injector, Ol as ɵɵdefineInjector, Ui as setClassMetadata, Vl as _objectSpread2, ar as RendererFactory2, ca as ɵɵNgOnChangesFeature, cl as inject, dc as APP_ID, dr as Service, hc as DOCUMENT, io as ɵɵdefineService, no as ɵɵdefineNgModule, pc as CSP_NONCE, qn as NgModule, to as ɵɵdefineDirective, uc as ANIMATION_MODULE_TYPE, wn as Directive, xc as EventEmitter } from "./core-M0Zz4fa8.js";
-import { Ct as take, Qn as Subject, T as skip, Tt as debounceTime, Xt as filter, Zn as BehaviorSubject, dn as concat, g as takeUntil, gt as distinctUntilChanged, hn as combineLatest, jn as of, rr as Observable, vn as map, x as startWith } from "./esm5-ChK3bs0s.js";
+import { $n as Output, Dc as InjectionToken, En as ElementRef, Hl as _defineProperty, Ic as NgZone, In as Input, Mr as afterNextRender, O as booleanAttribute, Oc as Injector, Ol as ɵɵdefineInjector, Ui as setClassMetadata, Vl as _objectSpread2, ar as RendererFactory2, ca as ɵɵNgOnChangesFeature, cl as inject, dc as APP_ID, dr as Service, hc as DOCUMENT, io as ɵɵdefineService, no as ɵɵdefineNgModule, qn as NgModule, to as ɵɵdefineDirective, wn as Directive, xc as EventEmitter } from "./core-M0Zz4fa8.js";
+import { Qn as Subject, T as skip, Tt as debounceTime, Xt as filter, Zn as BehaviorSubject, g as takeUntil, gt as distinctUntilChanged, jn as of, rr as Observable, vn as map } from "./esm5-ChK3bs0s.js";
 import { t as Platform } from "./_platform-chunk-Db8QDAu7.js";
+import { i as BreakpointObserver } from "./_animation-chunk-CeaQkWGK.js";
 import { n as coerceElement, r as coerceNumberProperty } from "./_element-chunk-DeJvSPMD.js";
 import { t as _CdkPrivateStyleLoader } from "./_style-loader-chunk-s8TJL8za.js";
 import { n as _setInnerHtml, t as _VisuallyHiddenLoader } from "./private-D5SPIAUl.js";
@@ -388,128 +389,6 @@ _defineProperty(CdkMonitorFocus, "ɵdir", /* @__PURE__ */ ɵɵdefineDirective({
 		}]
 	}], null, { cdkFocusChange: [{ type: Output }] });
 })();
-//#endregion
-//#region node_modules/@angular/cdk/fesm2022/_array-chunk.mjs
-function coerceArray(value) {
-	return Array.isArray(value) ? value : [value];
-}
-//#endregion
-//#region node_modules/@angular/cdk/fesm2022/_breakpoints-observer-chunk.mjs
-var _MediaMatcher;
-var _BreakpointObserver;
-var mediaQueriesForWebkitCompatibility = /* @__PURE__ */ new Set();
-var mediaQueryStyleNode;
-var MediaMatcher = class {
-	constructor() {
-		_defineProperty(this, "_platform", inject(Platform));
-		_defineProperty(this, "_nonce", inject(CSP_NONCE, { optional: true }));
-		_defineProperty(this, "_matchMedia", void 0);
-		this._matchMedia = this._platform.isBrowser && window.matchMedia ? window.matchMedia.bind(window) : noopMatchMedia;
-	}
-	matchMedia(query) {
-		if (this._platform.WEBKIT || this._platform.BLINK) createEmptyStyleRule(query, this._nonce);
-		return this._matchMedia(query);
-	}
-};
-_MediaMatcher = MediaMatcher;
-_defineProperty(MediaMatcher, "ɵfac", function MediaMatcher_Factory(__ngFactoryType__) {
-	return new (__ngFactoryType__ || _MediaMatcher)();
-});
-_defineProperty(MediaMatcher, "ɵprov", /* @__PURE__ */ ɵɵdefineService({
-	token: _MediaMatcher,
-	factory: _MediaMatcher.ɵfac
-}));
-(() => {
-	(typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(MediaMatcher, [{ type: Service }], () => [], null);
-})();
-function createEmptyStyleRule(query, nonce) {
-	if (mediaQueriesForWebkitCompatibility.has(query)) return;
-	try {
-		if (!mediaQueryStyleNode) {
-			mediaQueryStyleNode = document.createElement("style");
-			if (nonce) mediaQueryStyleNode.setAttribute("nonce", nonce);
-			mediaQueryStyleNode.setAttribute("type", "text/css");
-			document.head.appendChild(mediaQueryStyleNode);
-		}
-		if (mediaQueryStyleNode.sheet) {
-			mediaQueryStyleNode.sheet.insertRule(`@media ${query.replace(/[{}]/g, "")} {body{ }}`, 0);
-			mediaQueriesForWebkitCompatibility.add(query);
-		}
-	} catch (e) {
-		console.error(e);
-	}
-}
-function noopMatchMedia(query) {
-	return {
-		matches: query === "all" || query === "",
-		media: query,
-		addListener: () => {},
-		removeListener: () => {}
-	};
-}
-var BreakpointObserver = class {
-	constructor() {
-		_defineProperty(this, "_mediaMatcher", inject(MediaMatcher));
-		_defineProperty(this, "_zone", inject(NgZone));
-		_defineProperty(this, "_queries", /* @__PURE__ */ new Map());
-		_defineProperty(this, "_destroySubject", new Subject());
-	}
-	ngOnDestroy() {
-		this._destroySubject.next();
-		this._destroySubject.complete();
-	}
-	isMatched(value) {
-		return splitQueries(coerceArray(value)).some((mediaQuery) => this._registerQuery(mediaQuery).mql.matches);
-	}
-	observe(value) {
-		let stateObservable = combineLatest(splitQueries(coerceArray(value)).map((query) => this._registerQuery(query).observable));
-		stateObservable = concat(stateObservable.pipe(take(1)), stateObservable.pipe(skip(1), debounceTime(0)));
-		return stateObservable.pipe(map((breakpointStates) => {
-			const response = {
-				matches: false,
-				breakpoints: {}
-			};
-			breakpointStates.forEach(({ matches, query }) => {
-				response.matches = response.matches || matches;
-				response.breakpoints[query] = matches;
-			});
-			return response;
-		}));
-	}
-	_registerQuery(query) {
-		if (this._queries.has(query)) return this._queries.get(query);
-		const mql = this._mediaMatcher.matchMedia(query);
-		const output = {
-			observable: new Observable((observer) => {
-				const handler = (e) => this._zone.run(() => observer.next(e));
-				mql.addListener(handler);
-				return () => {
-					mql.removeListener(handler);
-				};
-			}).pipe(startWith(mql), map(({ matches }) => ({
-				query,
-				matches
-			})), takeUntil(this._destroySubject)),
-			mql
-		};
-		this._queries.set(query, output);
-		return output;
-	}
-};
-_BreakpointObserver = BreakpointObserver;
-_defineProperty(BreakpointObserver, "ɵfac", function BreakpointObserver_Factory(__ngFactoryType__) {
-	return new (__ngFactoryType__ || _BreakpointObserver)();
-});
-_defineProperty(BreakpointObserver, "ɵprov", /* @__PURE__ */ ɵɵdefineService({
-	token: _BreakpointObserver,
-	factory: _BreakpointObserver.ɵfac
-}));
-(() => {
-	(typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(BreakpointObserver, [{ type: Service }], null, null);
-})();
-function splitQueries(queries) {
-	return queries.map((query) => query.split(",")).reduce((a1, a2) => a1.concat(a2)).map((query) => query.trim());
-}
 //#endregion
 //#region node_modules/@angular/cdk/fesm2022/observers.mjs
 var _MutationObserverFactory;
@@ -1643,49 +1522,4 @@ _defineProperty(ConfigurableFocusTrapFactory, "ɵprov", /* @__PURE__ */ ɵɵdefi
 	(typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(ConfigurableFocusTrapFactory, [{ type: Service }], () => [], null);
 })();
 //#endregion
-//#region node_modules/@angular/cdk/fesm2022/layout.mjs
-var _LayoutModule;
-var LayoutModule = class {};
-_LayoutModule = LayoutModule;
-_defineProperty(LayoutModule, "ɵfac", function LayoutModule_Factory(__ngFactoryType__) {
-	return new (__ngFactoryType__ || _LayoutModule)();
-});
-_defineProperty(LayoutModule, "ɵmod", /* @__PURE__ */ ɵɵdefineNgModule({ type: _LayoutModule }));
-_defineProperty(LayoutModule, "ɵinj", /* @__PURE__ */ ɵɵdefineInjector({}));
-(() => {
-	(typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(LayoutModule, [{
-		type: NgModule,
-		args: [{}]
-	}], null, null);
-})();
-var Breakpoints = {
-	XSmall: "(max-width: 599.98px)",
-	Small: "(min-width: 600px) and (max-width: 959.98px)",
-	Medium: "(min-width: 960px) and (max-width: 1279.98px)",
-	Large: "(min-width: 1280px) and (max-width: 1919.98px)",
-	XLarge: "(min-width: 1920px)",
-	Handset: "(max-width: 599.98px) and (orientation: portrait), (max-width: 959.98px) and (orientation: landscape)",
-	Tablet: "(min-width: 600px) and (max-width: 839.98px) and (orientation: portrait), (min-width: 960px) and (max-width: 1279.98px) and (orientation: landscape)",
-	Web: "(min-width: 840px) and (orientation: portrait), (min-width: 1280px) and (orientation: landscape)",
-	HandsetPortrait: "(max-width: 599.98px) and (orientation: portrait)",
-	TabletPortrait: "(min-width: 600px) and (max-width: 839.98px) and (orientation: portrait)",
-	WebPortrait: "(min-width: 840px) and (orientation: portrait)",
-	HandsetLandscape: "(max-width: 959.98px) and (orientation: landscape)",
-	TabletLandscape: "(min-width: 960px) and (max-width: 1279.98px) and (orientation: landscape)",
-	WebLandscape: "(min-width: 1280px) and (orientation: landscape)"
-};
-//#endregion
-//#region node_modules/@angular/material/fesm2022/_animation-chunk.mjs
-var MATERIAL_ANIMATIONS = new InjectionToken("MATERIAL_ANIMATIONS");
-var reducedMotion = null;
-function _getAnimationsState() {
-	var _inject, _reducedMotion;
-	if (((_inject = inject(MATERIAL_ANIMATIONS, { optional: true })) === null || _inject === void 0 ? void 0 : _inject.animationsDisabled) || inject(ANIMATION_MODULE_TYPE, { optional: true }) === "NoopAnimations") return "di-disabled";
-	(_reducedMotion = reducedMotion) !== null && _reducedMotion !== void 0 || (reducedMotion = inject(MediaMatcher).matchMedia("(prefers-reduced-motion)").matches);
-	return reducedMotion ? "reduced-motion" : "enabled";
-}
-function _animationsDisabled() {
-	return _getAnimationsState() !== "enabled";
-}
-//#endregion
-export { isFakeMousedownFromScreenReader as _, FocusTrapFactory as a, CdkObserveContent as c, MediaMatcher as d, coerceArray as f, _getFocusedElementPierceShadowDom as g, _getEventTarget as h, A11yModule as i, ObserversModule as l, normalizePassiveListenerOptions as m, Breakpoints as n, InteractivityChecker as o, FocusMonitor as p, AriaDescriber as r, LiveAnnouncer as s, _animationsDisabled as t, BreakpointObserver as u, isFakeTouchstartFromScreenReader as v };
+export { LiveAnnouncer as a, FocusMonitor as c, _getFocusedElementPierceShadowDom as d, isFakeMousedownFromScreenReader as f, InteractivityChecker as i, normalizePassiveListenerOptions as l, A11yModule as n, CdkObserveContent as o, isFakeTouchstartFromScreenReader as p, FocusTrapFactory as r, ObserversModule as s, AriaDescriber as t, _getEventTarget as u };

@@ -1,7 +1,7 @@
 import { Dr as ViewEncapsulation, Hl as _defineProperty, In as Input, Ol as ɵɵdefineInjector, Sl as signal, Ui as setClassMetadata, Vl as _objectSpread2, ba as ɵɵclassProp, cn as Component, dl as isSignal, eo as ɵɵdefineComponent, nl as effect, no as ɵɵdefineNgModule, nr as QueryList, qn as NgModule } from "./core-M0Zz4fa8.js";
 import { Qn as Subject, Tt as debounceTime, Xt as filter, m as tap, ur as Subscription, vn as map } from "./esm5-ChK3bs0s.js";
+import { t as _animationsDisabled } from "./_animation-chunk-CeaQkWGK.js";
 import { t as BidiModule } from "./bidi-DzTqcHeT.js";
-import { t as _animationsDisabled } from "./_animation-chunk-BiCAYLDt.js";
 import { t as hasModifierKey } from "./keycodes-BvDTxKgo.js";
 //#region node_modules/@angular/cdk/fesm2022/_typeahead-chunk.mjs
 var DEFAULT_TYPEAHEAD_DEBOUNCE_INTERVAL_MS = 200;

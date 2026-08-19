@@ -2,14 +2,14 @@ import { $n as Output, Dc as InjectionToken, Dr as ViewEncapsulation, En as Elem
 import { Qn as Subject } from "./esm5-ChK3bs0s.js";
 import { t as BidiModule } from "./bidi-DzTqcHeT.js";
 import { t as _CdkPrivateStyleLoader } from "./_style-loader-chunk-s8TJL8za.js";
-import "./_animation-chunk-BiCAYLDt.js";
+import "./a11y-BTqgvA7r.js";
 import { t as _VisuallyHiddenLoader } from "./private-D5SPIAUl.js";
-import { n as MatPseudoCheckbox, r as ListKeyManager, t as MatPseudoCheckboxModule } from "./_pseudo-checkbox-module-chunk-ChAjeier.js";
+import { n as MatPseudoCheckbox, r as ListKeyManager, t as MatPseudoCheckboxModule } from "./_pseudo-checkbox-module-chunk-D2_5KzcM.js";
 import { t as hasModifierKey } from "./keycodes-BvDTxKgo.js";
 import { t as _IdGenerator } from "./_id-generator-chunk-Cnm3ZUPn.js";
-import { n as MatRipple } from "./_ripple-chunk-CFjFwWDR.js";
+import { n as MatRipple } from "./_ripple-chunk-BNClLSAp.js";
 import { t as _StructuralStylesLoader } from "./_structural-styles-chunk-CDrCiK1E.js";
-import { t as MatRippleModule } from "./_ripple-module-chunk-BP4BXLEt.js";
+import { t as MatRippleModule } from "./_ripple-module-chunk-BWzp5FAP.js";
 //#region node_modules/@angular/cdk/fesm2022/_activedescendant-key-manager-chunk.mjs
 var ActiveDescendantKeyManager = class extends ListKeyManager {
 	setActiveItem(index) {

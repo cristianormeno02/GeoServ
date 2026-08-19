@@ -103,3 +103,8 @@ body {
 *:focus-visible {
   outline-color: #D97706 !important;
 }
+
+/* Spinner (mat-spinner) primary color */
+.mat-mdc-progress-spinner.mat-primary {
+  --mdc-circular-progress-active-indicator-color: #D97706 !important;
+}

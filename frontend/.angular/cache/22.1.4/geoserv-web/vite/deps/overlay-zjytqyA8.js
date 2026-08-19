@@ -1,11 +1,12 @@
 import { $n as Output, Dc as InjectionToken, Do as ɵɵgetInheritedFactory, Dr as ViewEncapsulation, En as ElementRef, Er as ViewContainerRef, Hl as _defineProperty, Ic as NgZone, In as Input, M as createComponent, Mr as afterNextRender, O as booleanAttribute, Oc as Injector, Ol as ɵɵdefineInjector, Ui as setClassMetadata, Vl as _objectSpread2, Zn as NgModuleRef$1, ar as RendererFactory2, ca as ɵɵNgOnChangesFeature, cl as inject, cn as Component, dr as Service, eo as ɵɵdefineComponent, hc as DOCUMENT, io as ɵɵdefineService, ir as Renderer2, no as ɵɵdefineNgModule, qn as NgModule, sa as ɵɵInheritDefinitionFeature, tn as ApplicationRef, to as ɵɵdefineDirective, uc as ANIMATION_MODULE_TYPE, vr as TemplateRef, wn as Directive, xc as EventEmitter, yc as EnvironmentInjector } from "./core-M0Zz4fa8.js";
 import { Qn as Subject, Xt as filter, h as takeWhile, ur as Subscription } from "./esm5-ChK3bs0s.js";
-import { i as Directionality, t as BidiModule } from "./bidi-DzTqcHeT.js";
 import { jt as Location } from "./common-BlXOtcti.js";
 import { t as Platform } from "./_platform-chunk-Db8QDAu7.js";
-import { C as supportsScrollBehavior, _ as ViewportRuler, m as ScrollingModule, p as ScrollDispatcher } from "./scrolling-BsTEyEGe.js";
+import { o as coerceArray } from "./_animation-chunk-CeaQkWGK.js";
+import { i as Directionality, t as BidiModule } from "./bidi-DzTqcHeT.js";
+import { C as supportsScrollBehavior, _ as ViewportRuler, m as ScrollingModule, p as ScrollDispatcher } from "./scrolling-BhRTs1Ap.js";
 import { t as _CdkPrivateStyleLoader } from "./_style-loader-chunk-s8TJL8za.js";
-import { f as coerceArray, h as _getEventTarget } from "./_animation-chunk-BiCAYLDt.js";
+import { u as _getEventTarget } from "./a11y-BTqgvA7r.js";
 import { t as hasModifierKey } from "./keycodes-BvDTxKgo.js";
 import { t as _IdGenerator } from "./_id-generator-chunk-Cnm3ZUPn.js";
 //#region node_modules/@angular/cdk/fesm2022/_test-environment-chunk.mjs

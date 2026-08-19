@@ -1,6 +1,6 @@
 import { Hl as _defineProperty, Ol as ɵɵdefineInjector, Ui as setClassMetadata, no as ɵɵdefineNgModule, qn as NgModule } from "./core-M0Zz4fa8.js";
 import { t as BidiModule } from "./bidi-DzTqcHeT.js";
-import { n as MatRipple } from "./_ripple-chunk-CFjFwWDR.js";
+import { n as MatRipple } from "./_ripple-chunk-BNClLSAp.js";
 //#region node_modules/@angular/material/fesm2022/_ripple-module-chunk.mjs
 var _MatRippleModule;
 var MatRippleModule = class {};

@@ -20,7 +20,7 @@ import { delay } from 'rxjs';
       left: 0;
       width: 100vw;
       height: 100vh;
-      background-color: rgba(0, 0, 0, 0.3); /* Un fondo semitransparente oscuro */
+      background-color: rgba(30, 41, 59, 0.5); /* Color primario de la paleta (#1E293B) con transparencia */
       z-index: 9999; /* Asegurar que esté por encima de TODO (incluyendo modales de material) */
       display: flex;
       justify-content: center;
