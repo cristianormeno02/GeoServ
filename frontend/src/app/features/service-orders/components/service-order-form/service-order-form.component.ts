@@ -134,9 +134,9 @@ export class ServiceOrderFormComponent implements OnInit {
       totalAmount: [0, [Validators.required, Validators.min(0)]],
       estimatedStartDate: [today],
       estimatedEndDate: [today],
-      actualStartDate: [''],
-      actualEndDate: [''],
-      collectionDate: [''],
+      actualStartDate: [today],
+      actualEndDate: [today],
+      collectionDate: [today],
       distributions: this.fb.array([]),
       responsibleIds: [[], Validators.required] // Array of strings (dropdown multiple)
     });
