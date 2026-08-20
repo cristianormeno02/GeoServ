@@ -15,6 +15,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ServiceOrderService } from '../../services/service-order.service';
 import { ServiceOrder, ServiceOrderDocument } from '../../models/service-order.model';
 
+import { ChangeDetectorRef } from '@angular/core';
+
 @Component({
   selector: 'app-service-order-detail',
   standalone: true,
@@ -48,7 +50,8 @@ export class ServiceOrderDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private serviceOrderService: ServiceOrderService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -66,13 +69,18 @@ export class ServiceOrderDetailComponent implements OnInit {
         console.log('Datos recibidos:', data);
         this.order = data;
         this.isLoading = false;
-        // Forzar detección de cambios por si se pierde el contexto
-        // this.cdr.detectChanges(); // (no inyectado en constructor para no romper compatibilidad rápida, pero lo logueamos)
+        try {
+          this.cdr.detectChanges();
+          console.log('Detección de cambios manual ejecutada exitosamente.');
+        } catch (e) {
+          console.error('Error al renderizar la vista (Angular crash):', e);
+        }
       },
       error: (err) => {
         console.error('Error HTTP o de parsing:', err);
         this.snackBar.open('Error al cargar detalles de la orden.', 'Cerrar', { duration: 3000 });
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
