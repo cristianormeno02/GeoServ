@@ -199,7 +199,7 @@ public static class ServiceOrderEndpoints
                         Id = Guid.NewGuid(),
                         ShortDetail = act.ShortDetail,
                         LongDetail = act.LongDetail,
-                        State = Enum.Parse<GeoServ.Api.Domain.Enums.ActivityState>(act.State),
+                        State = Enum.Parse<GeoServ.Api.Domain.Enums.ActivityState>(act.State.Replace(" ", ""), true),
                         ProgressPercentage = act.ProgressPercentage
                     });
                 }
@@ -408,7 +408,7 @@ public static class ServiceOrderEndpoints
                         Id = Guid.NewGuid(),
                         ShortDetail = act.ShortDetail,
                         LongDetail = act.LongDetail,
-                        State = Enum.Parse<GeoServ.Api.Domain.Enums.ActivityState>(act.State),
+                        State = Enum.Parse<GeoServ.Api.Domain.Enums.ActivityState>(act.State.Replace(" ", ""), true),
                         ProgressPercentage = act.ProgressPercentage
                     });
                 }
