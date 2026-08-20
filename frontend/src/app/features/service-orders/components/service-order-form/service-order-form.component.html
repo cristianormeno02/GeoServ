@@ -85,7 +85,7 @@
           </mat-form-field>
         </div>
 
-        <div class="row" *ngIf="isEditMode">
+        <div class="row">
           <mat-form-field appearance="outline">
             <mat-label>Inicio Real</mat-label>
             <input matInput [matDatepicker]="picker3" formControlName="actualStartDate">
@@ -130,7 +130,7 @@
             <input matInput type="number" formControlName="exchangeRateAtBudget">
           </mat-form-field>
 
-          <mat-form-field appearance="outline" *ngIf="isEditMode">
+          <mat-form-field appearance="outline">
             <mat-label>Cotización al Cobrar</mat-label>
             <input matInput type="number" formControlName="exchangeRateAtCollection">
           </mat-form-field>
