@@ -337,24 +337,32 @@ export class ServiceOrderFormComponent implements OnInit {
       formValue.projectId = null;
     }
     
-    // Limpiar campos numéricos si ngx-mask los devolvió como string
-    formValue.budgetedAmount = Number(formValue.budgetedAmount?.toString().replace(/\./g, '').replace(',', '.')) || 0;
-    formValue.discount = Number(formValue.discount?.toString().replace(/\./g, '').replace(',', '.')) || 0;
-    formValue.foreignAmount = Number(formValue.foreignAmount?.toString().replace(/\./g, '').replace(',', '.')) || 0;
-    formValue.totalAmount = Number(formValue.totalAmount?.toString().replace(/\./g, '').replace(',', '.')) || 0;
+    // Helper para limpiar montos numéricos que pueden venir como string (ngx-mask) o como number puro
+    const parseAmount = (val: any): number => {
+      if (val === null || val === undefined || val === '') return 0;
+      if (typeof val === 'number') return Number(val.toFixed(2)); // Redondear a 2 decimales para evitar basuras de punto flotante
+      // Si es string (ngx-mask: "1.538.600,00")
+      return Number(val.toString().replace(/\./g, '').replace(',', '.')) || 0;
+    };
+
+    formValue.budgetedAmount = parseAmount(formValue.budgetedAmount);
+    formValue.discount = parseAmount(formValue.discount);
+    formValue.foreignAmount = parseAmount(formValue.foreignAmount);
+    formValue.totalAmount = parseAmount(formValue.totalAmount);
+
     if (formValue.exchangeRateAtBudget) {
-        formValue.exchangeRateAtBudget = Number(formValue.exchangeRateAtBudget.toString().replace(/\./g, '').replace(',', '.'));
+        formValue.exchangeRateAtBudget = parseAmount(formValue.exchangeRateAtBudget);
     }
     if (formValue.exchangeRateAtCollection) {
-        formValue.exchangeRateAtCollection = Number(formValue.exchangeRateAtCollection.toString().replace(/\./g, '').replace(',', '.'));
+        formValue.exchangeRateAtCollection = parseAmount(formValue.exchangeRateAtCollection);
     }
 
     if (formValue.distributions && formValue.distributions.length > 0) {
       formValue.distributions = formValue.distributions.map((d: any) => ({
         ...d,
-        percentage: Number(d.percentage?.toString().replace(/\./g, '').replace(',', '.')) || 0,
-        expectedAmount: Number(d.expectedAmount?.toString().replace(/\./g, '').replace(',', '.')) || 0,
-        actualAmount: Number(d.actualAmount?.toString().replace(/\./g, '').replace(',', '.')) || 0
+        percentage: parseAmount(d.percentage),
+        expectedAmount: parseAmount(d.expectedAmount),
+        actualAmount: parseAmount(d.actualAmount)
       }));
     }
 
