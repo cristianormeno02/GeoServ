@@ -381,7 +381,7 @@ export class ServiceOrderFormComponent implements OnInit {
           this.router.navigate(['/ordenes-servicio']);
         },
         error: (err) => {
-          this.snackBar.open(err.error?.message || 'Error al actualizar', 'Cerrar', { duration: 3000 });
+          this.snackBar.open(err.error?.detail || err.error?.message || 'Error al actualizar', 'Cerrar', { duration: 5000 });
         }
       });
     } else {
@@ -391,7 +391,7 @@ export class ServiceOrderFormComponent implements OnInit {
           this.router.navigate(['/ordenes-servicio']);
         },
         error: (err) => {
-          this.snackBar.open(err.error?.message || 'Error al crear', 'Cerrar', { duration: 3000 });
+          this.snackBar.open(err.error?.detail || err.error?.message || 'Error al crear', 'Cerrar', { duration: 5000 });
         }
       });
     }
