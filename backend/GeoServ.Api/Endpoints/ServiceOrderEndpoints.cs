@@ -58,6 +58,11 @@ public static class ServiceOrderEndpoints
             return Results.Ok(await context.DistributionConcepts.Where(c => c.IsActive).OrderBy(c => c.Name).ToListAsync());
         }).WithName("GetDistributionConcepts");
 
+        group.MapGet("/catalogs/currencies", async (GeoServDbContext context) =>
+        {
+            return Results.Ok(await context.Currencies.Where(c => c.IsActive).OrderBy(c => c.Name).ToListAsync());
+        }).WithName("GetCurrencies");
+
         // 2. Obtener orden por ID (con todos los detalles)
         group.MapGet("/{id:guid}", async (Guid id, GeoServDbContext context) =>
         {
@@ -66,7 +71,8 @@ public static class ServiceOrderEndpoints
                 .Include(o => o.Project)
                 .Include(o => o.Status)
                 .Include(o => o.ServiceType)
-                .Include(o => o.Responsibles).ThenInclude(r => r.User)
+                .Include(o => o.Currency)
+                .Include(o => o.Responsibles).ThenInclude(r => r.Responsible).ThenInclude(r => r.User)
                 .Include(o => o.Activities)
                 .Include(o => o.Distributions).ThenInclude(d => d.DistributionConcept)
                 .Include(o => o.Documents)
@@ -89,10 +95,17 @@ public static class ServiceOrderEndpoints
                 Priority = order.Priority.ToString(),
                 PriorityValue = (int)order.Priority,
                 order.Description,
+                order.CurrencyId,
+                CurrencyCode = order.Currency.Code,
+                CurrencySymbol = order.Currency.Symbol,
+                order.ForeignAmount,
+                order.ExchangeRateAtBudget,
+                order.ExchangeRateAtCollection,
                 order.BudgetedAmount,
                 order.Discount,
                 order.TotalAmount,
                 order.CollectedAmount,
+                order.RequestDate,
                 order.CreatedAt,
                 order.EstimatedStartDate,
                 order.EstimatedEndDate,
@@ -100,7 +113,15 @@ public static class ServiceOrderEndpoints
                 order.ActualEndDate,
                 order.CollectionDate,
                 order.CanceledAt,
-                Responsibles = order.Responsibles.Select(r => new { r.Id, r.Name, r.Position, r.Title, r.Specialties, r.UserId, UserName = r.User?.Name }),
+                Responsibles = order.Responsibles.Select(r => new { 
+                    r.Responsible.Id, 
+                    r.Responsible.Name, 
+                    r.Responsible.Position, 
+                    r.Responsible.Title, 
+                    r.Responsible.Specialties, 
+                    r.Responsible.UserId, 
+                    UserName = r.Responsible.User?.Name 
+                }),
                 Activities = order.Activities.Select(a => new { a.Id, a.ShortDetail, a.LongDetail, State = a.State.ToString(), StateValue = (int)a.State, a.ProgressPercentage }),
                 Distributions = order.Distributions.Select(d => new { d.Id, d.DistributionConceptId, ConceptName = d.DistributionConcept.Name, d.Percentage, d.ExpectedAmount, d.ActualAmount }),
                 Documents = order.Documents.Select(d => new { d.Id, d.FileName, d.ContentType, d.IsVisibleToClient, d.UploadedAt, d.UploadedById })
@@ -139,9 +160,13 @@ public static class ServiceOrderEndpoints
                 StatusId = request.StatusId,
                 Priority = (ServiceOrderPriority)request.Priority,
                 Description = request.Description,
+                CurrencyId = request.CurrencyId,
+                ForeignAmount = request.ForeignAmount,
+                ExchangeRateAtBudget = request.ExchangeRateAtBudget,
                 BudgetedAmount = request.BudgetedAmount,
                 Discount = request.Discount,
                 TotalAmount = request.TotalAmount,
+                RequestDate = request.RequestDate,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
                 EstimatedStartDate = request.EstimatedStartDate,
@@ -165,28 +190,14 @@ public static class ServiceOrderEndpoints
             }
 
             // Añadir responsables
-            if (request.Responsibles != null)
+            if (request.ResponsibleIds != null && request.ResponsibleIds.Any())
             {
-                foreach (var resp in request.Responsibles)
+                var uniqueIds = request.ResponsibleIds.Distinct().ToList();
+                foreach (var rId in uniqueIds)
                 {
-                    // Validación de Usuario (no puede ser rol cliente ni estar en otra parte de la orden)
-                    if (resp.UserId.HasValue)
+                    order.Responsibles.Add(new ServiceOrderResponsible
                     {
-                        var user = await context.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.Id == resp.UserId.Value);
-                        if (user != null && user.Role?.Name == "Cliente")
-                        {
-                            return Results.BadRequest(new { message = $"El usuario {user.Name} es un Cliente y no puede ser responsable." });
-                        }
-                    }
-
-                    order.Responsibles.Add(new Responsible
-                    {
-                        Id = Guid.NewGuid(),
-                        Name = resp.Name,
-                        Position = resp.Position,
-                        Title = resp.Title,
-                        Specialties = resp.Specialties,
-                        UserId = resp.UserId
+                        ResponsibleId = rId
                     });
                 }
             }
@@ -337,10 +348,15 @@ public static class ServiceOrderEndpoints
             order.StatusId = request.StatusId;
             order.Priority = (ServiceOrderPriority)request.Priority;
             order.Description = request.Description;
+            order.CurrencyId = request.CurrencyId;
+            order.ForeignAmount = request.ForeignAmount;
+            order.ExchangeRateAtBudget = request.ExchangeRateAtBudget;
+            order.ExchangeRateAtCollection = request.ExchangeRateAtCollection;
             order.BudgetedAmount = request.BudgetedAmount;
             order.Discount = request.Discount;
             order.TotalAmount = request.TotalAmount;
             order.UpdatedAt = DateTime.UtcNow;
+            order.RequestDate = request.RequestDate;
             order.EstimatedStartDate = request.EstimatedStartDate;
             order.EstimatedEndDate = request.EstimatedEndDate;
             order.ActualStartDate = request.ActualStartDate;
@@ -364,29 +380,16 @@ public static class ServiceOrderEndpoints
                 }
             }
 
-            // Sincronizar Responsables (reemplazo completo)
-            context.Responsibles.RemoveRange(order.Responsibles);
-            if (request.Responsibles != null)
+            // Sincronizar Responsables (reemplazo completo en la tabla intermedia)
+            context.ServiceOrderResponsibles.RemoveRange(order.Responsibles);
+            if (request.ResponsibleIds != null && request.ResponsibleIds.Any())
             {
-                foreach (var resp in request.Responsibles)
+                var uniqueIds = request.ResponsibleIds.Distinct().ToList();
+                foreach (var rId in uniqueIds)
                 {
-                    if (resp.UserId.HasValue)
+                    order.Responsibles.Add(new ServiceOrderResponsible
                     {
-                        var user = await context.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.Id == resp.UserId.Value);
-                        if (user != null && user.Role?.Name == "Cliente")
-                        {
-                            return Results.BadRequest(new { message = $"El usuario {user.Name} es un Cliente y no puede ser responsable." });
-                        }
-                    }
-
-                    order.Responsibles.Add(new Responsible
-                    {
-                        Id = Guid.NewGuid(),
-                        Name = resp.Name,
-                        Position = resp.Position,
-                        Title = resp.Title,
-                        Specialties = resp.Specialties,
-                        UserId = resp.UserId
+                        ResponsibleId = rId
                     });
                 }
             }
@@ -443,13 +446,17 @@ public record CreateServiceOrderRequest(
     Guid StatusId,
     int Priority,
     string? Description,
+    Guid CurrencyId,
+    decimal? ForeignAmount,
+    decimal? ExchangeRateAtBudget,
     decimal BudgetedAmount,
     decimal Discount,
     decimal TotalAmount,
+    DateTime? RequestDate,
     DateTime? EstimatedStartDate,
     DateTime? EstimatedEndDate,
     List<DistributionDto>? Distributions,
-    List<ResponsibleDto>? Responsibles
+    List<Guid>? ResponsibleIds
 );
 
 public record UpdateServiceOrderRequest(
@@ -460,17 +467,21 @@ public record UpdateServiceOrderRequest(
     Guid StatusId,
     int Priority,
     string? Description,
+    Guid CurrencyId,
+    decimal? ForeignAmount,
+    decimal? ExchangeRateAtBudget,
+    decimal? ExchangeRateAtCollection,
     decimal BudgetedAmount,
     decimal Discount,
     decimal TotalAmount,
+    DateTime? RequestDate,
     DateTime? EstimatedStartDate,
     DateTime? EstimatedEndDate,
     DateTime? ActualStartDate,
     DateTime? ActualEndDate,
     DateTime? CollectionDate,
     List<DistributionDto>? Distributions,
-    List<ResponsibleDto>? Responsibles
+    List<Guid>? ResponsibleIds
 );
 
 public record DistributionDto(Guid DistributionConceptId, decimal Percentage, decimal ExpectedAmount, decimal ActualAmount);
-public record ResponsibleDto(string Name, string? Position, string? Title, string? Specialties, Guid? UserId);

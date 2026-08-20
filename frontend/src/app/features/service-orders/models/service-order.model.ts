@@ -11,39 +11,14 @@ export interface ServiceOrderListItem {
   collectedAmount: number;
 }
 
-export interface ServiceOrder {
+export interface Currency {
   id: string;
-  orderNumber: string;
-  clientId: string;
-  clientName: string;
-  projectId?: string;
-  projectName?: string;
-  serviceTypeId: string;
-  serviceTypeName: string;
-  statusId: string;
-  statusName: string;
-  priority: string;
-  priorityValue: number;
-  description?: string;
-  budgetedAmount: number;
-  discount: number;
-  totalAmount: number;
-  collectedAmount: number;
-  createdAt: string;
-  estimatedStartDate?: string;
-  estimatedEndDate?: string;
-  actualStartDate?: string;
-  actualEndDate?: string;
-  collectionDate?: string;
-  canceledAt?: string;
-
-  responsibles: ServiceOrderResponsible[];
-  activities: ServiceOrderActivity[];
-  distributions: ServiceOrderDistribution[];
-  documents: ServiceOrderDocument[];
+  code: string;
+  symbol: string;
+  name: string;
 }
 
-export interface ServiceOrderResponsible {
+export interface Responsible {
   id: string;
   name: string;
   position?: string;
@@ -51,6 +26,44 @@ export interface ServiceOrderResponsible {
   specialties?: string;
   userId?: string;
   userName?: string;
+}
+
+export interface ServiceOrder {
+  id: string;
+  orderNumber: string;
+  clientId: string;
+  clientName?: string;
+  projectId?: string;
+  projectName?: string;
+  serviceTypeId: string;
+  serviceTypeName?: string;
+  statusId: string;
+  statusName?: string;
+  priorityValue: number;
+  priority: string;
+  description?: string;
+  currencyId: string;
+  currencyCode?: string;
+  currencySymbol?: string;
+  foreignAmount?: number;
+  exchangeRateAtBudget?: number;
+  exchangeRateAtCollection?: number;
+  budgetedAmount: number;
+  discount: number;
+  totalAmount: number;
+  collectedAmount: number;
+  requestDate?: string;
+  createdAt: string;
+  estimatedStartDate?: string;
+  estimatedEndDate?: string;
+  actualStartDate?: string;
+  actualEndDate?: string;
+  collectionDate?: string;
+  canceledAt?: string;
+  responsibles: Responsible[];
+  activities: ServiceOrderActivity[];
+  distributions: ServiceOrderDistribution[];
+  documents: ServiceOrderDocument[];
 }
 
 export interface ServiceOrderActivity {
@@ -89,16 +102,21 @@ export interface CreateServiceOrderRequest {
   statusId: string;
   priority: number;
   description?: string;
+  currencyId: string;
+  foreignAmount?: number;
+  exchangeRateAtBudget?: number;
   budgetedAmount: number;
   discount: number;
   totalAmount: number;
+  requestDate?: string;
   estimatedStartDate?: string;
   estimatedEndDate?: string;
-  distributions?: DistributionDto[];
-  responsibles?: ResponsibleDto[];
+  distributions: { distributionConceptId: string; percentage: number; expectedAmount: number; actualAmount: number }[];
+  responsibleIds: string[];
 }
 
 export interface UpdateServiceOrderRequest extends CreateServiceOrderRequest {
+  exchangeRateAtCollection?: number;
   actualStartDate?: string;
   actualEndDate?: string;
   collectionDate?: string;

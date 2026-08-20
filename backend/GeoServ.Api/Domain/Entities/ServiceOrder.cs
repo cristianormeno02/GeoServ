@@ -25,12 +25,19 @@ public class ServiceOrder
     public string? Description { get; set; }
     
     // Información Financiera
+    public Guid CurrencyId { get; set; }
+    public Currency Currency { get; set; } = null!;
+    public decimal? ForeignAmount { get; set; }
+    public decimal? ExchangeRateAtBudget { get; set; }
+    public decimal? ExchangeRateAtCollection { get; set; }
+    
     public decimal BudgetedAmount { get; set; }
     public decimal Discount { get; set; }
     public decimal TotalAmount { get; set; }
     public decimal CollectedAmount { get; set; }
     
     // Fechas de Control
+    public DateTime? RequestDate { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     
@@ -45,7 +52,7 @@ public class ServiceOrder
     
     // Navegación
     public ICollection<DirectCost> DirectCosts { get; set; } = new List<DirectCost>();
-    public ICollection<Responsible> Responsibles { get; set; } = new List<Responsible>();
+    public ICollection<ServiceOrderResponsible> Responsibles { get; set; } = new List<ServiceOrderResponsible>();
     public ICollection<ServiceOrderActivity> Activities { get; set; } = new List<ServiceOrderActivity>();
     public ICollection<ServiceOrderDistribution> Distributions { get; set; } = new List<ServiceOrderDistribution>();
     public ICollection<ServiceOrderDocument> Documents { get; set; } = new List<ServiceOrderDocument>();

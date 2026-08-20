@@ -50,6 +50,9 @@ export class ServiceOrderFormComponent implements OnInit {
   statuses: any[] = [];
   users: any[] = [];
   distributionConcepts: any[] = [];
+  currencies: any[] = [];
+  responsiblesCatalog: any[] = [];
+  selectedCurrencyCode: string = '';
 
   priorities = [
     { value: 1, label: 'Baja' },
@@ -84,12 +87,17 @@ export class ServiceOrderFormComponent implements OnInit {
   createForm(): void {
     this.orderForm = this.fb.group({
       orderNumber: ['', Validators.required],
+      requestDate: [''],
       clientId: ['', Validators.required],
       projectId: [''],
       serviceTypeId: ['', Validators.required],
       statusId: ['', Validators.required],
       priority: [2, Validators.required],
       description: [''],
+      currencyId: ['', Validators.required],
+      foreignAmount: [0, [Validators.min(0)]],
+      exchangeRateAtBudget: [1, [Validators.min(1)]],
+      exchangeRateAtCollection: [null],
       budgetedAmount: [0, [Validators.required, Validators.min(0)]],
       discount: [0, [Validators.min(0)]],
       totalAmount: [0, [Validators.required, Validators.min(0)]],
@@ -99,26 +107,42 @@ export class ServiceOrderFormComponent implements OnInit {
       actualEndDate: [''],
       collectionDate: [''],
       distributions: this.fb.array([]),
-      responsibles: this.fb.array([])
+      responsibleIds: [[], Validators.required] // Array of strings (dropdown multiple)
+    });
+
+    // Detectar cambio de moneda para setear la lógica de montos
+    this.orderForm.get('currencyId')?.valueChanges.subscribe(val => {
+      const selected = this.currencies.find(c => c.id === val);
+      if (selected) {
+        this.selectedCurrencyCode = selected.code;
+        this.calculateTotal(); // Re-calcula por si cambió a una moneda extranjera
+      }
     });
 
     // Calcular Total Amount automáticamente
-    this.orderForm.get('budgetedAmount')?.valueChanges.subscribe(val => this.calculateTotal());
-    this.orderForm.get('discount')?.valueChanges.subscribe(val => this.calculateTotal());
+    this.orderForm.get('foreignAmount')?.valueChanges.subscribe(() => this.calculateTotal());
+    this.orderForm.get('exchangeRateAtBudget')?.valueChanges.subscribe(() => this.calculateTotal());
+    this.orderForm.get('budgetedAmount')?.valueChanges.subscribe(() => this.calculateTotal());
+    this.orderForm.get('discount')?.valueChanges.subscribe(() => this.calculateTotal());
   }
 
   calculateTotal() {
-    const budget = this.orderForm.get('budgetedAmount')?.value || 0;
+    let budget = this.orderForm.get('budgetedAmount')?.value || 0;
+    
+    // Si la moneda seleccionada no es la local (ej. ARS)
+    if (this.selectedCurrencyCode && this.selectedCurrencyCode !== 'ARS') {
+      const foreignAmount = this.orderForm.get('foreignAmount')?.value || 0;
+      const rate = this.orderForm.get('exchangeRateAtBudget')?.value || 1;
+      budget = foreignAmount * rate;
+      this.orderForm.get('budgetedAmount')?.setValue(budget, { emitEvent: false });
+    }
+
     const discount = this.orderForm.get('discount')?.value || 0;
-    this.orderForm.get('totalAmount')?.setValue(budget - discount);
+    this.orderForm.get('totalAmount')?.setValue(budget - discount, { emitEvent: false });
   }
 
   get distributions(): FormArray {
     return this.orderForm.get('distributions') as FormArray;
-  }
-
-  get responsibles(): FormArray {
-    return this.orderForm.get('responsibles') as FormArray;
   }
 
   addDistribution() {
@@ -134,20 +158,6 @@ export class ServiceOrderFormComponent implements OnInit {
     this.distributions.removeAt(index);
   }
 
-  addResponsible() {
-    this.responsibles.push(this.fb.group({
-      name: ['', Validators.required],
-      position: [''],
-      title: [''],
-      specialties: [''],
-      userId: ['']
-    }));
-  }
-
-  removeResponsible(index: number) {
-    this.responsibles.removeAt(index);
-  }
-
   // Carga de catálogos
   loadCatalogs(): void {
     this.clientService.getClients().subscribe(res => this.clients = res);
@@ -157,6 +167,9 @@ export class ServiceOrderFormComponent implements OnInit {
     this.serviceOrderService.getStatuses().subscribe(res => this.statuses = res);
     this.serviceOrderService.getProjects().subscribe(res => this.projects = res);
     this.serviceOrderService.getDistributionConcepts().subscribe(res => this.distributionConcepts = res);
+    
+    this.serviceOrderService.getCurrencies().subscribe(res => this.currencies = res);
+    this.serviceOrderService.getResponsiblesCatalog().subscribe(res => this.responsiblesCatalog = res);
   }
 
   loadOrderData(id: string): void {
@@ -164,12 +177,17 @@ export class ServiceOrderFormComponent implements OnInit {
       next: (order) => {
         this.orderForm.patchValue({
           orderNumber: order.orderNumber,
+          requestDate: order.requestDate,
           clientId: order.clientId,
           projectId: order.projectId,
           serviceTypeId: order.serviceTypeId,
           statusId: order.statusId,
           priority: order.priorityValue,
           description: order.description,
+          currencyId: order.currencyId,
+          foreignAmount: order.foreignAmount,
+          exchangeRateAtBudget: order.exchangeRateAtBudget,
+          exchangeRateAtCollection: order.exchangeRateAtCollection,
           budgetedAmount: order.budgetedAmount,
           discount: order.discount,
           totalAmount: order.totalAmount,
@@ -177,7 +195,8 @@ export class ServiceOrderFormComponent implements OnInit {
           estimatedEndDate: order.estimatedEndDate,
           actualStartDate: order.actualStartDate,
           actualEndDate: order.actualEndDate,
-          collectionDate: order.collectionDate
+          collectionDate: order.collectionDate,
+          responsibleIds: order.responsibles ? order.responsibles.map(r => r.id) : []
         });
 
         // Cargar distribuciones
@@ -187,17 +206,6 @@ export class ServiceOrderFormComponent implements OnInit {
             percentage: [d.percentage, [Validators.required, Validators.min(0), Validators.max(100)]],
             expectedAmount: [d.expectedAmount],
             actualAmount: [d.actualAmount]
-          }));
-        });
-
-        // Cargar responsables
-        order.responsibles.forEach(r => {
-          this.responsibles.push(this.fb.group({
-            name: [r.name, Validators.required],
-            position: [r.position],
-            title: [r.title],
-            specialties: [r.specialties],
-            userId: [r.userId]
           }));
         });
       },

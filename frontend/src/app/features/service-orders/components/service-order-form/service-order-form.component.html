@@ -60,8 +60,16 @@
         </mat-form-field>
 
         <hr>
+        <hr>
         <h3>Fechas</h3>
         <div class="row">
+          <mat-form-field appearance="outline">
+            <mat-label>Fecha de Solicitud</mat-label>
+            <input matInput [matDatepicker]="pickerReq" formControlName="requestDate">
+            <mat-datepicker-toggle matSuffix [for]="pickerReq"></mat-datepicker-toggle>
+            <mat-datepicker #pickerReq></mat-datepicker>
+          </mat-form-field>
+
           <mat-form-field appearance="outline">
             <mat-label>Inicio Estimado</mat-label>
             <input matInput [matDatepicker]="picker1" formControlName="estimatedStartDate">
@@ -104,8 +112,34 @@
         <h3>Finanzas</h3>
         <div class="row">
           <mat-form-field appearance="outline">
-            <mat-label>Monto Presupuestado</mat-label>
-            <input matInput type="number" formControlName="budgetedAmount">
+            <mat-label>Moneda del Presupuesto</mat-label>
+            <mat-select formControlName="currencyId">
+              <mat-option *ngFor="let c of currencies" [value]="c.id">{{c.code}} - {{c.name}} ({{c.symbol}})</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        
+        <div class="row" *ngIf="selectedCurrencyCode && selectedCurrencyCode !== 'ARS'">
+          <mat-form-field appearance="outline">
+            <mat-label>Monto en Moneda Extranjera ({{selectedCurrencyCode}})</mat-label>
+            <input matInput type="number" formControlName="foreignAmount">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Cotización al Presupuestar</mat-label>
+            <input matInput type="number" formControlName="exchangeRateAtBudget">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" *ngIf="isEditMode">
+            <mat-label>Cotización al Cobrar</mat-label>
+            <input matInput type="number" formControlName="exchangeRateAtCollection">
+          </mat-form-field>
+        </div>
+
+        <div class="row">
+          <mat-form-field appearance="outline">
+            <mat-label>Monto Presupuestado (Base)</mat-label>
+            <input matInput type="number" formControlName="budgetedAmount" [readonly]="selectedCurrencyCode !== 'ARS'">
           </mat-form-field>
 
           <mat-form-field appearance="outline">
@@ -114,7 +148,7 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Total (Auto-calculado)</mat-label>
+            <mat-label>Total Final (Auto-calculado)</mat-label>
             <input matInput type="number" formControlName="totalAmount" readonly>
           </mat-form-field>
         </div>
@@ -141,7 +175,12 @@
 
             <mat-form-field appearance="outline">
               <mat-label>Monto Esperado</mat-label>
-              <input matInput type="number" formControlName="expectedAmount">
+              <input matInput type="number" formControlName="expectedAmount" readonly>
+            </mat-form-field>
+            
+            <mat-form-field appearance="outline" *ngIf="isEditMode">
+              <mat-label>Monto Real Destinado</mat-label>
+              <input matInput type="number" formControlName="actualAmount">
             </mat-form-field>
 
             <button type="button" mat-icon-button color="warn" (click)="removeDistribution(i)">
@@ -151,35 +190,17 @@
         </div>
 
         <hr>
-        <div class="section-header">
-          <h3>Responsables</h3>
-          <button type="button" mat-stroked-button color="primary" (click)="addResponsible()">+ Agregar Responsable</button>
-        </div>
-
-        <div formArrayName="responsibles">
-          <div *ngFor="let resp of responsibles.controls; let j=index" [formGroupName]="j" class="dynamic-row">
-            <mat-form-field appearance="outline">
-              <mat-label>Nombre</mat-label>
-              <input matInput formControlName="name">
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Cargo</mat-label>
-              <input matInput formControlName="position">
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Usuario en Sistema (Opcional)</mat-label>
-              <mat-select formControlName="userId">
-                <mat-option [value]="null">-- Ninguno --</mat-option>
-                <mat-option *ngFor="let u of users" [value]="u.id">{{u.name}} ({{u.email}})</mat-option>
-              </mat-select>
-            </mat-form-field>
-
-            <button type="button" mat-icon-button color="warn" (click)="removeResponsible(j)">
-              <mat-icon>delete</mat-icon>
-            </button>
-          </div>
+        <h3>Responsables Asignados</h3>
+        <div class="row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Seleccione Responsables del Catálogo</mat-label>
+            <mat-select formControlName="responsibleIds" multiple>
+              <mat-option *ngFor="let r of responsiblesCatalog" [value]="r.id">
+                {{r.name}} {{r.position ? (' - ' + r.position) : ''}}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="orderForm.get('responsibleIds')?.hasError('required')">Debe seleccionar al menos un responsable</mat-error>
+          </mat-form-field>
         </div>
 
       </form>

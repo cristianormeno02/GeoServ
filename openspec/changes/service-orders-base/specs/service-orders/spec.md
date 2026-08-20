@@ -1,35 +1,48 @@
 ## Purpose
 
-Define las capacidades principales para crear, gestionar y realizar el seguimiento de las Órdenes de Servicio (OS) dentro del sistema de consultoría geológica.
+Define las capacidades principales para crear, gestionar y realizar el seguimiento de las Órdenes de Servicio (OS) dentro del sistema de consultoría geológica, contemplando un manejo completo del ciclo de vida financiero y operativo.
 
 ## ADDED Requirements
 
-### Requirement: Crear Orden de Servicio
-El sistema DEBE permitir a los usuarios crear una nueva Orden de Servicio, vinculándola a un Cliente y a un Tipo de Servicio específico.
-La Orden de Servicio DEBE incluir campos para el importe presupuestado, descuento y monto total final.
-La Orden de Servicio DEBE incluir campos de porcentaje para la regla de distribución (Gastos, Capitalización y Honorarios), con un valor por defecto de 33.33% cada uno.
+### Requirement: Fechas de la Orden
+El sistema DEBE gestionar las siguientes fechas clave en el ciclo de vida de la orden:
+- **Fecha de Solicitud**: Momento en que el cliente solicitó el servicio, la cual es independiente de la fecha de creación en el sistema (`CreatedAt`).
+- **Fechas Estimadas**: Fecha estimada de inicio y fecha estimada de finalización.
+- **Fechas Reales**: "Fecha Real de Inicio" y "Fecha Real de Finalización/Entrega", las cuales se actualizarán conforme avance o concluya el trabajo.
+
+### Requirement: Manejo Multimoneda y Catálogo de Monedas
+El sistema DEBE soportar presupuestación y cobranza dinámica utilizando múltiples monedas.
+- **Catálogo de Monedas**: Debe existir una tabla maestra de monedas (`Currency`) que almacene su `Code` (ej. USD, CLP, ARS), su `Symbol` (ej. $) y su `Name` (ej. Dólar, Peso Chileno).
+- Al crear o editar el presupuesto en la Orden de Servicio, la moneda presupuestada se seleccionará obligatoriamente desde este catálogo a través de un combo/selector.
+- Si la moneda seleccionada es distinta a la moneda base (ej. ARS), el sistema debe habilitar el campo "Monto en Moneda Extranjera" y requerir la "Cotización al Presupuestar" para calcular automáticamente el "Monto Presupuestado" en la moneda base.
+- Al registrar el cobro, el sistema debe permitir ingresar el monto cobrado y la "Cotización a la Fecha de Cobro" si aplica.
+
+### Requirement: Formato Numérico Local (Argentina)
+El sistema DEBE mostrar visualmente en todas las interfaces los campos monetarios y numéricos utilizando el formato local argentino: separador de miles con punto (.) y separador de decimales con coma (,). Sin embargo, estos datos se almacenarán estructuradamente como valores `decimal` estándar en la base de datos.
+
+### Requirement: Distribución de Cobros Dinámica y Porcentajes
+La lógica de distribución de ingresos DEBE ser dinámica a partir de un catálogo (Amortización Gastos, Capitalización, Honorarios, Utilidad, etc.).
+- El sistema DEBE validar de forma obligatoria y estricta que la sumatoria de todos los porcentajes asignados a la orden dé exactamente 100%. No se pueden repetir conceptos.
+- El "Monto Esperado" para cada ítem debe ser calculado automáticamente (Porcentaje * Total de la Orden) y mostrase como solo lectura.
+- El sistema debe contar con el campo "Monto Real Destinado" por cada ítem, el cual se habilitará una vez que la orden pase a estado 'Cobrada'.
+
+### Requirement: Gestión de Actividades de la Orden
+El sistema DEBE permitir asociar múltiples actividades operativas a cada OS.
+- Las actividades tendrán: Detalle corto, Detalle largo, Estado (Pendiente, En Proceso, Cancelado, Finalizado).
+- Contarán con un "Porcentaje de Avance" numérico (1 al 100). Dicho campo solo estará habilitado para su edición si la actividad está en estado "En Proceso". Si la actividad pasa a "Finalizado", el porcentaje tomará el valor 100 de forma automática.
+
+### Requirement: Gestión de Responsables (Catálogo Maestro y Relación)
+La gestión de responsables requiere de un modelo desacoplado y una tabla intermedia para su vinculación con las Órdenes de Servicio.
+- **Tabla Maestra Independiente**: Existirá una tabla `Responsible` autónoma (sin relación directa ni campo `ServiceOrderId`). Tendrá su propio CRUD.
+- **Atributos del Responsable**: Id, Nombre, Cargo, Título, Especialidades, y `UserId`.
+- **Validaciones de Usuario**: Si se asigna un `UserId` a un Responsable, dicho usuario NO debe tener el rol de 'Cliente', y **tampoco puede estar ya asignado a otro Responsable** (relación 1 a 1 entre Usuario del sistema y Responsable).
+- **Vinculación a la Orden (Tabla Intermedia)**: Existirá una tabla de unión (ej. `ServiceOrderResponsible`) que contenga el `ServiceOrderId` y el `ResponsibleId`.
+- **Interfaz de la Orden de Servicio**: En el formulario de la OS, los responsables se agregarán o quitarán mediante un selector dinámico (dropdown). El sistema debe impedir que un mismo responsable sea agregado más de una vez a la misma orden.
+
+### Requirement: Gestionar Estado de la Orden
+El sistema DEBE gestionar el flujo de estados de una Orden de Servicio (Alta, Presupuestada, Aprobada, Iniciada, Entregada, Cobrada, Cancelada).
+- **Hito Cobrada**: Cuando el usuario registre el estado a 'Cobrada', ingresará la fecha de cobro y se habilitará la carga de los "Montos Reales Destinados".
 
 #### Scenario: Creación exitosa de una Orden de Servicio
-- **WHEN** el usuario proporciona detalles válidos de la Orden de Servicio, incluyendo los importes y porcentajes de distribución
-- **THEN** el sistema crea la Orden de Servicio en estado de 'Alta' y le asigna un identificador único
-
-### Requirement: Ver detalles de la Orden de Servicio
-El sistema DEBE permitir a los usuarios obtener los detalles completos de una Orden de Servicio existente.
-
-#### Scenario: Obtener una Orden de Servicio existente
-- **WHEN** el usuario solicita una Orden de Servicio mediante su identificador único válido
-- **THEN** el sistema devuelve los detalles de la Orden de Servicio, incluyendo la información financiera y porcentajes de distribución
-
-### Requirement: Gestionar Estado y Fechas de Control
-El sistema DEBE gestionar el flujo de estados de una Orden de Servicio de forma normalizada, con los siguientes estados posibles e implicancias financieras:
-1. **Alta:** Se recibe y registra la orden inicialmente.
-2. **Presupuestada:** Se emite el presupuesto al cliente. *(Hito clave de seguimiento)*.
-3. **Aprobada:** El cliente aprueba el presupuesto.
-4. **Iniciada:** Se comienza con el trabajo de campo o laboratorio.
-5. **Entregada:** Se entregan los resultados/informe al cliente.
-6. **Cobrada:** El cliente efectúa el pago. *(Hito crítico: solo en este estado se dispara la absorción de costos fijos y la distribución de los tercios de ingresos).*
-7. **Cancelada:** El cliente decide no avanzar o la consultora rechaza el servicio. *(Hito crítico: las órdenes canceladas no suman ni restan para el balance ni absorben costos fijos).*
-
-#### Scenario: Actualización de estado a Cobrada
-- **WHEN** el usuario actualiza el estado de una Orden de Servicio a 'Cobrada'
-- **THEN** el sistema registra la fecha actual como fecha de cobro y calcula automáticamente la tabla de Ingresos Distribuidos (Gastos, Capitalización y Honorarios) según los porcentajes definidos.
+- **WHEN** el usuario proporciona detalles válidos, incluyendo la moneda (con cotización si aplica) y las distribuciones sumando 100%
+- **THEN** el sistema crea la OS en estado de 'Alta' con su propio número identificador alfanumérico.

@@ -24,6 +24,7 @@ export class SidebarComponent implements OnInit {
     { name: 'Tipos de Compañía', path: '/tipos-compania', icon: 'category' },
     { name: 'Tipos de Servicio', path: '/tipos-servicio', icon: 'miscellaneous_services' },
     { name: 'Usuarios', path: '/usuarios', icon: 'manage_accounts' },
+    { name: 'Responsables', path: '/responsibles', icon: 'badge' },
     { name: 'Inventario', path: '/inventario', icon: 'inventory' },
     { name: 'Configuración', path: '/configuracion', icon: 'settings' }
   ];

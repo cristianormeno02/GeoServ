@@ -13,4 +13,14 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
   styleUrl: './main-layout.component.css'
 })
 export class MainLayoutComponent {
+  menuItems = [
+    { icon: 'business', label: 'Clientes', route: '/clientes' },
+    { icon: 'engineering', label: 'Proyectos', route: '/proyectos' },
+    { icon: 'category', label: 'Tipos de Servicio', route: '/tipos-servicio' },
+    { icon: 'assignment', label: 'Órdenes de Servicio', route: '/ordenes-servicio' },
+    { icon: 'groups', label: 'Responsables', route: '/responsibles' },
+    { icon: 'account_tree', label: 'Tipos de Compañía', route: '/tipos-compania' },
+    { icon: 'people', label: 'Usuarios', route: '/usuarios' },
+    { icon: 'settings', label: 'Configuración', route: '/configuracion' }
+  ];
 }

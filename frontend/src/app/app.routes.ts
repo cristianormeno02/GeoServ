@@ -17,6 +17,9 @@ export const routes: Routes = [
       { path: 'ordenes-servicio/nuevo', loadComponent: () => import('./features/service-orders/components/service-order-form/service-order-form.component').then(m => m.ServiceOrderFormComponent) },
       { path: 'ordenes-servicio/editar/:id', loadComponent: () => import('./features/service-orders/components/service-order-form/service-order-form.component').then(m => m.ServiceOrderFormComponent) },
       { path: 'ordenes-servicio/:id', loadComponent: () => import('./features/service-orders/components/service-order-detail/service-order-detail.component').then(m => m.ServiceOrderDetailComponent) },
+      { path: 'responsibles', loadComponent: () => import('./features/responsibles/components/responsible-list/responsible-list.component').then(m => m.ResponsibleListComponent) },
+      { path: 'responsibles/nuevo', loadComponent: () => import('./features/responsibles/components/responsible-form/responsible-form.component').then(m => m.ResponsibleFormComponent) },
+      { path: 'responsibles/editar/:id', loadComponent: () => import('./features/responsibles/components/responsible-form/responsible-form.component').then(m => m.ResponsibleFormComponent) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },

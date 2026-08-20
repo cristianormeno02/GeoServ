@@ -56,6 +56,14 @@ export class ServiceOrderService {
     return this.http.get<any[]>(`${this.apiUrl}/catalogs/distribution-concepts`);
   }
 
+  getCurrencies(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/catalogs/currencies`);
+  }
+
+  getResponsiblesCatalog(): Observable<any[]> {
+    return this.http.get<any[]>(`${environment.apiUrl}/api/responsibles`);
+  }
+
   // 6. Subir Documento
   uploadDocument(orderId: string, file: File, isVisibleToClient: boolean): Observable<DocumentUploadResponse> {
     const formData = new FormData();

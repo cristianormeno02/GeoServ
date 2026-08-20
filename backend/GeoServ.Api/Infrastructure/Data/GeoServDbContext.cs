@@ -13,19 +13,18 @@ public class GeoServDbContext : DbContext
     public DbSet<Role> Roles { get; set; } = null!;
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<Client> Clients { get; set; } = null!;
-    public DbSet<CompanyType> CompanyTypes { get; set; } = null!;
     public DbSet<ServiceType> ServiceTypes { get; set; } = null!;
-    public DbSet<ServiceOrderStatus> ServiceOrderStatuses { get; set; } = null!;
+    public DbSet<CompanyType> CompanyTypes { get; set; } = null!;
     public DbSet<ServiceOrder> ServiceOrders { get; set; } = null!;
-    
-    // Nuevas entidades del dominio de Orden de Servicio
-    public DbSet<Project> Projects { get; set; } = null!;
-    public DbSet<Responsible> Responsibles { get; set; } = null!;
-    public DbSet<ServiceOrderActivity> ServiceOrderActivities { get; set; } = null!;
+    public DbSet<ServiceOrderStatus> ServiceOrderStatuses { get; set; } = null!;
     public DbSet<DistributionConcept> DistributionConcepts { get; set; } = null!;
     public DbSet<ServiceOrderDistribution> ServiceOrderDistributions { get; set; } = null!;
+    public DbSet<ServiceOrderActivity> ServiceOrderActivities { get; set; } = null!;
+    public DbSet<Responsible> Responsibles { get; set; } = null!;
+    public DbSet<ServiceOrderResponsible> ServiceOrderResponsibles { get; set; } = null!;
+    public DbSet<Project> Projects { get; set; } = null!;
     public DbSet<ServiceOrderDocument> ServiceOrderDocuments { get; set; } = null!;
-    
+    public DbSet<Currency> Currencies { get; set; } = null!;
     public DbSet<DirectCost> DirectCosts { get; set; } = null!;
     public DbSet<FixedCostCategory> FixedCostCategories { get; set; } = null!;
     public DbSet<FixedCost> FixedCosts { get; set; } = null!;
@@ -78,12 +77,33 @@ public class GeoServDbContext : DbContext
             .HasForeignKey(c => c.UserId)
             .IsRequired(false);
             
-        // Relaciones con Cascade Delete
         modelBuilder.Entity<ServiceOrder>()
-            .HasMany(s => s.Responsibles)
-            .WithOne(r => r.ServiceOrder)
-            .HasForeignKey(r => r.ServiceOrderId)
+            .Property(o => o.ForeignAmount).HasPrecision(18, 2);
+        modelBuilder.Entity<ServiceOrder>()
+            .Property(o => o.ExchangeRateAtBudget).HasPrecision(18, 4);
+        modelBuilder.Entity<ServiceOrder>()
+            .Property(o => o.ExchangeRateAtCollection).HasPrecision(18, 4);
+
+        // Relación N:M ServiceOrder - Responsible
+        modelBuilder.Entity<ServiceOrderResponsible>()
+            .HasKey(sor => new { sor.ServiceOrderId, sor.ResponsibleId });
+
+        modelBuilder.Entity<ServiceOrderResponsible>()
+            .HasOne(sor => sor.ServiceOrder)
+            .WithMany(so => so.Responsibles)
+            .HasForeignKey(sor => sor.ServiceOrderId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ServiceOrderResponsible>()
+            .HasOne(sor => sor.Responsible)
+            .WithMany()
+            .HasForeignKey(sor => sor.ResponsibleId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Restricción única de Usuario por Responsable
+        modelBuilder.Entity<Responsible>()
+            .HasIndex(r => r.UserId)
+            .IsUnique();
 
         modelBuilder.Entity<ServiceOrder>()
             .HasMany(s => s.Activities)
@@ -148,6 +168,12 @@ public class GeoServDbContext : DbContext
             new CompanyType { Id = Guid.Parse("D6666666-6666-6666-6666-666666666666"), Name = "Particular / Inversionista" },
             new CompanyType { Id = Guid.Parse("D8888888-8888-8888-8888-888888888888"), Name = "Compañía Minera" },
             new CompanyType { Id = Guid.Parse("D7777777-7777-7777-7777-777777777777"), Name = "Otro" }
+        );
+
+        modelBuilder.Entity<Currency>().HasData(
+            new Currency { Id = Guid.Parse("F1111111-1111-1111-1111-111111111111"), Code = "ARS", Symbol = "$", Name = "Peso Argentino", IsActive = true },
+            new Currency { Id = Guid.Parse("F2222222-2222-2222-2222-222222222222"), Code = "USD", Symbol = "U$D", Name = "Dólar Estadounidense", IsActive = true },
+            new Currency { Id = Guid.Parse("F3333333-3333-3333-3333-333333333333"), Code = "CLP", Symbol = "$", Name = "Peso Chileno", IsActive = true }
         );
     }
 }
