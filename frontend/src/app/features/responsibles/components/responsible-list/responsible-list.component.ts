@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatTableModule } from '@angular/material/table';
+import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
@@ -60,7 +60,7 @@ import { ResponsibleService, Responsible } from '../../services/responsible.serv
   `]
 })
 export class ResponsibleListComponent implements OnInit {
-  responsibles: Responsible[] = [];
+  responsibles = new MatTableDataSource<Responsible>([]);
   displayedColumns: string[] = ['name', 'position', 'userName', 'actions'];
 
   constructor(
@@ -75,7 +75,7 @@ export class ResponsibleListComponent implements OnInit {
 
   loadData(): void {
     this.responsibleService.getResponsibles().subscribe({
-      next: (data) => this.responsibles = data,
+      next: (data) => this.responsibles.data = data,
       error: () => this.snackBar.open('Error al cargar', 'Cerrar', { duration: 3000 })
     });
   }
