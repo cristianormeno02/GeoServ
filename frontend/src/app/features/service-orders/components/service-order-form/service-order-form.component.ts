@@ -223,7 +223,15 @@ export class ServiceOrderFormComponent implements OnInit {
     this.serviceOrderService.getProjects().subscribe(res => this.projects = res);
     this.serviceOrderService.getDistributionConcepts().subscribe(res => this.distributionConcepts = res);
     
-    this.serviceOrderService.getCurrencies().subscribe(res => this.currencies = res);
+    this.serviceOrderService.getCurrencies().subscribe(res => {
+      this.currencies = res;
+      if (!this.isEditMode) {
+        const ars = this.currencies.find(c => c.code === 'ARS');
+        if (ars) {
+          this.orderForm.get('currencyId')?.setValue(ars.id);
+        }
+      }
+    });
     this.serviceOrderService.getResponsiblesCatalog().subscribe(res => this.responsiblesCatalog = res);
   }
 
