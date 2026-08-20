@@ -332,7 +332,31 @@ export class ServiceOrderFormComponent implements OnInit {
       return;
     }
 
-    const formValue = this.orderForm.value;
+    const formValue = { ...this.orderForm.value };
+    if (formValue.projectId === '') {
+      formValue.projectId = null;
+    }
+    
+    // Limpiar campos numéricos si ngx-mask los devolvió como string
+    formValue.budgetedAmount = Number(formValue.budgetedAmount?.toString().replace(/\./g, '').replace(',', '.')) || 0;
+    formValue.discount = Number(formValue.discount?.toString().replace(/\./g, '').replace(',', '.')) || 0;
+    formValue.foreignAmount = Number(formValue.foreignAmount?.toString().replace(/\./g, '').replace(',', '.')) || 0;
+    formValue.totalAmount = Number(formValue.totalAmount?.toString().replace(/\./g, '').replace(',', '.')) || 0;
+    if (formValue.exchangeRateAtBudget) {
+        formValue.exchangeRateAtBudget = Number(formValue.exchangeRateAtBudget.toString().replace(/\./g, '').replace(',', '.'));
+    }
+    if (formValue.exchangeRateAtCollection) {
+        formValue.exchangeRateAtCollection = Number(formValue.exchangeRateAtCollection.toString().replace(/\./g, '').replace(',', '.'));
+    }
+
+    if (formValue.distributions && formValue.distributions.length > 0) {
+      formValue.distributions = formValue.distributions.map((d: any) => ({
+        ...d,
+        percentage: Number(d.percentage?.toString().replace(/\./g, '').replace(',', '.')) || 0,
+        expectedAmount: Number(d.expectedAmount?.toString().replace(/\./g, '').replace(',', '.')) || 0,
+        actualAmount: Number(d.actualAmount?.toString().replace(/\./g, '').replace(',', '.')) || 0
+      }));
+    }
 
     // Validación custom de porcentajes
     if (formValue.distributions && formValue.distributions.length > 0) {

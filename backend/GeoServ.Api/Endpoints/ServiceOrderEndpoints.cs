@@ -133,95 +133,101 @@ public static class ServiceOrderEndpoints
         // 3. Crear Orden de Servicio
         group.MapPost("/", async (CreateServiceOrderRequest request, GeoServDbContext context) =>
         {
-            // Validar unicidad de número de orden
-            if (await context.ServiceOrders.AnyAsync(o => o.OrderNumber == request.OrderNumber))
-                return Results.BadRequest(new { message = "El número de orden ya existe." });
-
-            // Validar distribuciones al 100%
-            if (request.Distributions != null && request.Distributions.Any())
+            try 
             {
-                var sum = request.Distributions.Sum(d => d.Percentage);
-                if (sum != 100m)
-                    return Results.BadRequest(new { message = "La suma de los porcentajes de distribución debe ser exactamente 100." });
-                
-                // Validar que no se repitan conceptos
-                var duplicates = request.Distributions.GroupBy(d => d.DistributionConceptId).Any(g => g.Count() > 1);
-                if (duplicates)
-                    return Results.BadRequest(new { message = "No se puede repetir el mismo concepto de distribución en una orden." });
-            }
+                // Validar unicidad de número de orden
+                if (await context.ServiceOrders.AnyAsync(o => o.OrderNumber == request.OrderNumber))
+                    return Results.BadRequest(new { message = "El número de orden ya existe." });
 
-            var order = new ServiceOrder
-            {
-                Id = Guid.NewGuid(),
-                OrderNumber = request.OrderNumber,
-                ClientId = request.ClientId,
-                ProjectId = request.ProjectId,
-                ServiceTypeId = request.ServiceTypeId,
-                StatusId = request.StatusId,
-                Priority = (ServiceOrderPriority)request.Priority,
-                Description = request.Description,
-                CurrencyId = request.CurrencyId,
-                ForeignAmount = request.ForeignAmount,
-                ExchangeRateAtBudget = request.ExchangeRateAtBudget,
-                BudgetedAmount = request.BudgetedAmount,
-                Discount = request.Discount,
-                TotalAmount = request.TotalAmount,
-                RequestDate = request.RequestDate,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
-                EstimatedStartDate = request.EstimatedStartDate,
-                EstimatedEndDate = request.EstimatedEndDate
-            };
-
-            // Añadir distribuciones
-            if (request.Distributions != null)
-            {
-                foreach (var dist in request.Distributions)
+                // Validar distribuciones al 100%
+                if (request.Distributions != null && request.Distributions.Any())
                 {
-                    order.Distributions.Add(new ServiceOrderDistribution
-                    {
-                        Id = Guid.NewGuid(),
-                        DistributionConceptId = dist.DistributionConceptId,
-                        Percentage = dist.Percentage,
-                        ExpectedAmount = dist.ExpectedAmount,
-                        ActualAmount = dist.ActualAmount
-                    });
+                    var sum = request.Distributions.Sum(d => d.Percentage);
+                    if (sum != 100)
+                        return Results.BadRequest(new { message = "La sumatoria de los porcentajes de distribución debe ser 100%." });
+                    
+                    var duplicateConcepts = request.Distributions.GroupBy(d => d.DistributionConceptId).Any(g => g.Count() > 1);
+                    if (duplicateConcepts)
+                        return Results.BadRequest(new { message = "No se puede repetir el mismo concepto de distribución en una orden." });
                 }
-            }
 
-            // Añadir actividades
-            if (request.Activities != null)
-            {
-                foreach (var act in request.Activities)
+                var order = new ServiceOrder
                 {
-                    order.Activities.Add(new ServiceOrderActivity
-                    {
-                        Id = Guid.NewGuid(),
-                        ShortDetail = act.ShortDetail,
-                        LongDetail = act.LongDetail,
-                        State = Enum.Parse<GeoServ.Api.Domain.Enums.ActivityState>(act.State.Replace(" ", ""), true),
-                        ProgressPercentage = act.ProgressPercentage
-                    });
-                }
-            }
+                    Id = Guid.NewGuid(),
+                    OrderNumber = request.OrderNumber,
+                    ClientId = request.ClientId,
+                    ProjectId = request.ProjectId,
+                    ServiceTypeId = request.ServiceTypeId,
+                    StatusId = request.StatusId,
+                    Priority = (ServiceOrderPriority)request.Priority,
+                    Description = request.Description,
+                    CurrencyId = request.CurrencyId,
+                    ForeignAmount = request.ForeignAmount,
+                    ExchangeRateAtBudget = request.ExchangeRateAtBudget,
+                    BudgetedAmount = request.BudgetedAmount,
+                    Discount = request.Discount,
+                    TotalAmount = request.TotalAmount,
+                    RequestDate = request.RequestDate,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    EstimatedStartDate = request.EstimatedStartDate,
+                    EstimatedEndDate = request.EstimatedEndDate
+                };
 
-            // Añadir responsables
-            if (request.ResponsibleIds != null && request.ResponsibleIds.Any())
-            {
-                var uniqueIds = request.ResponsibleIds.Distinct().ToList();
-                foreach (var rId in uniqueIds)
+                // Añadir distribuciones
+                if (request.Distributions != null)
                 {
-                    order.Responsibles.Add(new ServiceOrderResponsible
+                    foreach (var dist in request.Distributions)
                     {
-                        ResponsibleId = rId
-                    });
+                        order.Distributions.Add(new ServiceOrderDistribution
+                        {
+                            Id = Guid.NewGuid(),
+                            DistributionConceptId = dist.DistributionConceptId,
+                            Percentage = dist.Percentage,
+                            ExpectedAmount = dist.ExpectedAmount,
+                            ActualAmount = dist.ActualAmount
+                        });
+                    }
                 }
+
+                // Añadir actividades
+                if (request.Activities != null)
+                {
+                    foreach (var act in request.Activities)
+                    {
+                        order.Activities.Add(new ServiceOrderActivity
+                        {
+                            Id = Guid.NewGuid(),
+                            ShortDetail = act.ShortDetail,
+                            LongDetail = act.LongDetail,
+                            State = Enum.Parse<GeoServ.Api.Domain.Enums.ActivityState>(act.State.Replace(" ", ""), true),
+                            ProgressPercentage = act.ProgressPercentage
+                        });
+                    }
+                }
+
+                // Añadir responsables
+                if (request.ResponsibleIds != null && request.ResponsibleIds.Any())
+                {
+                    var uniqueIds = request.ResponsibleIds.Distinct().ToList();
+                    foreach (var rId in uniqueIds)
+                    {
+                        order.Responsibles.Add(new ServiceOrderResponsible
+                        {
+                            ResponsibleId = rId
+                        });
+                    }
+                }
+
+                context.ServiceOrders.Add(order);
+                await context.SaveChangesAsync();
+
+                return Results.Created($"/api/service-orders/{order.Id}", order.Id);
             }
-
-            context.ServiceOrders.Add(order);
-            await context.SaveChangesAsync();
-
-            return Results.Created($"/api/service-orders/{order.Id}", order.Id);
+            catch (Exception ex)
+            {
+                return Results.Problem(detail: ex.InnerException?.Message ?? ex.Message, title: "Error Interno", statusCode: 500);
+            }
         })
         .WithName("CreateServiceOrder")
         .WithOpenApi();
