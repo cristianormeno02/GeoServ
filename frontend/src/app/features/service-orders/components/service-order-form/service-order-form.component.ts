@@ -123,7 +123,7 @@ export class ServiceOrderFormComponent implements OnInit {
     const today = new Date();
     this.orderForm = this.fb.group({
       orderNumber: ['', Validators.required],
-      requestDate: [today],
+      requestDate: [today, Validators.required],
       clientId: ['', Validators.required],
       projectId: [''],
       serviceTypeId: ['', Validators.required],
@@ -137,11 +137,11 @@ export class ServiceOrderFormComponent implements OnInit {
       budgetedAmount: [0, [Validators.required, Validators.min(0)]],
       discount: [0, [Validators.min(0)]],
       totalAmount: [0, [Validators.required, Validators.min(0)]],
-      estimatedStartDate: [today],
-      estimatedEndDate: [today],
-      actualStartDate: [today],
-      actualEndDate: [today],
-      collectionDate: [today],
+      estimatedStartDate: [today, Validators.required],
+      estimatedEndDate: [today, Validators.required],
+      actualStartDate: [today, Validators.required],
+      actualEndDate: [today, Validators.required],
+      collectionDate: [today, Validators.required],
       distributions: this.fb.array([]),
       activities: this.fb.array([]),
       responsibleIds: [[], Validators.required] // Array of strings (dropdown multiple)
@@ -336,7 +336,7 @@ export class ServiceOrderFormComponent implements OnInit {
 
     // Validación custom de porcentajes
     if (formValue.distributions && formValue.distributions.length > 0) {
-      const totalPercentage = formValue.distributions.reduce((acc: number, curr: any) => acc + curr.percentage, 0);
+      const totalPercentage = formValue.distributions.reduce((acc: number, curr: any) => acc + (Number(curr.percentage) || 0), 0);
       if (totalPercentage !== 100) {
         this.snackBar.open('La suma de los porcentajes de distribución debe ser exactamente 100.', 'Cerrar', { duration: 4000 });
         return;

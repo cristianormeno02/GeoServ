@@ -37,6 +37,15 @@ La lógica de distribución de ingresos DEBE ser dinámica a partir de un catál
 El sistema DEBE permitir asociar múltiples actividades operativas a cada OS.
 - Las actividades tendrán: Detalle corto, Detalle largo, Estado (Pendiente, En Proceso, Cancelado, Finalizado).
 - Contarán con un "Porcentaje de Avance" numérico (1 al 100). Dicho campo solo estará habilitado para su edición si la actividad está en estado "En Proceso". Si la actividad pasa a "Finalizado", el porcentaje tomará el valor 100 de forma automática.
+- **Alineación Visual**: El valor numérico del porcentaje de progreso debe estar alineado a la derecha en la interfaz del formulario.
+
+### Requirement: Validaciones Generales y de Interfaz al Guardar
+El sistema DEBE realizar verificaciones estrictas antes de permitir guardar (crear o editar) la Orden de Servicio:
+- **Campos Obligatorios Principales**: Nro. de Orden, Cliente, Tipo de Servicio, Estado, Prioridad, Monto Presupuestado y Responsables (mínimo uno).
+- **Fechas Obligatorias**: Todas las fechas (Solicitud, Inicio y Fin estimadas, Inicio y Fin reales, Fecha de Cobro) deben estar presentes al momento de guardar.
+- **Unicidad**: El Nro. de Orden no debe estar duplicado en el sistema.
+- **Distribución de Cobro**: Si existe al menos una línea de distribución agregada, la suma de todos los porcentajes de los ítems de distribución DEBE ser exactamente 100%.
+- **Limpieza de Interfaz**: Visualmente solo debe existir una única línea separadora entre la sección de "Datos Principales" y "Fechas".
 
 ### Requirement: Gestión de Responsables (Catálogo Maestro y Relación)
 La gestión de responsables requiere de un modelo desacoplado y una tabla intermedia para su vinculación con las Órdenes de Servicio.
