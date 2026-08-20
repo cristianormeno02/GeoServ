@@ -1,8 +1,8 @@
 import { Dc as InjectionToken, Dr as ViewEncapsulation, En as ElementRef, Hl as _defineProperty, Ic as NgZone, In as Input, Oc as Injector, Ui as setClassMetadata, Vl as _objectSpread2, ba as ɵɵclassProp, cl as inject, cn as Component, eo as ɵɵdefineComponent, to as ɵɵdefineDirective, wn as Directive } from "./core-M0Zz4fa8.js";
-import { d as normalizePassiveListenerOptions, f as _getEventTarget, h as isFakeTouchstartFromScreenReader, m as isFakeMousedownFromScreenReader } from "./a11y-CkxbZcag.js";
 import { t as Platform } from "./_platform-chunk-Db8QDAu7.js";
 import { n as coerceElement } from "./_element-chunk-DeJvSPMD.js";
 import { t as _CdkPrivateStyleLoader } from "./_style-loader-chunk-s8TJL8za.js";
+import { d as normalizePassiveListenerOptions, f as _getEventTarget, h as isFakeTouchstartFromScreenReader, m as isFakeMousedownFromScreenReader } from "./a11y-B7QX0gx0.js";
 import "./private-D5SPIAUl.js";
 import { n as _animationsDisabled } from "./_animation-chunk-BUWdZVzP.js";
 import "./platform-Dcm7u2Id.js";

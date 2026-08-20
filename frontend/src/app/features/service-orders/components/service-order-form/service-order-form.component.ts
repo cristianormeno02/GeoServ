@@ -14,6 +14,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
+// ngx-mask
+import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
+
 import { ServiceOrderService } from '../../services/service-order.service';
 import { ClientService } from '../../../clients/services/client.service';
 import { ServiceTypeService } from '../../../service-types/services/service-type.service';
@@ -58,12 +61,14 @@ export const CUSTOM_DATE_FORMATS = {
     MatNativeDateModule,
     MatButtonModule,
     MatIconModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    NgxMaskDirective
   ],
   providers: [
     { provide: MAT_DATE_LOCALE, useValue: 'es-AR' },
     { provide: DateAdapter, useClass: CustomDateAdapter },
-    { provide: MAT_DATE_FORMATS, useValue: CUSTOM_DATE_FORMATS }
+    { provide: MAT_DATE_FORMATS, useValue: CUSTOM_DATE_FORMATS },
+    provideNgxMask()
   ],
   templateUrl: './service-order-form.component.html',
   styleUrls: ['./service-order-form.component.scss']

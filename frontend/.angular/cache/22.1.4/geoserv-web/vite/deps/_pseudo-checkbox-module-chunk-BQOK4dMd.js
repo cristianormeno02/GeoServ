@@ -1,6 +1,6 @@
 import { Dr as ViewEncapsulation, Hl as _defineProperty, In as Input, Ol as ɵɵdefineInjector, Ui as setClassMetadata, ba as ɵɵclassProp, cn as Component, eo as ɵɵdefineComponent, no as ɵɵdefineNgModule, qn as NgModule } from "./core-M0Zz4fa8.js";
-import { n as _animationsDisabled } from "./_animation-chunk-BUWdZVzP.js";
 import { t as BidiModule } from "./bidi-DzTqcHeT.js";
+import { n as _animationsDisabled } from "./_animation-chunk-BUWdZVzP.js";
 //#region node_modules/@angular/material/fesm2022/_pseudo-checkbox-chunk.mjs
 var _MatPseudoCheckbox;
 var MatPseudoCheckbox = class {

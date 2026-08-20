@@ -5,7 +5,7 @@ import { n as coerceElement, r as coerceNumberProperty } from "./_element-chunk-
 import { t as _CdkPrivateStyleLoader } from "./_style-loader-chunk-s8TJL8za.js";
 import { n as _setInnerHtml, t as _VisuallyHiddenLoader } from "./private-D5SPIAUl.js";
 import { a as BreakpointObserver } from "./_animation-chunk-BUWdZVzP.js";
-import { r as DomSanitizer } from "./platform-browser-Bn29Bh17.js";
+import { r as DomSanitizer } from "./platform-browser-YKXQ_pqb.js";
 //#region node_modules/@angular/cdk/fesm2022/_fake-event-detection-chunk.mjs
 function isFakeMousedownFromScreenReader(event) {
 	return event.buttons === 0 || event.detail === 0;

@@ -122,34 +122,34 @@
         <div class="row" *ngIf="selectedCurrencyCode && selectedCurrencyCode !== 'ARS'">
           <mat-form-field appearance="outline">
             <mat-label>Monto en Moneda Extranjera ({{selectedCurrencyCode}})</mat-label>
-            <input matInput type="number" formControlName="foreignAmount">
+            <input matInput type="text" mask="separator.2" thousandSeparator="." decimalMarker="," style="text-align: right" formControlName="foreignAmount">
           </mat-form-field>
 
           <mat-form-field appearance="outline">
             <mat-label>Cotización al Presupuestar</mat-label>
-            <input matInput type="number" formControlName="exchangeRateAtBudget">
+            <input matInput type="text" mask="separator.2" thousandSeparator="." decimalMarker="," style="text-align: right" formControlName="exchangeRateAtBudget">
           </mat-form-field>
 
           <mat-form-field appearance="outline">
             <mat-label>Cotización al Cobrar</mat-label>
-            <input matInput type="number" formControlName="exchangeRateAtCollection">
+            <input matInput type="text" mask="separator.2" thousandSeparator="." decimalMarker="," style="text-align: right" formControlName="exchangeRateAtCollection">
           </mat-form-field>
         </div>
 
         <div class="row">
           <mat-form-field appearance="outline">
             <mat-label>Monto Presupuestado (Base)</mat-label>
-            <input matInput type="number" formControlName="budgetedAmount" [readonly]="selectedCurrencyCode !== 'ARS'">
+            <input matInput type="text" mask="separator.2" thousandSeparator="." decimalMarker="," style="text-align: right" formControlName="budgetedAmount" [readonly]="selectedCurrencyCode !== 'ARS'">
           </mat-form-field>
 
           <mat-form-field appearance="outline">
             <mat-label>Descuento</mat-label>
-            <input matInput type="number" formControlName="discount">
+            <input matInput type="text" mask="separator.2" thousandSeparator="." decimalMarker="," style="text-align: right" formControlName="discount">
           </mat-form-field>
 
           <mat-form-field appearance="outline">
             <mat-label>Total Final (Auto-calculado)</mat-label>
-            <input matInput type="number" formControlName="totalAmount" readonly>
+            <input matInput type="text" mask="separator.2" thousandSeparator="." decimalMarker="," style="text-align: right" formControlName="totalAmount" readonly>
           </mat-form-field>
         </div>
 
@@ -170,17 +170,17 @@
             
             <mat-form-field appearance="outline">
               <mat-label>Porcentaje (%)</mat-label>
-              <input matInput type="number" formControlName="percentage">
+              <input matInput type="text" mask="separator.2" thousandSeparator="." decimalMarker="," style="text-align: right" formControlName="percentage">
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>Monto Esperado</mat-label>
-              <input matInput type="number" formControlName="expectedAmount" readonly>
+              <input matInput type="text" mask="separator.2" thousandSeparator="." decimalMarker="," style="text-align: right" formControlName="expectedAmount" readonly>
             </mat-form-field>
             
-            <mat-form-field appearance="outline" *ngIf="isEditMode">
+            <mat-form-field appearance="outline">
               <mat-label>Monto Real Destinado</mat-label>
-              <input matInput type="number" formControlName="actualAmount">
+              <input matInput type="text" mask="separator.2" thousandSeparator="." decimalMarker="," style="text-align: right" formControlName="actualAmount">
             </mat-form-field>
 
             <button type="button" mat-icon-button color="warn" (click)="removeDistribution(i)">
