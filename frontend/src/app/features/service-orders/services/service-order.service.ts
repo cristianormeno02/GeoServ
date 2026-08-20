@@ -61,7 +61,7 @@ export class ServiceOrderService {
   }
 
   getResponsiblesCatalog(): Observable<any[]> {
-    return this.http.get<any[]>(`${environment.apiUrl}/api/responsibles`);
+    return this.http.get<any[]>(`${environment.apiUrl}/responsibles`);
   }
 
   // 6. Subir Documento

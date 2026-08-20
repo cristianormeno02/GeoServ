@@ -17,7 +17,7 @@ export interface Responsible {
   providedIn: 'root'
 })
 export class ResponsibleService {
-  private apiUrl = `${environment.apiUrl}/api/responsibles`;
+  private apiUrl = `${environment.apiUrl}/responsibles`;
 
   constructor(private http: HttpClient) { }
 
