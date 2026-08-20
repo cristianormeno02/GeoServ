@@ -219,6 +219,18 @@ export class ServiceOrderFormComponent implements OnInit {
     this.distributions.removeAt(index);
   }
 
+  get totalDistributionPercentage(): number {
+    return this.distributions.controls.reduce((sum, ctrl) => sum + (Number(ctrl.get('percentage')?.value) || 0), 0);
+  }
+
+  get totalDistributionExpected(): number {
+    return this.distributions.controls.reduce((sum, ctrl) => sum + (Number(ctrl.get('expectedAmount')?.value) || 0), 0);
+  }
+
+  get totalDistributionActual(): number {
+    return this.distributions.controls.reduce((sum, ctrl) => sum + (Number(ctrl.get('actualAmount')?.value) || 0), 0);
+  }
+
   get activities(): FormArray {
     return this.orderForm.get('activities') as FormArray;
   }

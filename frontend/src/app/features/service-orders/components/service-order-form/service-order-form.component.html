@@ -187,6 +187,32 @@
               <mat-icon>delete</mat-icon>
             </button>
           </div>
+
+          <!-- Totalizadora -->
+          <div class="dynamic-row summary-row" *ngIf="distributions.length > 0" style="margin-top: 10px;">
+            <div style="flex: 1; text-align: right; padding-right: 16px; display: flex; align-items: center; justify-content: flex-end; font-weight: bold;">
+              TOTALES:
+            </div>
+            
+            <mat-form-field appearance="outline">
+              <input matInput type="text" mask="separator.2" thousandSeparator="." decimalMarker="," style="text-align: right; font-weight: bold;" 
+                     [style.color]="totalDistributionPercentage !== 100 ? 'red' : 'inherit'"
+                     [value]="totalDistributionPercentage" readonly>
+              <mat-hint *ngIf="totalDistributionPercentage !== 100" style="color: red;">Debe ser 100%</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <input matInput type="text" mask="separator.2" thousandSeparator="." decimalMarker="," style="text-align: right; font-weight: bold;" [value]="totalDistributionExpected" readonly>
+            </mat-form-field>
+            
+            <mat-form-field appearance="outline">
+              <input matInput type="text" mask="separator.2" thousandSeparator="." decimalMarker="," style="text-align: right; font-weight: bold;" [value]="totalDistributionActual" readonly>
+            </mat-form-field>
+
+            <button type="button" mat-icon-button style="visibility: hidden;">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
         </div>
 
         <hr>
