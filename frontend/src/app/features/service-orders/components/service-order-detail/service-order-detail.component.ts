@@ -60,12 +60,17 @@ export class ServiceOrderDetailComponent implements OnInit {
 
   loadOrderDetails(): void {
     this.isLoading = true;
+    console.log('Iniciando carga de orden:', this.orderId);
     this.serviceOrderService.getServiceOrderById(this.orderId!).subscribe({
       next: (data) => {
+        console.log('Datos recibidos:', data);
         this.order = data;
         this.isLoading = false;
+        // Forzar detección de cambios por si se pierde el contexto
+        // this.cdr.detectChanges(); // (no inyectado en constructor para no romper compatibilidad rápida, pero lo logueamos)
       },
       error: (err) => {
+        console.error('Error HTTP o de parsing:', err);
         this.snackBar.open('Error al cargar detalles de la orden.', 'Cerrar', { duration: 3000 });
         this.isLoading = false;
       }
