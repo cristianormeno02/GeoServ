@@ -143,6 +143,7 @@ export class ServiceOrderFormComponent implements OnInit {
       actualEndDate: [today],
       collectionDate: [today],
       distributions: this.fb.array([]),
+      activities: this.fb.array([]),
       responsibleIds: [[], Validators.required] // Array of strings (dropdown multiple)
     });
 
@@ -218,6 +219,23 @@ export class ServiceOrderFormComponent implements OnInit {
     this.distributions.removeAt(index);
   }
 
+  get activities(): FormArray {
+    return this.orderForm.get('activities') as FormArray;
+  }
+
+  addActivity() {
+    this.activities.push(this.fb.group({
+      shortDetail: ['', Validators.required],
+      longDetail: [''],
+      status: ['Pendiente'],
+      progressPercentage: [0, [Validators.min(0), Validators.max(100)]]
+    }));
+  }
+
+  removeActivity(index: number) {
+    this.activities.removeAt(index);
+  }
+
   // Carga de catálogos
   loadCatalogs(): void {
     this.clientService.getClients().subscribe(res => this.clients = res);
@@ -268,7 +286,7 @@ export class ServiceOrderFormComponent implements OnInit {
         });
 
         // Cargar distribuciones
-        order.distributions.forEach(d => {
+        order.distributions?.forEach(d => {
           this.addDistribution();
           const newGroup = this.distributions.at(this.distributions.length - 1);
           newGroup.patchValue({
@@ -276,6 +294,18 @@ export class ServiceOrderFormComponent implements OnInit {
             percentage: d.percentage,
             expectedAmount: d.expectedAmount,
             actualAmount: d.actualAmount
+          });
+        });
+
+        // Cargar actividades
+        order.activities?.forEach(a => {
+          this.addActivity();
+          const newGroup = this.activities.at(this.activities.length - 1);
+          newGroup.patchValue({
+            shortDetail: a.shortDetail,
+            longDetail: a.longDetail,
+            status: a.state,
+            progressPercentage: a.progressPercentage
           });
         });
       },

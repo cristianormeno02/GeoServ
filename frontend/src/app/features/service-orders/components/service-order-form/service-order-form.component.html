@@ -190,6 +190,45 @@
         </div>
 
         <hr>
+        <div class="section-header">
+          <h3>Actividades Operativas</h3>
+          <button type="button" mat-stroked-button color="primary" (click)="addActivity()">+ Agregar Actividad</button>
+        </div>
+        
+        <div formArrayName="activities">
+          <div *ngFor="let act of activities.controls; let i=index" [formGroupName]="i" class="dynamic-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Detalle Corto</mat-label>
+              <input matInput formControlName="shortDetail">
+            </mat-form-field>
+            
+            <mat-form-field appearance="outline">
+              <mat-label>Detalle Largo (opcional)</mat-label>
+              <input matInput formControlName="longDetail">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Estado</mat-label>
+              <mat-select formControlName="status">
+                <mat-option value="Pendiente">Pendiente</mat-option>
+                <mat-option value="En Proceso">En Proceso</mat-option>
+                <mat-option value="Cancelado">Cancelado</mat-option>
+                <mat-option value="Finalizado">Finalizado</mat-option>
+              </mat-select>
+            </mat-form-field>
+            
+            <mat-form-field appearance="outline">
+              <mat-label>Progreso (%)</mat-label>
+              <input matInput type="number" formControlName="progressPercentage">
+            </mat-form-field>
+
+            <button type="button" mat-icon-button color="warn" (click)="removeActivity(i)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <hr>
         <h3>Responsables Asignados</h3>
         <div class="row">
           <mat-form-field appearance="outline" class="full-width">

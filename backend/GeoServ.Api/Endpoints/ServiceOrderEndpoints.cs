@@ -189,6 +189,22 @@ public static class ServiceOrderEndpoints
                 }
             }
 
+            // Añadir actividades
+            if (request.Activities != null)
+            {
+                foreach (var act in request.Activities)
+                {
+                    order.Activities.Add(new ServiceOrderActivity
+                    {
+                        Id = Guid.NewGuid(),
+                        ShortDetail = act.ShortDetail,
+                        LongDetail = act.LongDetail,
+                        State = Enum.Parse<GeoServ.Api.Domain.Enums.ActivityState>(act.State),
+                        ProgressPercentage = act.ProgressPercentage
+                    });
+                }
+            }
+
             // Añadir responsables
             if (request.ResponsibleIds != null && request.ResponsibleIds.Any())
             {
@@ -320,6 +336,7 @@ public static class ServiceOrderEndpoints
             var order = await context.ServiceOrders
                 .Include(o => o.Distributions)
                 .Include(o => o.Responsibles)
+                .Include(o => o.Activities)
                 .FirstOrDefaultAsync(o => o.Id == id);
 
             if (order == null) return Results.NotFound();
@@ -376,6 +393,23 @@ public static class ServiceOrderEndpoints
                         Percentage = dist.Percentage,
                         ExpectedAmount = dist.ExpectedAmount,
                         ActualAmount = dist.ActualAmount
+                    });
+                }
+            }
+
+            // Sincronizar Actividades
+            context.ServiceOrderActivities.RemoveRange(order.Activities);
+            if (request.Activities != null)
+            {
+                foreach (var act in request.Activities)
+                {
+                    order.Activities.Add(new ServiceOrderActivity
+                    {
+                        Id = Guid.NewGuid(),
+                        ShortDetail = act.ShortDetail,
+                        LongDetail = act.LongDetail,
+                        State = Enum.Parse<GeoServ.Api.Domain.Enums.ActivityState>(act.State),
+                        ProgressPercentage = act.ProgressPercentage
                     });
                 }
             }
@@ -456,6 +490,7 @@ public record CreateServiceOrderRequest(
     DateTime? EstimatedStartDate,
     DateTime? EstimatedEndDate,
     List<DistributionDto>? Distributions,
+    List<ActivityDto>? Activities,
     List<Guid>? ResponsibleIds
 );
 
@@ -481,7 +516,9 @@ public record UpdateServiceOrderRequest(
     DateTime? ActualEndDate,
     DateTime? CollectionDate,
     List<DistributionDto>? Distributions,
+    List<ActivityDto>? Activities,
     List<Guid>? ResponsibleIds
 );
 
 public record DistributionDto(Guid DistributionConceptId, decimal Percentage, decimal ExpectedAmount, decimal ActualAmount);
+public record ActivityDto(string ShortDetail, string? LongDetail, string State, int ProgressPercentage);
