@@ -346,103 +346,110 @@ public static class ServiceOrderEndpoints
         // 7. Actualizar Orden de Servicio (PUT)
         group.MapPut("/{id:guid}", async (Guid id, UpdateServiceOrderRequest request, GeoServDbContext context) =>
         {
-            var order = await context.ServiceOrders
-                .Include(o => o.Distributions)
-                .Include(o => o.Responsibles)
-                .Include(o => o.Activities)
-                .FirstOrDefaultAsync(o => o.Id == id);
-
-            if (order == null) return Results.NotFound();
-
-            // Validar unicidad de número de orden (excluyendo la actual)
-            if (await context.ServiceOrders.AnyAsync(o => o.OrderNumber == request.OrderNumber && o.Id != id))
-                return Results.BadRequest(new { message = "El número de orden ya está en uso por otra orden." });
-
-            // Validar distribuciones al 100%
-            if (request.Distributions != null && request.Distributions.Any())
+            try
             {
-                var sum = request.Distributions.Sum(d => d.Percentage);
-                if (sum != 100m)
-                    return Results.BadRequest(new { message = "La suma de los porcentajes de distribución debe ser exactamente 100." });
-                
-                var duplicates = request.Distributions.GroupBy(d => d.DistributionConceptId).Any(g => g.Count() > 1);
-                if (duplicates)
-                    return Results.BadRequest(new { message = "No se puede repetir el mismo concepto de distribución." });
-            }
+                var order = await context.ServiceOrders
+                    .Include(o => o.Distributions)
+                    .Include(o => o.Responsibles)
+                    .Include(o => o.Activities)
+                    .FirstOrDefaultAsync(o => o.Id == id);
 
-            // Actualizar campos básicos
-            order.OrderNumber = request.OrderNumber;
-            order.ClientId = request.ClientId;
-            order.ProjectId = request.ProjectId;
-            order.ServiceTypeId = request.ServiceTypeId;
-            order.StatusId = request.StatusId;
-            order.Priority = (ServiceOrderPriority)request.Priority;
-            order.Description = request.Description;
-            order.CurrencyId = request.CurrencyId;
-            order.ForeignAmount = request.ForeignAmount;
-            order.ExchangeRateAtBudget = request.ExchangeRateAtBudget;
-            order.ExchangeRateAtCollection = request.ExchangeRateAtCollection;
-            order.BudgetedAmount = request.BudgetedAmount;
-            order.Discount = request.Discount;
-            order.TotalAmount = request.TotalAmount;
-            order.UpdatedAt = DateTime.UtcNow;
-            order.RequestDate = request.RequestDate;
-            order.EstimatedStartDate = request.EstimatedStartDate;
-            order.EstimatedEndDate = request.EstimatedEndDate;
-            order.ActualStartDate = request.ActualStartDate;
-            order.ActualEndDate = request.ActualEndDate;
-            order.CollectionDate = request.CollectionDate;
+                if (order == null) return Results.NotFound();
 
-            // Sincronizar Distribuciones (reemplazo completo para simplificar)
-            context.ServiceOrderDistributions.RemoveRange(order.Distributions);
-            if (request.Distributions != null)
-            {
-                foreach (var dist in request.Distributions)
+                // Validar unicidad de número de orden (excluyendo la actual)
+                if (await context.ServiceOrders.AnyAsync(o => o.OrderNumber == request.OrderNumber && o.Id != id))
+                    return Results.BadRequest(new { message = "El número de orden ya está en uso por otra orden." });
+
+                // Validar distribuciones al 100%
+                if (request.Distributions != null && request.Distributions.Any())
                 {
-                    order.Distributions.Add(new ServiceOrderDistribution
-                    {
-                        Id = Guid.NewGuid(),
-                        DistributionConceptId = dist.DistributionConceptId,
-                        Percentage = dist.Percentage,
-                        ExpectedAmount = dist.ExpectedAmount,
-                        ActualAmount = dist.ActualAmount
-                    });
+                    var sum = request.Distributions.Sum(d => d.Percentage);
+                    if (sum != 100m)
+                        return Results.BadRequest(new { message = "La suma de los porcentajes de distribución debe ser exactamente 100." });
+                    
+                    var duplicates = request.Distributions.GroupBy(d => d.DistributionConceptId).Any(g => g.Count() > 1);
+                    if (duplicates)
+                        return Results.BadRequest(new { message = "No se puede repetir el mismo concepto de distribución." });
                 }
-            }
 
-            // Sincronizar Actividades
-            context.ServiceOrderActivities.RemoveRange(order.Activities);
-            if (request.Activities != null)
-            {
-                foreach (var act in request.Activities)
+                // Actualizar campos básicos
+                order.OrderNumber = request.OrderNumber;
+                order.ClientId = request.ClientId;
+                order.ProjectId = request.ProjectId;
+                order.ServiceTypeId = request.ServiceTypeId;
+                order.StatusId = request.StatusId;
+                order.Priority = (ServiceOrderPriority)request.Priority;
+                order.Description = request.Description;
+                order.CurrencyId = request.CurrencyId;
+                order.ForeignAmount = request.ForeignAmount;
+                order.ExchangeRateAtBudget = request.ExchangeRateAtBudget;
+                order.ExchangeRateAtCollection = request.ExchangeRateAtCollection;
+                order.BudgetedAmount = request.BudgetedAmount;
+                order.Discount = request.Discount;
+                order.TotalAmount = request.TotalAmount;
+                order.UpdatedAt = DateTime.UtcNow;
+                order.RequestDate = request.RequestDate;
+                order.EstimatedStartDate = request.EstimatedStartDate;
+                order.EstimatedEndDate = request.EstimatedEndDate;
+                order.ActualStartDate = request.ActualStartDate;
+                order.ActualEndDate = request.ActualEndDate;
+                order.CollectionDate = request.CollectionDate;
+
+                // Sincronizar Distribuciones (reemplazo completo para simplificar)
+                context.ServiceOrderDistributions.RemoveRange(order.Distributions);
+                if (request.Distributions != null)
                 {
-                    order.Activities.Add(new ServiceOrderActivity
+                    foreach (var dist in request.Distributions)
                     {
-                        Id = Guid.NewGuid(),
-                        ShortDetail = act.ShortDetail,
-                        LongDetail = act.LongDetail,
-                        State = Enum.Parse<GeoServ.Api.Domain.Enums.ActivityState>(act.State.Replace(" ", ""), true),
-                        ProgressPercentage = act.ProgressPercentage
-                    });
+                        order.Distributions.Add(new ServiceOrderDistribution
+                        {
+                            Id = Guid.NewGuid(),
+                            DistributionConceptId = dist.DistributionConceptId,
+                            Percentage = dist.Percentage,
+                            ExpectedAmount = dist.ExpectedAmount,
+                            ActualAmount = dist.ActualAmount
+                        });
+                    }
                 }
-            }
 
-            // Sincronizar Responsables (reemplazo completo en la tabla intermedia)
-            context.ServiceOrderResponsibles.RemoveRange(order.Responsibles);
-            if (request.ResponsibleIds != null && request.ResponsibleIds.Any())
-            {
-                var uniqueIds = request.ResponsibleIds.Distinct().ToList();
-                foreach (var rId in uniqueIds)
+                // Sincronizar Actividades
+                context.ServiceOrderActivities.RemoveRange(order.Activities);
+                if (request.Activities != null)
                 {
-                    order.Responsibles.Add(new ServiceOrderResponsible
+                    foreach (var act in request.Activities)
                     {
-                        ResponsibleId = rId
-                    });
+                        order.Activities.Add(new ServiceOrderActivity
+                        {
+                            Id = Guid.NewGuid(),
+                            ShortDetail = act.ShortDetail,
+                            LongDetail = act.LongDetail,
+                            State = Enum.Parse<GeoServ.Api.Domain.Enums.ActivityState>(act.State?.Replace(" ", "") ?? "EnProceso", true),
+                            ProgressPercentage = act.ProgressPercentage
+                        });
+                    }
                 }
-            }
 
-            await context.SaveChangesAsync();
-            return Results.NoContent();
+                // Sincronizar Responsables (reemplazo completo en la tabla intermedia)
+                context.ServiceOrderResponsibles.RemoveRange(order.Responsibles);
+                if (request.ResponsibleIds != null && request.ResponsibleIds.Any())
+                {
+                    var uniqueIds = request.ResponsibleIds.Distinct().ToList();
+                    foreach (var rId in uniqueIds)
+                    {
+                        order.Responsibles.Add(new ServiceOrderResponsible
+                        {
+                            ResponsibleId = rId
+                        });
+                    }
+                }
+
+                await context.SaveChangesAsync();
+                return Results.NoContent();
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem(detail: ex.InnerException?.Message ?? ex.Message, title: "Error Interno en MapPut", statusCode: 500);
+            }
         })
         .WithName("UpdateServiceOrder")
         .WithOpenApi();
