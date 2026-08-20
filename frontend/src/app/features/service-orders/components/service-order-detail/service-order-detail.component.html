@@ -135,7 +135,7 @@
         <mat-card-title>Responsables</mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <mat-list *ngIf="order.responsibles.length > 0; else noResp">
+        <mat-list *ngIf="order.responsibles?.length > 0; else noResp">
           <mat-list-item *ngFor="let resp of order.responsibles">
             <mat-icon matListItemIcon>person</mat-icon>
             <div matListItemTitle>{{ resp.name }}</div>
@@ -151,7 +151,7 @@
         <mat-card-title>Distribución de Cobro</mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <mat-list *ngIf="order.distributions.length > 0; else noDist">
+        <mat-list *ngIf="order.distributions?.length > 0; else noDist">
           <mat-list-item *ngFor="let dist of order.distributions">
             <mat-icon matListItemIcon>pie_chart</mat-icon>
             <div matListItemTitle>{{ dist.conceptName }}</div>
