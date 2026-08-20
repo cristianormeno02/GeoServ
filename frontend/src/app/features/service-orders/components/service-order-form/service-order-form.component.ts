@@ -358,6 +358,13 @@ export class ServiceOrderFormComponent implements OnInit {
       }));
     }
 
+    if (formValue.activities && formValue.activities.length > 0) {
+      formValue.activities = formValue.activities.map((a: any) => ({
+        ...a,
+        state: a.status
+      }));
+    }
+
     // Validación custom de porcentajes
     if (formValue.distributions && formValue.distributions.length > 0) {
       const totalPercentage = formValue.distributions.reduce((acc: number, curr: any) => acc + (Number(curr.percentage) || 0), 0);
