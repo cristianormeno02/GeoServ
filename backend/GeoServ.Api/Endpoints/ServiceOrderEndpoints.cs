@@ -66,66 +66,73 @@ public static class ServiceOrderEndpoints
         // 2. Obtener orden por ID (con todos los detalles)
         group.MapGet("/{id:guid}", async (Guid id, GeoServDbContext context) =>
         {
-            var order = await context.ServiceOrders
-                .Include(o => o.Client)
-                .Include(o => o.Project)
-                .Include(o => o.Status)
-                .Include(o => o.ServiceType)
-                .Include(o => o.Currency)
-                .Include(o => o.Responsibles).ThenInclude(r => r.Responsible).ThenInclude(r => r.User)
-                .Include(o => o.Activities)
-                .Include(o => o.Distributions).ThenInclude(d => d.DistributionConcept)
-                .Include(o => o.Documents)
-                .FirstOrDefaultAsync(o => o.Id == id);
-
-            if (order == null) return Results.NotFound();
-
-            return Results.Ok(new
+            try
             {
-                order.Id,
-                order.OrderNumber,
-                order.ClientId,
-                ClientName = order.Client.CompanyName,
-                order.ProjectId,
-                ProjectName = order.Project?.Name,
-                order.ServiceTypeId,
-                ServiceTypeName = order.ServiceType.Name,
-                order.StatusId,
-                StatusName = order.Status.Name,
-                Priority = order.Priority.ToString(),
-                PriorityValue = (int)order.Priority,
-                order.Description,
-                order.CurrencyId,
-                CurrencyCode = order.Currency.Code,
-                CurrencySymbol = order.Currency.Symbol,
-                order.ForeignAmount,
-                order.ExchangeRateAtBudget,
-                order.ExchangeRateAtCollection,
-                order.BudgetedAmount,
-                order.Discount,
-                order.TotalAmount,
-                order.CollectedAmount,
-                order.RequestDate,
-                order.CreatedAt,
-                order.EstimatedStartDate,
-                order.EstimatedEndDate,
-                order.ActualStartDate,
-                order.ActualEndDate,
-                order.CollectionDate,
-                order.CanceledAt,
-                Responsibles = order.Responsibles.Select(r => new { 
-                    r.Responsible.Id, 
-                    r.Responsible.Name, 
-                    r.Responsible.Position, 
-                    r.Responsible.Title, 
-                    r.Responsible.Specialties, 
-                    r.Responsible.UserId, 
-                    UserName = r.Responsible.User?.Name 
-                }),
-                Activities = order.Activities.Select(a => new { a.Id, a.ShortDetail, a.LongDetail, State = a.State.ToString(), StateValue = (int)a.State, a.ProgressPercentage }),
-                Distributions = order.Distributions.Select(d => new { d.Id, d.DistributionConceptId, ConceptName = d.DistributionConcept.Name, d.Percentage, d.ExpectedAmount, d.ActualAmount }),
-                Documents = order.Documents.Select(d => new { d.Id, d.FileName, d.ContentType, d.IsVisibleToClient, d.UploadedAt, d.UploadedById })
-            });
+                var order = await context.ServiceOrders
+                    .Include(o => o.Client)
+                    .Include(o => o.Project)
+                    .Include(o => o.Status)
+                    .Include(o => o.ServiceType)
+                    .Include(o => o.Currency)
+                    .Include(o => o.Responsibles).ThenInclude(r => r.Responsible).ThenInclude(r => r.User)
+                    .Include(o => o.Activities)
+                    .Include(o => o.Distributions).ThenInclude(d => d.DistributionConcept)
+                    .Include(o => o.Documents)
+                    .FirstOrDefaultAsync(o => o.Id == id);
+
+                if (order == null) return Results.NotFound();
+
+                return Results.Ok(new
+                {
+                    order.Id,
+                    order.OrderNumber,
+                    order.ClientId,
+                    ClientName = order.Client.CompanyName,
+                    order.ProjectId,
+                    ProjectName = order.Project?.Name,
+                    order.ServiceTypeId,
+                    ServiceTypeName = order.ServiceType.Name,
+                    order.StatusId,
+                    StatusName = order.Status.Name,
+                    Priority = order.Priority.ToString(),
+                    PriorityValue = (int)order.Priority,
+                    order.Description,
+                    order.CurrencyId,
+                    CurrencyCode = order.Currency?.Code,
+                    CurrencySymbol = order.Currency?.Symbol,
+                    order.ForeignAmount,
+                    order.ExchangeRateAtBudget,
+                    order.ExchangeRateAtCollection,
+                    order.BudgetedAmount,
+                    order.Discount,
+                    order.TotalAmount,
+                    order.CollectedAmount,
+                    order.RequestDate,
+                    order.CreatedAt,
+                    order.EstimatedStartDate,
+                    order.EstimatedEndDate,
+                    order.ActualStartDate,
+                    order.ActualEndDate,
+                    order.CollectionDate,
+                    order.CanceledAt,
+                    Responsibles = order.Responsibles.Select(r => new { 
+                        r.Responsible.Id, 
+                        r.Responsible.Name, 
+                        r.Responsible.Position, 
+                        r.Responsible.Title, 
+                        r.Responsible.Specialties, 
+                        r.Responsible.UserId, 
+                        UserName = r.Responsible.User?.Name 
+                    }),
+                    Activities = order.Activities.Select(a => new { a.Id, a.ShortDetail, a.LongDetail, State = a.State.ToString(), StateValue = (int)a.State, a.ProgressPercentage }),
+                    Distributions = order.Distributions.Select(d => new { d.Id, d.DistributionConceptId, ConceptName = d.DistributionConcept.Name, d.Percentage, d.ExpectedAmount, d.ActualAmount }),
+                    Documents = order.Documents.Select(d => new { d.Id, d.FileName, d.ContentType, d.IsVisibleToClient, d.UploadedAt, d.UploadedById })
+                });
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem(detail: ex.InnerException?.Message ?? ex.Message, title: "Error Interno en GET", statusCode: 500);
+            }
         })
         .WithName("GetServiceOrderById")
         .WithOpenApi();
