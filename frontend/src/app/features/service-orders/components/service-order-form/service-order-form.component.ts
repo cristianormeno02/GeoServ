@@ -9,7 +9,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
+import { MatNativeDateModule, MAT_DATE_LOCALE } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -34,6 +34,9 @@ import { UserService } from '../../../users/services/user.service';
     MatButtonModule,
     MatIconModule,
     MatSnackBarModule
+  ],
+  providers: [
+    { provide: MAT_DATE_LOCALE, useValue: 'es-AR' }
   ],
   templateUrl: './service-order-form.component.html',
   styleUrls: ['./service-order-form.component.scss']
@@ -85,9 +88,10 @@ export class ServiceOrderFormComponent implements OnInit {
   }
 
   createForm(): void {
+    const today = new Date();
     this.orderForm = this.fb.group({
       orderNumber: ['', Validators.required],
-      requestDate: [''],
+      requestDate: [today],
       clientId: ['', Validators.required],
       projectId: [''],
       serviceTypeId: ['', Validators.required],
@@ -101,8 +105,8 @@ export class ServiceOrderFormComponent implements OnInit {
       budgetedAmount: [0, [Validators.required, Validators.min(0)]],
       discount: [0, [Validators.min(0)]],
       totalAmount: [0, [Validators.required, Validators.min(0)]],
-      estimatedStartDate: [''],
-      estimatedEndDate: [''],
+      estimatedStartDate: [today],
+      estimatedEndDate: [today],
       actualStartDate: [''],
       actualEndDate: [''],
       collectionDate: [''],
@@ -138,7 +142,22 @@ export class ServiceOrderFormComponent implements OnInit {
     }
 
     const discount = this.orderForm.get('discount')?.value || 0;
-    this.orderForm.get('totalAmount')?.setValue(budget - discount, { emitEvent: false });
+    const finalTotal = budget - discount;
+    this.orderForm.get('totalAmount')?.setValue(finalTotal, { emitEvent: false });
+    
+    // Recalcular montos de distribución cuando cambian los totales
+    this.recalculateDistributions(finalTotal, budget);
+  }
+
+  recalculateDistributions(finalTotal: number, budget: number) {
+    const baseAmount = finalTotal > 0 ? finalTotal : budget;
+    const distArray = this.distributions;
+    for (let i = 0; i < distArray.length; i++) {
+      const group = distArray.at(i) as FormGroup;
+      const percentage = group.get('percentage')?.value || 0;
+      const expectedAmount = (percentage / 100) * baseAmount;
+      group.get('expectedAmount')?.setValue(expectedAmount, { emitEvent: false });
+    }
   }
 
   get distributions(): FormArray {
@@ -146,12 +165,21 @@ export class ServiceOrderFormComponent implements OnInit {
   }
 
   addDistribution() {
-    this.distributions.push(this.fb.group({
+    const group = this.fb.group({
       distributionConceptId: ['', Validators.required],
       percentage: [0, [Validators.required, Validators.min(0), Validators.max(100)]],
       expectedAmount: [0],
       actualAmount: [0]
-    }));
+    });
+
+    // Suscribirse a cambios en porcentaje para este item
+    group.get('percentage')?.valueChanges.subscribe(() => {
+      const finalTotal = this.orderForm.get('totalAmount')?.value || 0;
+      const budget = this.orderForm.get('budgetedAmount')?.value || 0;
+      this.recalculateDistributions(finalTotal, budget);
+    });
+
+    this.distributions.push(group);
   }
 
   removeDistribution(index: number) {
@@ -201,12 +229,14 @@ export class ServiceOrderFormComponent implements OnInit {
 
         // Cargar distribuciones
         order.distributions.forEach(d => {
-          this.distributions.push(this.fb.group({
-            distributionConceptId: [d.distributionConceptId, Validators.required],
-            percentage: [d.percentage, [Validators.required, Validators.min(0), Validators.max(100)]],
-            expectedAmount: [d.expectedAmount],
-            actualAmount: [d.actualAmount]
-          }));
+          this.addDistribution();
+          const newGroup = this.distributions.at(this.distributions.length - 1);
+          newGroup.patchValue({
+            distributionConceptId: d.distributionConceptId,
+            percentage: d.percentage,
+            expectedAmount: d.expectedAmount,
+            actualAmount: d.actualAmount
+          });
         });
       },
       error: () => this.snackBar.open('Error al cargar la orden', 'Cerrar', { duration: 3000 })

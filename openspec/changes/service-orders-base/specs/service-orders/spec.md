@@ -5,7 +5,10 @@ Define las capacidades principales para crear, gestionar y realizar el seguimien
 ## ADDED Requirements
 
 ### Requirement: Fechas de la Orden
-El sistema DEBE gestionar las siguientes fechas clave en el ciclo de vida de la orden:
+El sistema DEBE gestionar las siguientes fechas clave en el ciclo de vida de la orden.
+- **Manejo Visual y Formato**: Todos los campos de fecha en la interfaz de usuario deben mostrarse y validarse bajo el formato **`dd/mm/aaaa`** (día/mes/año).
+- **Inicialización (Creación)**: Al crear una NUEVA Orden de Servicio, los campos "Fecha de Solicitud", "Fecha Estimada de Inicio" y "Fecha Estimada de Fin" deben inicializarse automáticamente con la **fecha actual** del sistema.
+- **Inicialización (Edición)**: Al editar una orden existente, los campos de fecha deben mostrar los valores que ya se encuentran guardados en la base de datos sin sobrescribirse automáticamente.
 - **Fecha de Solicitud**: Momento en que el cliente solicitó el servicio, la cual es independiente de la fecha de creación en el sistema (`CreatedAt`).
 - **Fechas Estimadas**: Fecha estimada de inicio y fecha estimada de finalización.
 - **Fechas Reales**: "Fecha Real de Inicio" y "Fecha Real de Finalización/Entrega", las cuales se actualizarán conforme avance o concluya el trabajo.
@@ -23,8 +26,10 @@ El sistema DEBE mostrar visualmente en todas las interfaces los campos monetario
 ### Requirement: Distribución de Cobros Dinámica y Porcentajes
 La lógica de distribución de ingresos DEBE ser dinámica a partir de un catálogo (Amortización Gastos, Capitalización, Honorarios, Utilidad, etc.).
 - El sistema DEBE validar de forma obligatoria y estricta que la sumatoria de todos los porcentajes asignados a la orden dé exactamente 100%. No se pueden repetir conceptos.
-- El "Monto Esperado" para cada ítem debe ser calculado automáticamente (Porcentaje * Total de la Orden) y mostrase como solo lectura.
-- El sistema debe contar con el campo "Monto Real Destinado" por cada ítem, el cual se habilitará una vez que la orden pase a estado 'Cobrada'.
+- El "Monto Esperado" para cada ítem debe ser calculado automáticamente basado en el porcentaje y usando el siguiente monto base por orden de prioridad:
+  - **Prioridad 1:** "Total Final" (`TotalAmount`) de la orden de servicio si tiene un valor cargado mayor a 0.
+  - **Prioridad 2:** Si el "Total Final" está en 0 o vacío, utilizar el "Monto Presupuestado" (`BudgetedAmount`) base.
+- El sistema debe contar con el campo "Monto Real Destinado" por cada ítem. Este campo será editable en la interfaz para que el usuario cargue el valor real definitivo una vez confirmado el cobro.
 
 ### Requirement: Gestión de Actividades de la Orden
 El sistema DEBE permitir asociar múltiples actividades operativas a cada OS.
