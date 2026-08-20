@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Injectable } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -9,7 +9,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule, MAT_DATE_LOCALE } from '@angular/material/core';
+import { MatNativeDateModule, MAT_DATE_LOCALE, DateAdapter, MAT_DATE_FORMATS, NativeDateAdapter } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -18,6 +18,31 @@ import { ServiceOrderService } from '../../services/service-order.service';
 import { ClientService } from '../../../clients/services/client.service';
 import { ServiceTypeService } from '../../../service-types/services/service-type.service';
 import { UserService } from '../../../users/services/user.service';
+
+@Injectable()
+export class CustomDateAdapter extends NativeDateAdapter {
+  override format(date: Date, displayFormat: Object): string {
+    if (displayFormat === 'input') {
+      let day: string = date.getDate().toString();
+      day = +day < 10 ? '0' + day : day;
+      let month: string = (date.getMonth() + 1).toString();
+      month = +month < 10 ? '0' + month : month;
+      let year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    }
+    return super.format(date, displayFormat);
+  }
+}
+
+export const CUSTOM_DATE_FORMATS = {
+  parse: { dateInput: { month: 'short', year: 'numeric', day: 'numeric' } },
+  display: {
+    dateInput: 'input',
+    monthYearLabel: 'MMM YYYY',
+    dateA11yLabel: 'LL',
+    monthYearA11yLabel: 'MMMM YYYY',
+  }
+};
 
 @Component({
   selector: 'app-service-order-form',
@@ -36,7 +61,9 @@ import { UserService } from '../../../users/services/user.service';
     MatSnackBarModule
   ],
   providers: [
-    { provide: MAT_DATE_LOCALE, useValue: 'es-AR' }
+    { provide: MAT_DATE_LOCALE, useValue: 'es-AR' },
+    { provide: DateAdapter, useClass: CustomDateAdapter },
+    { provide: MAT_DATE_FORMATS, useValue: CUSTOM_DATE_FORMATS }
   ],
   templateUrl: './service-order-form.component.html',
   styleUrls: ['./service-order-form.component.scss']
