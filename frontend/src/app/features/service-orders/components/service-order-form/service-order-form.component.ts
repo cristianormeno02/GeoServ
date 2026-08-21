@@ -13,6 +13,7 @@ import { MatNativeDateModule, MAT_DATE_LOCALE, DateAdapter, MAT_DATE_FORMATS, Na
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatExpansionModule } from '@angular/material/expansion';
 
 // ngx-mask
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
@@ -21,6 +22,7 @@ import { ServiceOrderService } from '../../services/service-order.service';
 import { ClientService } from '../../../clients/services/client.service';
 import { ServiceTypeService } from '../../../service-types/services/service-type.service';
 import { UserService } from '../../../users/services/user.service';
+import { ServiceOrderObservationsComponent } from '../service-order-observations/service-order-observations.component';
 
 @Injectable()
 export class CustomDateAdapter extends NativeDateAdapter {
@@ -63,7 +65,9 @@ export const CUSTOM_DATE_FORMATS = {
     MatButtonModule,
     MatIconModule,
     MatSnackBarModule,
-    NgxMaskDirective
+    MatExpansionModule,
+    NgxMaskDirective,
+    ServiceOrderObservationsComponent
   ],
   providers: [
     { provide: MAT_DATE_LOCALE, useValue: 'es-AR' },
@@ -442,24 +446,20 @@ export class ServiceOrderFormComponent implements OnInit {
     }
   }
 
-  saveObservation(): void {
-    if (!this.orderId || !this.newObservationText.trim()) return;
-    this.isSavingObservation = true;
-    this.serviceOrderService.addObservation(this.orderId, this.newObservationText.trim()).subscribe({
+  onObservationAdded(payload: any): void {
+    if (!this.orderId) return;
+    this.serviceOrderService.addObservation(this.orderId, payload).subscribe({
       next: (obs) => {
         this.observations = [obs, ...this.observations];
-        this.newObservationText = '';
-        this.isSavingObservation = false;
         this.snackBar.open('Observación guardada', 'Cerrar', { duration: 2000 });
       },
       error: () => {
-        this.isSavingObservation = false;
-        this.snackBar.open('Error al guardar la observación', 'Cerrar', { duration: 3000 });
+        this.snackBar.open('Error al guardar observación', 'Cerrar', { duration: 3000 });
       }
     });
   }
 
-  cancel(): void {
+  goBack(): void {
     this.router.navigate(['/ordenes-servicio']);
   }
 }

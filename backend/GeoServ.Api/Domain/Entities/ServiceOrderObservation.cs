@@ -9,5 +9,9 @@ public class ServiceOrderObservation
     
     public string Text { get; set; } = null!;
     
+    public string ObservationType { get; set; } = null!;
+    
+    public Guid UserId { get; set; }
+    
     public DateTime CreatedAt { get; set; }
 }

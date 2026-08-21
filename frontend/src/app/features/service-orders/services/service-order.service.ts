@@ -87,7 +87,7 @@ export class ServiceOrderService {
   }
 
   // 9. Agregar Observación
-  addObservation(orderId: string, text: string): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/${orderId}/observations`, { text });
+  addObservation(orderId: string, payload: { text: string, observationType?: string }): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/${orderId}/observations`, payload);
   }
 }

@@ -4,6 +4,16 @@ Define las capacidades principales para crear, gestionar y realizar el seguimien
 
 ## ADDED Requirements
 
+### Requirement: Estructura General del Formulario y UI/UX (Acordeones y Badges)
+El formulario de Creación y Edición de Órdenes de Servicio debe organizarse de manera modular para evitar el scroll vertical excesivo y mejorar la experiencia del usuario.
+- **Sección Principal Fija**: La primera sección ("Datos Principales") debe permanecer siempre visible y expandida por defecto.
+- **Acordeones para Secciones Subsiguientes**: Todas las demás secciones deben estar contenidas obligatoriamente dentro de componentes de acordeón (expansibles/colapsables):
+  1. Cronograma y Trazabilidad (Fechas)
+  2. Gestión Financiera y Presupuesto (incluyendo Distribución de Cobro y Moneda)
+  3. Ejecución y Avance (Actividades)
+  4. Equipo de Trabajo (Responsables)
+  5. Bitácora y Observaciones
+- **Badges de Validación Dinámicos**: Cada cabecera de acordeón (excepto la primera) debe incluir un badge rojo dinámico que indique la cantidad exacta de campos obligatorios (*) faltantes en esa sección, bloqueando el guardado hasta que todos se completen.
 ### Requirement: Fechas de la Orden
 El sistema DEBE gestionar las siguientes fechas clave en el ciclo de vida de la orden.
 - **Manejo Visual y Formato**: Todos los campos de fecha en la interfaz de usuario deben mostrarse y validarse bajo el formato **`dd/mm/aaaa`** (día/mes/año).
@@ -34,20 +44,41 @@ El formulario de la OS DEBE incluir un campo de texto libre multilinea denominad
 - Su propósito es describir las tareas incluidas en el presupuesto, siendo la fuente de contenido principal para la generación del **PDF del presupuesto**.
 - El campo es opcional al guardar la orden.
 
-### Requirement: Historial de Observaciones
-El sistema DEBE mantener un historial inmutable de observaciones asociado a cada Orden de Servicio.
+### Requirement: Historial de Observaciones (Bitácora y Línea de Tiempo Enriquecida)
+El sistema DEBE mantener un historial inmutable de observaciones (bitácora) asociado a cada Orden de Servicio, presentado en una interfaz moderna de línea de tiempo dentro de su acordeón correspondiente.
 
 **Modelo de datos:**
-- Existirá la entidad `ServiceOrderObservation` con los campos: `Id` (Guid), `ServiceOrderId` (Guid, FK), `Text` (string, texto libre), `CreatedAt` (DateTime UTC).
-- Las observaciones son de solo inserción: no se editan ni eliminan.
+- Existirá la entidad `ServiceOrderObservation` (o `ServiceOrderObservations`) con los siguientes campos: 
+  - `Id` (Guid)
+  - `ServiceOrderId` (Guid, FK)
+  - `Text` (string, texto libre multilinea)
+  - `ObservationType` (string o enum para clasificar, ej: Nota General, Alerta Operativa, Novedad Contable, Hito Clave)
+  - `UserId` (Guid, FK del usuario que creó la nota, tomado automáticamente)
+  - `CreatedAt` (DateTime UTC, fecha y hora exacta, automática)
+- Las observaciones son de solo inserción: no se editan ni eliminan para garantizar la trazabilidad.
 
-**Interfaz de usuario (formulario de edición):**
-- Se incorpora una sección "Observaciones" al pie del formulario de edición de la OS.
-- Contiene un campo de texto multilinea (textarea) para ingresar una "Nueva Observación".
-- Un botón **"Guardar Observación"** que solo estará habilitado cuando la OS ya esté persistida (modo edición) y el textarea no esté vacío.
-- Al guardar, la observación se persiste y el textarea se limpia automáticamente.
-- Debajo del formulario de ingreso, se muestra un listado de solo lectura con el historial completo de observaciones ordenado por `CreatedAt` **descendente** (más reciente primero), mostrando: Fecha y hora formateada + Texto de la observación.
-- Esta sección **no se muestra** en el formulario de creación de una nueva OS (solo aparece en modo edición).
+**Interfaz de usuario - Sección de Carga Mejorada:**
+- En el acordeón de "Bitácora y Observaciones" al pie del formulario de edición, el formulario de carga debe incluir:
+  - Un campo de texto multilinea (textarea) para la observación.
+  - Un combo desplegable (`mat-select`) para seleccionar el "Tipo de Observación". La opción **"Nota General"** debe estar seleccionada por defecto.
+  - Los tipos de observación permitidos para la primera versión y sus identificadores visuales son:
+    - `Nota General` (Color por defecto / Azul)
+    - `Alerta Operativa` (Color Amarillo / Naranja)
+    - `Novedad Contable` (Color Rojo)
+    - `Hito Clave` (Color Verde)
+- Al presionar **"Guardar Observación"**, el sistema debe tomar automáticamente la Fecha/Hora actual y el Usuario de la sesión activa (desde el token JWT). El usuario no los ingresa manualmente.
+- Esta sección de carga solo estará habilitada cuando la OS ya esté persistida (modo edición) y el textarea no esté vacío. Al guardar, el formulario se limpia automáticamente.
+
+**Interfaz de usuario - Visualización en Línea de Tiempo Vertical (Vertical Timeline):**
+- Debajo de la sección de carga, el historial de observaciones debe mostrarse en un formato de línea de tiempo vertical.
+- **Orden cronológico inverso:** Las notas deben renderizarse estrictamente en orden DESC por fecha (las más nuevas arriba).
+- **Tarjetas de Eventos:** Cada observación debe renderizarse como una tarjeta que contenga:
+  - El Nombre del Usuario (real).
+  - La Fecha y Hora formateada.
+  - El Tipo de Nota (visualizado como una etiqueta o *badge* de color correspondiente).
+  - El Contenido (texto) de la observación.
+- **Eje de la Línea de Tiempo:** El eje vertical de la línea de tiempo debe tener puntos (dots) de colores dinámicos que correspondan al tipo de observación.
+- **Scroll Vertical:** Se debe implementar un área con scroll vertical interno (`overflow-y: auto`) y altura máxima para la línea de tiempo si la lista de observaciones se extiende, evitando desbordes en el formulario general de la OS.
 
 ### Requirement: Formato Numérico Local (Argentina)
 El sistema DEBE mostrar visualmente en todas las interfaces los campos monetarios y numéricos utilizando el formato local argentino: separador de miles con punto (.) y separador de decimales con coma (,). Sin embargo, estos datos se almacenarán estructuradamente como valores `decimal` estándar en la base de datos.

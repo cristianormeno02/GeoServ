@@ -129,7 +129,7 @@ public static class ServiceOrderEndpoints
                     Activities = order.Activities.Select(a => new { a.Id, a.ShortDetail, a.LongDetail, State = a.State.ToString(), StateValue = (int)a.State, a.ProgressPercentage }),
                     Distributions = order.Distributions.Select(d => new { d.Id, d.DistributionConceptId, ConceptName = d.DistributionConcept.Name, d.Percentage, d.ExpectedAmount, d.ActualAmount }),
                     Documents = order.Documents.Select(d => new { d.Id, d.FileName, d.ContentType, d.IsVisibleToClient, d.UploadedAt, d.UploadedById }),
-                    Observations = order.Observations.OrderByDescending(o => o.CreatedAt).Select(o => new { o.Id, o.Text, o.CreatedAt })
+                    Observations = order.Observations.OrderByDescending(o => o.CreatedAt).Select(o => new { o.Id, o.Text, o.ObservationType, o.UserId, o.CreatedAt })
                 });
             }
             catch (Exception ex)
@@ -510,10 +510,13 @@ public static class ServiceOrderEndpoints
         .WithOpenApi();
 
         // 6. Agregar Observación
-        group.MapPost("/{id:guid}/observations", async (Guid id, [FromBody] AddObservationRequest request, GeoServDbContext context) =>
+        group.MapPost("/{id:guid}/observations", async (Guid id, [FromBody] AddObservationRequest request, HttpContext httpContext, GeoServDbContext context) =>
         {
             try
             {
+                var userIdStr = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!Guid.TryParse(userIdStr, out var userId)) return Results.Unauthorized();
+
                 var order = await context.ServiceOrders.FindAsync(id);
                 if (order == null) return Results.NotFound();
 
@@ -522,13 +525,15 @@ public static class ServiceOrderEndpoints
                     Id = Guid.NewGuid(),
                     ServiceOrderId = id,
                     Text = request.Text,
+                    ObservationType = request.ObservationType ?? "General",
+                    UserId = userId,
                     CreatedAt = DateTime.UtcNow
                 };
 
                 context.ServiceOrderObservations.Add(observation);
                 await context.SaveChangesAsync();
 
-                return Results.Ok(new { observation.Id, observation.Text, observation.CreatedAt });
+                return Results.Ok(new { observation.Id, observation.Text, observation.ObservationType, observation.UserId, observation.CreatedAt });
             }
             catch (Exception ex)
             {
@@ -541,7 +546,7 @@ public static class ServiceOrderEndpoints
 }
 
 // DTOs
-public record AddObservationRequest(string Text);
+public record AddObservationRequest(string Text, string? ObservationType);
 public record CreateServiceOrderRequest(
     string OrderNumber,
     Guid ClientId,

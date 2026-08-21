@@ -64,9 +64,19 @@
           <textarea matInput formControlName="budgetedTasksDetail" rows="5" placeholder="Describir las tareas incluidas en el presupuesto (se usará para generar el PDF del presupuesto)..."></textarea>
         </mat-form-field>
 
-        <hr>
-        <h3>Fechas</h3>
-        <!-- Fila 1 -->
+        <mat-accordion multi>
+          <!-- Fechas -->
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>Fechas</mat-panel-title>
+              <mat-panel-description>
+                <span class="badge error-badge" *ngIf="orderForm.get('requestDate')?.invalid || orderForm.get('estimatedStartDate')?.invalid || orderForm.get('estimatedEndDate')?.invalid">
+                  Faltan datos obligatorios
+                </span>
+              </mat-panel-description>
+            </mat-expansion-panel-header>
+            
+            <!-- Fila 1 -->
         <div class="row">
           <mat-form-field appearance="outline">
             <mat-label>Fecha de Solicitud</mat-label>
@@ -122,9 +132,20 @@
           <div style="flex: 1; min-width: 250px;"></div>
         </div>
 
-        <hr>
-        <h3>Finanzas</h3>
-        <div class="row">
+          </mat-expansion-panel>
+
+          <!-- Finanzas -->
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>Finanzas</mat-panel-title>
+              <mat-panel-description>
+                <span class="badge error-badge" *ngIf="orderForm.get('budgetedAmount')?.invalid || orderForm.get('currencyId')?.invalid || (distributions.length > 0 && totalDistributionPercentage !== 100)">
+                  Faltan datos o distribución inválida
+                </span>
+              </mat-panel-description>
+            </mat-expansion-panel-header>
+
+            <div class="row">
           <mat-form-field appearance="outline">
             <mat-label>Moneda del Presupuesto</mat-label>
             <mat-select formControlName="currencyId">
@@ -176,7 +197,6 @@
           <div style="flex: 1; min-width: 250px;"></div>
         </div>
 
-        <hr>
         <div class="section-header">
           <h3>Distribución de Cobro</h3>
           <button type="button" mat-stroked-button color="primary" (click)="addDistribution()">+ Agregar Concepto</button>
@@ -238,11 +258,20 @@
           </div>
         </div>
 
-        <hr>
-        <div class="section-header">
-          <h3>Actividades Operativas</h3>
-          <button type="button" mat-stroked-button color="primary" (click)="addActivity()">+ Agregar Actividad</button>
-        </div>
+          </mat-expansion-panel>
+
+          <!-- Actividades Operativas -->
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>Actividades Operativas</mat-panel-title>
+              <mat-panel-description>
+                <!-- Badge opcional -->
+              </mat-panel-description>
+            </mat-expansion-panel-header>
+
+            <div class="section-header">
+              <button type="button" mat-stroked-button color="primary" (click)="addActivity()">+ Agregar Actividad</button>
+            </div>
         
         <div formArrayName="activities">
           <div *ngFor="let act of activities.controls; let i=index" [formGroupName]="i" class="dynamic-row">
@@ -277,8 +306,18 @@
           </div>
         </div>
 
-        <hr>
-        <h3>Responsables Asignados</h3>
+          </mat-expansion-panel>
+
+          <!-- Equipo de Trabajo (Responsables) -->
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>Equipo de Trabajo (Responsables)</mat-panel-title>
+              <mat-panel-description>
+                <span class="badge error-badge" *ngIf="orderForm.get('responsibleIds')?.invalid">
+                  Debe asignar un responsable
+                </span>
+              </mat-panel-description>
+            </mat-expansion-panel-header>
         <div class="row">
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Seleccione Responsables del Catálogo</mat-label>

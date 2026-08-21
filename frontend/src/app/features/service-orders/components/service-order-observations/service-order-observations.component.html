@@ -1,0 +1,47 @@
+<div class="observations-container">
+  
+  <div class="observation-form">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Nueva Observación</mat-label>
+      <textarea matInput [(ngModel)]="newObservationText" rows="3" placeholder="Ingrese una observación sobre esta orden..."></textarea>
+    </mat-form-field>
+    
+    <div class="form-actions">
+      <mat-form-field appearance="outline">
+        <mat-label>Tipo de Observación</mat-label>
+        <mat-select [(ngModel)]="observationType">
+          <mat-option *ngFor="let type of observationTypes" [value]="type.value">
+            <span [style.color]="type.color" class="type-dot">●</span> {{ type.value }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <button type="button" mat-raised-button color="accent"
+        [disabled]="!newObservationText.trim() || isSavingObservation"
+        (click)="saveObservation()">
+        <mat-icon>add_comment</mat-icon> Guardar Observación
+      </button>
+    </div>
+  </div>
+
+  <div class="timeline" *ngIf="observations && observations.length > 0">
+    <div *ngFor="let obs of observations" class="timeline-item">
+      <div class="timeline-dot" [style.backgroundColor]="getColor(obs.observationType)"></div>
+      <div class="timeline-content">
+        <div class="timeline-header">
+          <strong>{{ obs.userId || 'Usuario' }}</strong>
+          <span class="timeline-date">{{ obs.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+          <span class="timeline-badge" [style.backgroundColor]="getColor(obs.observationType)">{{ obs.observationType || 'Nota General' }}</span>
+        </div>
+        <div class="timeline-body">
+          {{ obs.text }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!observations || observations.length === 0" class="no-data">
+    <p>No hay observaciones registradas en esta orden.</p>
+  </div>
+
+</div>
