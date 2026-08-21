@@ -395,23 +395,19 @@ public static class ServiceOrderEndpoints
                 order.ActualEndDate = request.ActualEndDate;
                 order.CollectionDate = request.CollectionDate;
 
-                // Sincronizar Distribuciones
+                // Sincronizar Distribuciones: DELETE directo con SQL para evitar doble-tracking de EF Core
+                await context.ServiceOrderDistributions
+                    .Where(d => d.ServiceOrderId == id)
+                    .ExecuteDeleteAsync();
+
                 if (request.Distributions != null)
                 {
-                    // Remover las distribuciones actuales tanto del DbSet como de la colección en memoria
-                    var oldDistributions = order.Distributions.ToList();
-                    foreach (var d in oldDistributions)
-                    {
-                        order.Distributions.Remove(d);
-                    }
-                    context.ServiceOrderDistributions.RemoveRange(oldDistributions);
-
-                    // Insertar las nuevas con IDs frescos
                     foreach (var dist in request.Distributions)
                     {
-                        order.Distributions.Add(new ServiceOrderDistribution
+                        context.ServiceOrderDistributions.Add(new ServiceOrderDistribution
                         {
                             Id = Guid.NewGuid(),
+                            ServiceOrderId = id,
                             DistributionConceptId = dist.DistributionConceptId,
                             Percentage = dist.Percentage,
                             ExpectedAmount = dist.ExpectedAmount,
@@ -419,27 +415,20 @@ public static class ServiceOrderEndpoints
                         });
                     }
                 }
-                else
-                {
-                    context.ServiceOrderDistributions.RemoveRange(order.Distributions);
-                    order.Distributions.Clear();
-                }
 
-                // Sincronizar Actividades
+                // Sincronizar Actividades: DELETE directo con SQL para evitar doble-tracking de EF Core
+                await context.ServiceOrderActivities
+                    .Where(a => a.ServiceOrderId == id)
+                    .ExecuteDeleteAsync();
+
                 if (request.Activities != null)
                 {
-                    // Como el frontend no envía Id para actividades, pero sí un detalle corto que puede servir de "clave" temporal para actualizar, 
-                    // o simplemente podemos borrarlas todas de forma segura asegurándonos de hacer SaveChanges intermedio.
-                    // Para evitar el error de concurrencia, lo mejor es actualizar por posición o detalle, pero como son pocas, un clear es riesgoso si el tracking falla.
-                    // Vamos a limpiar y crear pero vaciando la lista de navegación primero para que EF entienda la intención.
-                    context.ServiceOrderActivities.RemoveRange(order.Activities);
-                    order.Activities.Clear(); // <-- Importante para limpiar el tracking en memoria
-
                     foreach (var act in request.Activities)
                     {
-                        order.Activities.Add(new ServiceOrderActivity
+                        context.ServiceOrderActivities.Add(new ServiceOrderActivity
                         {
                             Id = Guid.NewGuid(),
+                            ServiceOrderId = id,
                             ShortDetail = act.ShortDetail,
                             LongDetail = act.LongDetail,
                             State = Enum.Parse<GeoServ.Api.Domain.Enums.ActivityState>(act.State?.Replace(" ", "") ?? "EnProceso", true),
@@ -447,39 +436,22 @@ public static class ServiceOrderEndpoints
                         });
                     }
                 }
-                else
-                {
-                    context.ServiceOrderActivities.RemoveRange(order.Activities);
-                    order.Activities.Clear();
-                }
 
-                // Sincronizar Responsables
+                // Sincronizar Responsables: DELETE directo con SQL para evitar doble-tracking de EF Core
+                await context.ServiceOrderResponsibles
+                    .Where(r => r.ServiceOrderId == id)
+                    .ExecuteDeleteAsync();
+
                 if (request.ResponsibleIds != null)
                 {
-                    var incomingResponsibleIds = request.ResponsibleIds.Distinct().ToList();
-                    var respToRemove = order.Responsibles.Where(r => !incomingResponsibleIds.Contains(r.ResponsibleId)).ToList();
-                    
-                    foreach (var r in respToRemove)
+                    foreach (var rId in request.ResponsibleIds.Distinct())
                     {
-                        order.Responsibles.Remove(r);
-                        context.ServiceOrderResponsibles.Remove(r);
-                    }
-
-                    var existingResponsibleIds = order.Responsibles.Select(r => r.ResponsibleId).ToList();
-                    var respToAdd = incomingResponsibleIds.Where(id => !existingResponsibleIds.Contains(id)).ToList();
-
-                    foreach (var rId in respToAdd)
-                    {
-                        order.Responsibles.Add(new ServiceOrderResponsible
+                        context.ServiceOrderResponsibles.Add(new ServiceOrderResponsible
                         {
+                            ServiceOrderId = id,
                             ResponsibleId = rId
                         });
                     }
-                }
-                else
-                {
-                    context.ServiceOrderResponsibles.RemoveRange(order.Responsibles);
-                    order.Responsibles.Clear();
                 }
 
                 await context.SaveChangesAsync();
@@ -489,7 +461,7 @@ public static class ServiceOrderEndpoints
             {
                 var entry = ex.Entries.FirstOrDefault();
                 var entityName = entry?.Entity.GetType().Name ?? "Desconocida";
-                return Results.Problem(detail: $"Error de concurrencia al actualizar la entidad: {entityName}. Esto suele ocurrir por guardar la orden dos veces rápidamente. Por favor, refresque la página e intente de nuevo.", title: "Error de Concurrencia", statusCode: 409);
+                return Results.Problem(detail: $"Error de concurrencia al actualizar la entidad: {entityName}.", title: "Error de Concurrencia", statusCode: 409);
             }
             catch (Exception ex)
             {
