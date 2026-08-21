@@ -66,6 +66,7 @@
 
         <hr>
         <h3>Fechas</h3>
+        <!-- Fila 1 -->
         <div class="row">
           <mat-form-field appearance="outline">
             <mat-label>Fecha de Solicitud</mat-label>
@@ -73,7 +74,10 @@
             <mat-datepicker-toggle matSuffix [for]="pickerReq"></mat-datepicker-toggle>
             <mat-datepicker #pickerReq></mat-datepicker>
           </mat-form-field>
+        </div>
 
+        <!-- Fila 2 -->
+        <div class="row">
           <mat-form-field appearance="outline">
             <mat-label>Inicio Presupuestado</mat-label>
             <input matInput [matDatepicker]="picker1" formControlName="estimatedStartDate">
@@ -89,6 +93,7 @@
           </mat-form-field>
         </div>
 
+        <!-- Fila 3 -->
         <div class="row">
           <mat-form-field appearance="outline">
             <mat-label>Inicio Real</mat-label>
@@ -103,7 +108,10 @@
             <mat-datepicker-toggle matSuffix [for]="picker4"></mat-datepicker-toggle>
             <mat-datepicker #picker4></mat-datepicker>
           </mat-form-field>
+        </div>
 
+        <!-- Fila 4 -->
+        <div class="row">
           <mat-form-field appearance="outline">
             <mat-label>Fecha de Cobro</mat-label>
             <input matInput [matDatepicker]="picker5" formControlName="collectionDate">
@@ -162,6 +170,8 @@
             <mat-label>Monto Cobrado</mat-label>
             <input matInput type="text" mask="separator.2" thousandSeparator="." decimalMarker="," style="text-align: right" formControlName="collectedAmount">
           </mat-form-field>
+          <div style="flex: 1; min-width: 250px;"></div>
+          <div style="flex: 1; min-width: 250px;"></div>
         </div>
 
         <hr>

@@ -172,12 +172,12 @@ export class ServiceOrderFormComponent implements OnInit {
 
     // Auto-copy fechas presupuestadas → reales
     this.orderForm.get('estimatedStartDate')?.valueChanges.subscribe(val => {
-      if (val && !this.isEditMode) {
+      if (val) {
         this.orderForm.get('actualStartDate')?.setValue(val, { emitEvent: false });
       }
     });
     this.orderForm.get('estimatedEndDate')?.valueChanges.subscribe(val => {
-      if (val && !this.isEditMode) {
+      if (val) {
         this.orderForm.get('actualEndDate')?.setValue(val, { emitEvent: false });
       }
     });
