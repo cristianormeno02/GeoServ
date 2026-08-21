@@ -1,12 +1,26 @@
 /* You can add global styles to this file, and also import other style files */
 
 :root {
+  /* Identidad */
   --color-primary: #1E293B;
   --color-accent: #D97706;
+
+  /* Estados */
+  --color-success: #059669;
+  --color-error: #DC2626;
+  --color-warning: #F59E0B;
+  --color-info: #2563EB;
+
+  /* Superficies */
   --color-background: #F8FAFC;
   --color-surface: #FFFFFF;
+
+  /* Texto */
   --text-primary: #FFFFFF;
   --text-secondary: #1E293B;
+
+  /* Bordes */
+  --border-color: #E2E8F0;
 
   /* Material MDC variables overrides for primary color (Copper: #D97706) */
   --mdc-theme-primary: #D97706;
@@ -112,4 +126,25 @@ body {
 .mat-mdc-progress-spinner circle,
 .mdc-circular-progress__indeterminate-circle-graphic {
   stroke: #D97706 !important;
+}
+
+/* Warn Buttons */
+.mat-mdc-raised-button.mat-warn, 
+.mat-mdc-unelevated-button.mat-warn,
+.mat-mdc-fab.mat-warn,
+.mat-mdc-mini-fab.mat-warn {
+  --mdc-protected-button-container-color: var(--color-error) !important;
+  --mdc-filled-button-container-color: var(--color-error) !important;
+  --mdc-fab-container-color: var(--color-error) !important;
+  background-color: var(--color-error) !important;
+  color: white !important;
+}
+
+.mat-mdc-outlined-button.mat-warn,
+.mat-mdc-button.mat-warn,
+.mat-mdc-icon-button.mat-warn {
+  --mdc-outlined-button-label-text-color: var(--color-error) !important;
+  --mdc-text-button-label-text-color: var(--color-error) !important;
+  --mdc-icon-button-icon-color: var(--color-error) !important;
+  color: var(--color-error) !important;
 }

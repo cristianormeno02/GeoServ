@@ -109,7 +109,7 @@ public static class ServiceOrderEndpoints
                     .Include(o => o.Activities)
                     .Include(o => o.Distributions).ThenInclude(d => d.DistributionConcept)
                     .Include(o => o.Documents)
-                    .Include(o => o.Observations).ThenInclude(o => o.User)
+                    .Include(o => o.Observations).ThenInclude(obs => obs.User)
                     .FirstOrDefaultAsync(o => o.Id == id);
 
                 if (order == null) return Results.NotFound();

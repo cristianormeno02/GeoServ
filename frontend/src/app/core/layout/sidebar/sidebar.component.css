@@ -9,7 +9,7 @@
   flex-direction: column;
   align-items: center;
   padding: 24px 16px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .user-avatar {
@@ -23,13 +23,13 @@
 .user-name {
   font-size: 16px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-secondary);
 }
 
 .logout-item {
-  color: #d32f2f;
+  color: var(--color-error);
 }
 
 .logout-item mat-icon {
-  color: #d32f2f;
+  color: var(--color-error);
 }
