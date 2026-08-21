@@ -490,6 +490,12 @@ public static class ServiceOrderEndpoints
                 await context.SaveChangesAsync();
                 return Results.NoContent();
             }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                var entry = ex.Entries.FirstOrDefault();
+                var entityName = entry?.Entity.GetType().Name ?? "Desconocida";
+                return Results.Problem(detail: $"Error de concurrencia al actualizar la entidad: {entityName}. Esto suele ocurrir por guardar la orden dos veces rápidamente. Por favor, refresque la página e intente de nuevo.", title: "Error de Concurrencia", statusCode: 409);
+            }
             catch (Exception ex)
             {
                 return Results.Problem(detail: ex.InnerException?.Message ?? ex.Message, title: "Error Interno en MapPut", statusCode: 500);

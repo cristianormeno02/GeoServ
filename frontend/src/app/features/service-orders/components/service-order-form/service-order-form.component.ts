@@ -77,6 +77,7 @@ export class ServiceOrderFormComponent implements OnInit {
   orderForm!: FormGroup;
   isEditMode = false;
   orderId: string | null = null;
+  isSaving = false;
 
   // Catálogos
   clients: any[] = [];
@@ -382,13 +383,16 @@ export class ServiceOrderFormComponent implements OnInit {
       }
     }
 
+    this.isSaving = true;
     if (this.isEditMode && this.orderId) {
       this.serviceOrderService.updateServiceOrder(this.orderId, formValue).subscribe({
         next: () => {
           this.snackBar.open('Orden actualizada con éxito', 'Cerrar', { duration: 3000 });
+          this.isSaving = false;
           this.router.navigate(['/ordenes-servicio']);
         },
         error: (err) => {
+          this.isSaving = false;
           this.snackBar.open(err.error?.detail || err.error?.message || 'Error al actualizar', 'Cerrar', { duration: 5000 });
         }
       });
@@ -396,9 +400,11 @@ export class ServiceOrderFormComponent implements OnInit {
       this.serviceOrderService.createServiceOrder(formValue).subscribe({
         next: () => {
           this.snackBar.open('Orden creada con éxito', 'Cerrar', { duration: 3000 });
+          this.isSaving = false;
           this.router.navigate(['/ordenes-servicio']);
         },
         error: (err) => {
+          this.isSaving = false;
           this.snackBar.open(err.error?.detail || err.error?.message || 'Error al crear', 'Cerrar', { duration: 5000 });
         }
       });

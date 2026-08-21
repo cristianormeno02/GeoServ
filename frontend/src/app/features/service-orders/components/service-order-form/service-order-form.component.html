@@ -272,7 +272,7 @@
     
     <mat-card-actions align="end">
       <button mat-button (click)="cancel()">Cancelar</button>
-      <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="orderForm.invalid">Guardar</button>
+      <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="orderForm.invalid || isSaving">Guardar</button>
     </mat-card-actions>
   </mat-card>
 </div>
