@@ -14,6 +14,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatExpansionModule } from '@angular/material/expansion';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
 // ngx-mask
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
@@ -23,6 +24,7 @@ import { ClientService } from '../../../clients/services/client.service';
 import { ServiceTypeService } from '../../../service-types/services/service-type.service';
 import { UserService } from '../../../users/services/user.service';
 import { ServiceOrderObservationsComponent } from '../service-order-observations/service-order-observations.component';
+import { CopyOrderDetailsDialogComponent } from '../copy-order-details-dialog/copy-order-details-dialog.component';
 
 @Injectable()
 export class CustomDateAdapter extends NativeDateAdapter {
@@ -67,7 +69,8 @@ export const CUSTOM_DATE_FORMATS = {
     MatSnackBarModule,
     MatExpansionModule,
     NgxMaskDirective,
-    ServiceOrderObservationsComponent
+    ServiceOrderObservationsComponent,
+    MatDialogModule
   ],
   providers: [
     { provide: MAT_DATE_LOCALE, useValue: 'es-AR' },
@@ -114,7 +117,8 @@ export class ServiceOrderFormComponent implements OnInit {
     private serviceOrderService: ServiceOrderService,
     private clientService: ClientService,
     private serviceTypeService: ServiceTypeService,
-    private userService: UserService
+    private userService: UserService,
+    private dialog: MatDialog
   ) {
     this.createForm();
   }
@@ -253,6 +257,47 @@ export class ServiceOrderFormComponent implements OnInit {
 
   get totalDistributionActual(): number {
     return this.distributions.controls.reduce((sum, ctrl) => sum + (Number(ctrl.get('actualAmount')?.value) || 0), 0);
+  }
+
+  isFechasInvalid(): boolean {
+    const req = this.orderForm.get('requestDate');
+    const start = this.orderForm.get('estimatedStartDate');
+    const end = this.orderForm.get('estimatedEndDate');
+    const isInvalid = !!(req?.invalid || start?.invalid || end?.invalid);
+    const isTouched = !!(req?.touched || start?.touched || end?.touched || this.orderForm.touched);
+    return isInvalid && isTouched;
+  }
+
+  isFechasComplete(): boolean {
+    const req = this.orderForm.get('requestDate');
+    const start = this.orderForm.get('estimatedStartDate');
+    const end = this.orderForm.get('estimatedEndDate');
+    return !!(req?.valid && start?.valid && end?.valid);
+  }
+
+  isFinanzasInvalid(): boolean {
+    const budget = this.orderForm.get('budgetedAmount');
+    const currency = this.orderForm.get('currencyId');
+    const isInvalid = !!(budget?.invalid || currency?.invalid || (this.distributions.length > 0 && this.totalDistributionPercentage !== 100));
+    const isTouched = !!(budget?.touched || currency?.touched || this.orderForm.touched);
+    return isInvalid && isTouched;
+  }
+
+  isFinanzasComplete(): boolean {
+    const budget = this.orderForm.get('budgetedAmount');
+    const currency = this.orderForm.get('currencyId');
+    const validFields = !!(budget?.valid && currency?.valid);
+    const validDist = this.distributions.length === 0 || this.totalDistributionPercentage === 100;
+    return validFields && validDist;
+  }
+
+  isEquipoInvalid(): boolean {
+    const resp = this.orderForm.get('responsibleIds');
+    return !!(resp?.invalid && (resp?.touched || this.orderForm.touched));
+  }
+
+  isEquipoComplete(): boolean {
+    return !!this.orderForm.get('responsibleIds')?.valid;
   }
 
   get activities(): FormArray {
@@ -462,4 +507,20 @@ export class ServiceOrderFormComponent implements OnInit {
   goBack(): void {
     this.router.navigate(['/ordenes-servicio']);
   }
+
+  openCopyDetailsDialog(): void {
+    const dialogRef = this.dialog.open(CopyOrderDetailsDialogComponent, {
+      width: '600px',
+      disableClose: true
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        const currentValue = this.orderForm.get('budgetedTasksDetail')?.value || '';
+        const newValue = currentValue ? `${currentValue}\n\n${result}` : result;
+        this.orderForm.get('budgetedTasksDetail')?.setValue(newValue);
+      }
+    });
+  }
 }
+

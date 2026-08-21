@@ -68,6 +68,21 @@ export class ServiceOrderListComponent implements OnInit {
     });
   }
 
+  getStatusClass(status: string): string {
+    if (!status) return 'status-info';
+    const s = status.toLowerCase();
+    if (s.includes('aprobado') || s.includes('completado') || s.includes('pagado') || s.includes('cobrado') || s.includes('activo') || s.includes('procesado')) {
+      return 'status-success';
+    }
+    if (s.includes('pendiente') || s.includes('revisión') || s.includes('revision')) {
+      return 'status-warning';
+    }
+    if (s.includes('error') || s.includes('rechazado')) {
+      return 'status-error';
+    }
+    return 'status-info';
+  }
+
   applyFilter(event: Event): void {
     const filterValue = (event.target as HTMLInputElement).value;
     this.dataSource.filter = filterValue.trim().toLowerCase();

@@ -42,6 +42,37 @@ public static class ServiceOrderEndpoints
         .WithName("GetServiceOrders")
         .WithOpenApi();
 
+        // Búsqueda de órdenes para autocompletar (retorna BudgetedTasksDetail)
+        group.MapGet("/search", async (string? q, GeoServDbContext context) =>
+        {
+            var query = context.ServiceOrders
+                .Include(o => o.Client)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                var lowerQ = q.ToLower();
+                query = query.Where(o => o.OrderNumber.ToLower().Contains(lowerQ) || 
+                                         (o.Client != null && o.Client.CompanyName.ToLower().Contains(lowerQ)));
+            }
+
+            var results = await query
+                .OrderByDescending(o => o.CreatedAt)
+                .Take(20) // Limitar a 20 resultados
+                .Select(o => new
+                {
+                    o.Id,
+                    o.OrderNumber,
+                    ClientName = o.Client != null ? o.Client.CompanyName : "",
+                    o.BudgetedTasksDetail
+                })
+                .ToListAsync();
+
+            return Results.Ok(results);
+        })
+        .WithName("SearchServiceOrders")
+        .WithOpenApi();
+
         // Catálogos auxiliares
         group.MapGet("/catalogs/statuses", async (GeoServDbContext context) =>
         {
@@ -78,7 +109,7 @@ public static class ServiceOrderEndpoints
                     .Include(o => o.Activities)
                     .Include(o => o.Distributions).ThenInclude(d => d.DistributionConcept)
                     .Include(o => o.Documents)
-                    .Include(o => o.Observations)
+                    .Include(o => o.Observations).ThenInclude(o => o.User)
                     .FirstOrDefaultAsync(o => o.Id == id);
 
                 if (order == null) return Results.NotFound();
@@ -129,7 +160,7 @@ public static class ServiceOrderEndpoints
                     Activities = order.Activities.Select(a => new { a.Id, a.ShortDetail, a.LongDetail, State = a.State.ToString(), StateValue = (int)a.State, a.ProgressPercentage }),
                     Distributions = order.Distributions.Select(d => new { d.Id, d.DistributionConceptId, ConceptName = d.DistributionConcept.Name, d.Percentage, d.ExpectedAmount, d.ActualAmount }),
                     Documents = order.Documents.Select(d => new { d.Id, d.FileName, d.ContentType, d.IsVisibleToClient, d.UploadedAt, d.UploadedById }),
-                    Observations = order.Observations.OrderByDescending(o => o.CreatedAt).Select(o => new { o.Id, o.Text, o.ObservationType, o.UserId, o.CreatedAt })
+                    Observations = order.Observations.OrderByDescending(o => o.CreatedAt).Select(o => new { o.Id, o.Text, o.ObservationType, UserName = o.User != null ? o.User.Name : o.UserId.ToString(), o.CreatedAt })
                 });
             }
             catch (Exception ex)
@@ -532,8 +563,11 @@ public static class ServiceOrderEndpoints
 
                 context.ServiceOrderObservations.Add(observation);
                 await context.SaveChangesAsync();
+                
+                var user = await context.Users.FindAsync(userId);
+                var userName = user?.Name ?? userId.ToString();
 
-                return Results.Ok(new { observation.Id, observation.Text, observation.ObservationType, observation.UserId, observation.CreatedAt });
+                return Results.Ok(new { observation.Id, observation.Text, observation.ObservationType, UserName = userName, observation.CreatedAt });
             }
             catch (Exception ex)
             {

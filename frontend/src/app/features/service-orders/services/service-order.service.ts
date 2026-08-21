@@ -23,6 +23,11 @@ export class ServiceOrderService {
     return this.http.get<ServiceOrderListItem[]>(this.apiUrl);
   }
 
+  // Buscar órdenes de servicio por autocompletar
+  searchServiceOrders(query: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/search?q=${encodeURIComponent(query)}`);
+  }
+
   // 2. Obtener una orden de servicio por ID
   getServiceOrderById(id: string): Observable<ServiceOrder> {
     return this.http.get<ServiceOrder>(`${this.apiUrl}/${id}`);

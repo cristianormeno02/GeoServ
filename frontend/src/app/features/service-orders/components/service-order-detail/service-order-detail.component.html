@@ -129,29 +129,35 @@
   </mat-card>
 
   <!-- Responsables y Distribuciones -->
-  <div class="cards-grid">
-    <mat-card class="info-card">
-      <mat-card-header>
-        <mat-card-title>Responsables</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <mat-list *ngIf="order.responsibles?.length > 0; else noResp">
-          <mat-list-item *ngFor="let resp of order.responsibles">
-            <mat-icon matListItemIcon>person</mat-icon>
-            <div matListItemTitle>{{ resp.name }}</div>
-            <div matListItemLine>{{ resp.position || 'Sin cargo' }}</div>
-          </mat-list-item>
-        </mat-list>
-        <ng-template #noResp><p class="no-data">Sin responsables asignados.</p></ng-template>
-      </mat-card-content>
-    </mat-card>
+  <div class="detail-section">
+    <div class="section-header">
+      <mat-icon color="primary">group</mat-icon>
+      <h3>Equipo de Trabajo</h3>
+    </div>
+    <div class="section-content">
+      <mat-list *ngIf="order.responsibles.length > 0; else noResp">
+        <mat-list-item *ngFor="let resp of order.responsibles">
+          <mat-icon matListItemIcon>person</mat-icon>
+          <div matListItemTitle>{{ resp.name }}</div>
+          <div matListItemLine>{{ resp.position || 'Sin cargo' }}</div>
+        </mat-list-item>
+      </mat-list>
+      <ng-template #noResp>
+        <p class="empty-msg">No hay responsables asignados.</p>
+      </ng-template>
+    </div>
+  </div>
 
-    <mat-card class="info-card">
-      <mat-card-header>
-        <mat-card-title>Distribución de Cobro</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <mat-list *ngIf="order.distributions?.length > 0; else noDist">
+  <mat-divider></mat-divider>
+
+  <!-- Distribución Financiera -->
+  <div class="detail-section">
+    <div class="section-header">
+      <mat-icon color="primary">pie_chart</mat-icon>
+      <h3>Distribución Financiera</h3>
+    </div>
+    <div class="section-content">
+      <mat-list *ngIf="order.distributions.length > 0; else noDist">
           <mat-list-item *ngFor="let dist of order.distributions">
             <mat-icon matListItemIcon>pie_chart</mat-icon>
             <div matListItemTitle>{{ dist.conceptName }}</div>
@@ -159,8 +165,7 @@
           </mat-list-item>
         </mat-list>
         <ng-template #noDist><p class="no-data">Sin distribución definida.</p></ng-template>
-      </mat-card-content>
-    </mat-card>
+      </div>
+    </div>
   </div>
 
-</div>

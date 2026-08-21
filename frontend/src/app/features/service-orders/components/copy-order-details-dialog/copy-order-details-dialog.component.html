@@ -1,0 +1,30 @@
+<h2 mat-dialog-title>Copiar Detalle de Tareas</h2>
+<mat-dialog-content>
+  <p>Busca una orden de servicio previa para copiar su detalle de tareas presupuestadas.</p>
+
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>Buscar por número o cliente</mat-label>
+    <input type="text" matInput [formControl]="searchControl" [matAutocomplete]="auto">
+    <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn" (optionSelected)="onOptionSelected($event)">
+      <mat-option *ngIf="isLoading" class="is-loading">Cargando...</mat-option>
+      <mat-option *ngFor="let order of filteredOrders" [value]="order">
+        <span class="order-number">{{ order.orderNumber }}</span>
+        <small class="client-name" *ngIf="order.clientName"> - {{ order.clientName }}</small>
+      </mat-option>
+    </mat-autocomplete>
+  </mat-form-field>
+
+  <div class="preview-container" *ngIf="selectedDetails">
+    <h4>Previsualización del texto a copiar:</h4>
+    <div class="preview-box">
+      {{ selectedDetails }}
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancelar</button>
+  <button mat-flat-button color="primary" (click)="onConfirm()" [disabled]="!selectedDetails || selectedDetails === 'No hay detalle cargado en esta orden.'">
+    Confirmar Copia
+  </button>
+</mat-dialog-actions>

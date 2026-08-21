@@ -59,10 +59,15 @@
           <textarea matInput formControlName="description" rows="3"></textarea>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" class="full-width">
+        <mat-form-field appearance="outline" class="full-width" style="margin-bottom: 0;">
           <mat-label>Detalle de Tareas Presupuestadas</mat-label>
           <textarea matInput formControlName="budgetedTasksDetail" rows="5" placeholder="Describir las tareas incluidas en el presupuesto (se usará para generar el PDF del presupuesto)..."></textarea>
         </mat-form-field>
+        <div style="margin-bottom: 20px; text-align: right;">
+          <button type="button" mat-stroked-button color="primary" (click)="openCopyDetailsDialog()">
+            <mat-icon>content_copy</mat-icon> Copiar de otra orden
+          </button>
+        </div>
 
         <mat-accordion multi>
           <!-- Fechas -->
@@ -70,9 +75,10 @@
             <mat-expansion-panel-header>
               <mat-panel-title>Fechas</mat-panel-title>
               <mat-panel-description>
-                <span class="badge error-badge" *ngIf="orderForm.get('requestDate')?.invalid || orderForm.get('estimatedStartDate')?.invalid || orderForm.get('estimatedEndDate')?.invalid">
+                <span class="badge error-badge" *ngIf="isFechasInvalid()">
                   Faltan datos obligatorios
                 </span>
+                <span class="badge success-badge" *ngIf="isFechasComplete() && !isFechasInvalid()">✓</span>
               </mat-panel-description>
             </mat-expansion-panel-header>
             
@@ -139,9 +145,10 @@
             <mat-expansion-panel-header>
               <mat-panel-title>Finanzas</mat-panel-title>
               <mat-panel-description>
-                <span class="badge error-badge" *ngIf="orderForm.get('budgetedAmount')?.invalid || orderForm.get('currencyId')?.invalid || (distributions.length > 0 && totalDistributionPercentage !== 100)">
+                <span class="badge error-badge" *ngIf="isFinanzasInvalid()">
                   Faltan datos o distribución inválida
                 </span>
+                <span class="badge success-badge" *ngIf="isFinanzasComplete() && !isFinanzasInvalid()">✓</span>
               </mat-panel-description>
             </mat-expansion-panel-header>
 
@@ -199,7 +206,7 @@
 
         <div class="section-header">
           <h3>Distribución de Cobro</h3>
-          <button type="button" mat-stroked-button color="primary" (click)="addDistribution()">+ Agregar Concepto</button>
+          <button type="button" mat-stroked-button (click)="addDistribution()">+ Agregar Concepto</button>
         </div>
         
         <div formArrayName="distributions">
@@ -270,7 +277,7 @@
             </mat-expansion-panel-header>
 
             <div class="section-header">
-              <button type="button" mat-stroked-button color="primary" (click)="addActivity()">+ Agregar Actividad</button>
+              <button type="button" mat-stroked-button (click)="addActivity()">+ Agregar Actividad</button>
             </div>
         
         <div formArrayName="activities">
@@ -313,9 +320,10 @@
             <mat-expansion-panel-header>
               <mat-panel-title>Equipo de Trabajo (Responsables)</mat-panel-title>
               <mat-panel-description>
-                <span class="badge error-badge" *ngIf="orderForm.get('responsibleIds')?.invalid">
+                <span class="badge error-badge" *ngIf="isEquipoInvalid()">
                   Debe asignar un responsable
                 </span>
+                <span class="badge success-badge" *ngIf="isEquipoComplete() && !isEquipoInvalid()">✓</span>
               </mat-panel-description>
             </mat-expansion-panel-header>
         <div class="row">
@@ -329,39 +337,28 @@
             <mat-error *ngIf="orderForm.get('responsibleIds')?.hasError('required')">Debe seleccionar al menos un responsable</mat-error>
           </mat-form-field>
         </div>
+      </mat-expansion-panel>
 
-        <!-- Sección Observaciones: solo visible en modo edición -->
-        <ng-container *ngIf="isEditMode">
-          <hr>
-          <h3>Observaciones</h3>
+      <!-- Bitácora y Observaciones -->
+      <mat-expansion-panel *ngIf="isEditMode">
+        <mat-expansion-panel-header>
+          <mat-panel-title>Bitácora y Observaciones</mat-panel-title>
+        </mat-expansion-panel-header>
+        
+        <app-service-order-observations 
+          [serviceOrderId]="orderId"
+          [observations]="observations"
+          (observationAdded)="onObservationAdded($event)">
+        </app-service-order-observations>
+      </mat-expansion-panel>
 
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Nueva Observación</mat-label>
-            <textarea matInput [(ngModel)]="newObservationText" [ngModelOptions]="{standalone: true}" rows="3" placeholder="Ingrese una observación sobre esta orden..."></textarea>
-          </mat-form-field>
+    </mat-accordion>
 
-          <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
-            <button type="button" mat-raised-button color="accent"
-              [disabled]="!newObservationText.trim() || isSavingObservation"
-              (click)="saveObservation()">
-              <mat-icon>add_comment</mat-icon> Guardar Observación
-            </button>
-          </div>
-
-          <div *ngIf="observations.length > 0" class="observations-list">
-            <div *ngFor="let obs of observations" class="observation-item">
-              <span class="obs-date">{{ obs.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
-              <p class="obs-text">{{ obs.text }}</p>
-            </div>
-          </div>
-          <p *ngIf="observations.length === 0" style="color: #888; font-style: italic;">Sin observaciones registradas.</p>
-        </ng-container>
-
-      </form>
-    </mat-card-content>
+    </form>
+  </mat-card-content>
     
     <mat-card-actions align="end">
-      <button mat-button (click)="cancel()">Cancelar</button>
+      <button mat-button (click)="goBack()">Cancelar</button>
       <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="orderForm.invalid || isSaving">Guardar</button>
     </mat-card-actions>
   </mat-card>

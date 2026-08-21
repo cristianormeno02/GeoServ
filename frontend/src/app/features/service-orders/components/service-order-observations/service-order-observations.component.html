@@ -29,7 +29,7 @@
       <div class="timeline-dot" [style.backgroundColor]="getColor(obs.observationType)"></div>
       <div class="timeline-content">
         <div class="timeline-header">
-          <strong>{{ obs.userId || 'Usuario' }}</strong>
+          <strong>{{ obs.userName || 'Usuario' }}</strong>
           <span class="timeline-date">{{ obs.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
           <span class="timeline-badge" [style.backgroundColor]="getColor(obs.observationType)">{{ obs.observationType || 'Nota General' }}</span>
         </div>
