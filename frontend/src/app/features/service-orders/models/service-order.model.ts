@@ -42,6 +42,7 @@ export interface ServiceOrder {
   priorityValue: number;
   priority: string;
   description?: string;
+  budgetedTasksDetail?: string;
   currencyId: string;
   currencyCode?: string;
   currencySymbol?: string;
@@ -64,6 +65,13 @@ export interface ServiceOrder {
   activities: ServiceOrderActivity[];
   distributions: ServiceOrderDistribution[];
   documents: ServiceOrderDocument[];
+  observations?: ServiceOrderObservation[];
+}
+
+export interface ServiceOrderObservation {
+  id: string;
+  text: string;
+  createdAt: string;
 }
 
 export interface ServiceOrderActivity {
