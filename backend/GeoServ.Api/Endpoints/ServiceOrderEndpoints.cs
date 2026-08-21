@@ -395,27 +395,51 @@ public static class ServiceOrderEndpoints
                 order.ActualEndDate = request.ActualEndDate;
                 order.CollectionDate = request.CollectionDate;
 
-                // Sincronizar Distribuciones (reemplazo completo para simplificar)
-                context.ServiceOrderDistributions.RemoveRange(order.Distributions);
+                // Sincronizar Distribuciones
                 if (request.Distributions != null)
                 {
+                    // Limpiar las que ya no vienen
+                    var incomingConceptIds = request.Distributions.Select(d => d.DistributionConceptId).ToList();
+                    var distToRemove = order.Distributions.Where(d => !incomingConceptIds.Contains(d.DistributionConceptId)).ToList();
+                    context.ServiceOrderDistributions.RemoveRange(distToRemove);
+
                     foreach (var dist in request.Distributions)
                     {
-                        order.Distributions.Add(new ServiceOrderDistribution
+                        var existing = order.Distributions.FirstOrDefault(d => d.DistributionConceptId == dist.DistributionConceptId);
+                        if (existing != null)
                         {
-                            Id = Guid.NewGuid(),
-                            DistributionConceptId = dist.DistributionConceptId,
-                            Percentage = dist.Percentage,
-                            ExpectedAmount = dist.ExpectedAmount,
-                            ActualAmount = dist.ActualAmount
-                        });
+                            existing.Percentage = dist.Percentage;
+                            existing.ExpectedAmount = dist.ExpectedAmount;
+                            existing.ActualAmount = dist.ActualAmount;
+                        }
+                        else
+                        {
+                            order.Distributions.Add(new ServiceOrderDistribution
+                            {
+                                Id = Guid.NewGuid(),
+                                DistributionConceptId = dist.DistributionConceptId,
+                                Percentage = dist.Percentage,
+                                ExpectedAmount = dist.ExpectedAmount,
+                                ActualAmount = dist.ActualAmount
+                            });
+                        }
                     }
+                }
+                else
+                {
+                    context.ServiceOrderDistributions.RemoveRange(order.Distributions);
                 }
 
                 // Sincronizar Actividades
-                context.ServiceOrderActivities.RemoveRange(order.Activities);
                 if (request.Activities != null)
                 {
+                    // Como el frontend no envía Id para actividades, pero sí un detalle corto que puede servir de "clave" temporal para actualizar, 
+                    // o simplemente podemos borrarlas todas de forma segura asegurándonos de hacer SaveChanges intermedio.
+                    // Para evitar el error de concurrencia, lo mejor es actualizar por posición o detalle, pero como son pocas, un clear es riesgoso si el tracking falla.
+                    // Vamos a limpiar y crear pero vaciando la lista de navegación primero para que EF entienda la intención.
+                    context.ServiceOrderActivities.RemoveRange(order.Activities);
+                    order.Activities.Clear(); // <-- Importante para limpiar el tracking en memoria
+
                     foreach (var act in request.Activities)
                     {
                         order.Activities.Add(new ServiceOrderActivity
@@ -428,19 +452,39 @@ public static class ServiceOrderEndpoints
                         });
                     }
                 }
-
-                // Sincronizar Responsables (reemplazo completo en la tabla intermedia)
-                context.ServiceOrderResponsibles.RemoveRange(order.Responsibles);
-                if (request.ResponsibleIds != null && request.ResponsibleIds.Any())
+                else
                 {
-                    var uniqueIds = request.ResponsibleIds.Distinct().ToList();
-                    foreach (var rId in uniqueIds)
+                    context.ServiceOrderActivities.RemoveRange(order.Activities);
+                    order.Activities.Clear();
+                }
+
+                // Sincronizar Responsables
+                if (request.ResponsibleIds != null)
+                {
+                    var incomingResponsibleIds = request.ResponsibleIds.Distinct().ToList();
+                    var respToRemove = order.Responsibles.Where(r => !incomingResponsibleIds.Contains(r.ResponsibleId)).ToList();
+                    
+                    foreach (var r in respToRemove)
+                    {
+                        order.Responsibles.Remove(r);
+                        context.ServiceOrderResponsibles.Remove(r);
+                    }
+
+                    var existingResponsibleIds = order.Responsibles.Select(r => r.ResponsibleId).ToList();
+                    var respToAdd = incomingResponsibleIds.Where(id => !existingResponsibleIds.Contains(id)).ToList();
+
+                    foreach (var rId in respToAdd)
                     {
                         order.Responsibles.Add(new ServiceOrderResponsible
                         {
                             ResponsibleId = rId
                         });
                     }
+                }
+                else
+                {
+                    context.ServiceOrderResponsibles.RemoveRange(order.Responsibles);
+                    order.Responsibles.Clear();
                 }
 
                 await context.SaveChangesAsync();
