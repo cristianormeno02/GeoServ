@@ -349,9 +349,6 @@ public static class ServiceOrderEndpoints
             try
             {
                 var order = await context.ServiceOrders
-                    .Include(o => o.Distributions)
-                    .Include(o => o.Responsibles)
-                    .Include(o => o.Activities)
                     .FirstOrDefaultAsync(o => o.Id == id);
 
                 if (order == null) return Results.NotFound();
