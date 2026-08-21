@@ -23,6 +23,7 @@ public class ServiceOrder
     public ServiceOrderPriority Priority { get; set; } = ServiceOrderPriority.Media;
     
     public string? Description { get; set; }
+    public string? BudgetedTasksDetail { get; set; }
     
     // Información Financiera
     public Guid CurrencyId { get; set; }
@@ -56,4 +57,5 @@ public class ServiceOrder
     public ICollection<ServiceOrderActivity> Activities { get; set; } = new List<ServiceOrderActivity>();
     public ICollection<ServiceOrderDistribution> Distributions { get; set; } = new List<ServiceOrderDistribution>();
     public ICollection<ServiceOrderDocument> Documents { get; set; } = new List<ServiceOrderDocument>();
+    public ICollection<ServiceOrderObservation> Observations { get; set; } = new List<ServiceOrderObservation>();
 }

@@ -59,6 +59,11 @@
           <textarea matInput formControlName="description" rows="3"></textarea>
         </mat-form-field>
 
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Detalle de Tareas Presupuestadas</mat-label>
+          <textarea matInput formControlName="budgetedTasksDetail" rows="5" placeholder="Describir las tareas incluidas en el presupuesto (se usará para generar el PDF del presupuesto)..."></textarea>
+        </mat-form-field>
+
         <hr>
         <h3>Fechas</h3>
         <div class="row">
@@ -70,14 +75,14 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Inicio Estimado</mat-label>
+            <mat-label>Inicio Presupuestado</mat-label>
             <input matInput [matDatepicker]="picker1" formControlName="estimatedStartDate">
             <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
             <mat-datepicker #picker1></mat-datepicker>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Fin Estimado</mat-label>
+            <mat-label>Fin Presupuestado</mat-label>
             <input matInput [matDatepicker]="picker2" formControlName="estimatedEndDate">
             <mat-datepicker-toggle matSuffix [for]="picker2"></mat-datepicker-toggle>
             <mat-datepicker #picker2></mat-datepicker>
@@ -149,6 +154,13 @@
           <mat-form-field appearance="outline">
             <mat-label>Total Final (Auto-calculado)</mat-label>
             <input matInput type="text" mask="separator.2" thousandSeparator="." decimalMarker="," style="text-align: right" formControlName="totalAmount" readonly>
+          </mat-form-field>
+        </div>
+
+        <div class="row">
+          <mat-form-field appearance="outline">
+            <mat-label>Monto Cobrado</mat-label>
+            <input matInput type="text" mask="separator.2" thousandSeparator="." decimalMarker="," style="text-align: right" formControlName="collectedAmount">
           </mat-form-field>
         </div>
 
@@ -266,6 +278,33 @@
             <mat-error *ngIf="orderForm.get('responsibleIds')?.hasError('required')">Debe seleccionar al menos un responsable</mat-error>
           </mat-form-field>
         </div>
+
+        <!-- Sección Observaciones: solo visible en modo edición -->
+        <ng-container *ngIf="isEditMode">
+          <hr>
+          <h3>Observaciones</h3>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Nueva Observación</mat-label>
+            <textarea matInput [(ngModel)]="newObservationText" [ngModelOptions]="{standalone: true}" rows="3" placeholder="Ingrese una observación sobre esta orden..."></textarea>
+          </mat-form-field>
+
+          <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
+            <button type="button" mat-raised-button color="accent"
+              [disabled]="!newObservationText.trim() || isSavingObservation"
+              (click)="saveObservation()">
+              <mat-icon>add_comment</mat-icon> Guardar Observación
+            </button>
+          </div>
+
+          <div *ngIf="observations.length > 0" class="observations-list">
+            <div *ngFor="let obs of observations" class="observation-item">
+              <span class="obs-date">{{ obs.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+              <p class="obs-text">{{ obs.text }}</p>
+            </div>
+          </div>
+          <p *ngIf="observations.length === 0" style="color: #888; font-style: italic;">Sin observaciones registradas.</p>
+        </ng-container>
 
       </form>
     </mat-card-content>

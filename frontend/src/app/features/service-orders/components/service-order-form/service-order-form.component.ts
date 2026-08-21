@@ -1,6 +1,6 @@
 import { Component, OnInit, Injectable } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
+import { CommonModule, DatePipe } from '@angular/common';
+import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 
 // Material Modules
@@ -53,6 +53,7 @@ export const CUSTOM_DATE_FORMATS = {
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
@@ -97,6 +98,10 @@ export class ServiceOrderFormComponent implements OnInit {
     { value: 4, label: 'Urgente' }
   ];
 
+  observations: any[] = [];
+  newObservationText: string = '';
+  isSavingObservation = false;
+
   constructor(
     private fb: FormBuilder,
     private router: Router,
@@ -131,6 +136,7 @@ export class ServiceOrderFormComponent implements OnInit {
       statusId: ['', Validators.required],
       priority: [2, Validators.required],
       description: [''],
+      budgetedTasksDetail: [''],
       currencyId: ['', Validators.required],
       foreignAmount: [0, [Validators.min(0)]],
       exchangeRateAtBudget: [1, [Validators.min(1)]],
@@ -138,14 +144,15 @@ export class ServiceOrderFormComponent implements OnInit {
       budgetedAmount: [0, [Validators.required, Validators.min(0)]],
       discount: [0, [Validators.min(0)]],
       totalAmount: [0, [Validators.required, Validators.min(0)]],
+      collectedAmount: [0, [Validators.min(0)]],
       estimatedStartDate: [today, Validators.required],
       estimatedEndDate: [today, Validators.required],
-      actualStartDate: [today, Validators.required],
-      actualEndDate: [today, Validators.required],
-      collectionDate: [today, Validators.required],
+      actualStartDate: [null],   // opcional
+      actualEndDate: [null],     // opcional
+      collectionDate: [null],    // opcional
       distributions: this.fb.array([]),
       activities: this.fb.array([]),
-      responsibleIds: [[], Validators.required] // Array of strings (dropdown multiple)
+      responsibleIds: [[], Validators.required]
     });
 
     // Detectar cambio de moneda para setear la lógica de montos
@@ -153,7 +160,7 @@ export class ServiceOrderFormComponent implements OnInit {
       const selected = this.currencies.find(c => c.id === val);
       if (selected) {
         this.selectedCurrencyCode = selected.code;
-        this.calculateTotal(); // Re-calcula por si cambió a una moneda extranjera
+        this.calculateTotal();
       }
     });
 
@@ -162,6 +169,18 @@ export class ServiceOrderFormComponent implements OnInit {
     this.orderForm.get('exchangeRateAtBudget')?.valueChanges.subscribe(() => this.calculateTotal());
     this.orderForm.get('budgetedAmount')?.valueChanges.subscribe(() => this.calculateTotal());
     this.orderForm.get('discount')?.valueChanges.subscribe(() => this.calculateTotal());
+
+    // Auto-copy fechas presupuestadas → reales
+    this.orderForm.get('estimatedStartDate')?.valueChanges.subscribe(val => {
+      if (val && !this.isEditMode) {
+        this.orderForm.get('actualStartDate')?.setValue(val, { emitEvent: false });
+      }
+    });
+    this.orderForm.get('estimatedEndDate')?.valueChanges.subscribe(val => {
+      if (val && !this.isEditMode) {
+        this.orderForm.get('actualEndDate')?.setValue(val, { emitEvent: false });
+      }
+    });
   }
 
   calculateTotal() {
@@ -274,32 +293,41 @@ export class ServiceOrderFormComponent implements OnInit {
   loadOrderData(id: string): void {
     this.serviceOrderService.getServiceOrderById(id).subscribe({
       next: (order) => {
+        // Helper para convertir string ISO a Date para el datepicker
+        const toDate = (val: any) => val ? new Date(val) : null;
+
         this.orderForm.patchValue({
           orderNumber: order.orderNumber,
-          requestDate: order.requestDate,
+          requestDate: toDate(order.requestDate),
           clientId: order.clientId,
-          projectId: order.projectId,
+          projectId: order.projectId ?? '',
           serviceTypeId: order.serviceTypeId,
           statusId: order.statusId,
           priority: order.priorityValue,
           description: order.description,
+          budgetedTasksDetail: order.budgetedTasksDetail ?? '',
           currencyId: order.currencyId,
-          foreignAmount: order.foreignAmount,
-          exchangeRateAtBudget: order.exchangeRateAtBudget,
+          foreignAmount: order.foreignAmount ?? 0,
+          exchangeRateAtBudget: order.exchangeRateAtBudget ?? 1,
           exchangeRateAtCollection: order.exchangeRateAtCollection,
           budgetedAmount: order.budgetedAmount,
           discount: order.discount,
           totalAmount: order.totalAmount,
-          estimatedStartDate: order.estimatedStartDate,
-          estimatedEndDate: order.estimatedEndDate,
-          actualStartDate: order.actualStartDate,
-          actualEndDate: order.actualEndDate,
-          collectionDate: order.collectionDate,
-          responsibleIds: order.responsibles ? order.responsibles.map(r => r.id) : []
+          collectedAmount: order.collectedAmount ?? 0,
+          estimatedStartDate: toDate(order.estimatedStartDate),
+          estimatedEndDate: toDate(order.estimatedEndDate),
+          actualStartDate: toDate(order.actualStartDate),
+          actualEndDate: toDate(order.actualEndDate),
+          collectionDate: toDate(order.collectionDate),
+          responsibleIds: order.responsibles ? order.responsibles.map((r: any) => r.id) : []
         });
 
+        // Actualizar la moneda seleccionada para que funcione el selector de tipo de cambio
+        const selectedCurrency = this.currencies.find(c => c.id === order.currencyId);
+        if (selectedCurrency) this.selectedCurrencyCode = selectedCurrency.code;
+
         // Cargar distribuciones
-        order.distributions?.forEach(d => {
+        order.distributions?.forEach((d: any) => {
           this.addDistribution();
           const newGroup = this.distributions.at(this.distributions.length - 1);
           newGroup.patchValue({
@@ -311,7 +339,7 @@ export class ServiceOrderFormComponent implements OnInit {
         });
 
         // Cargar actividades
-        order.activities?.forEach(a => {
+        order.activities?.forEach((a: any) => {
           this.addActivity();
           const newGroup = this.activities.at(this.activities.length - 1);
           newGroup.patchValue({
@@ -321,6 +349,9 @@ export class ServiceOrderFormComponent implements OnInit {
             progressPercentage: a.progressPercentage
           });
         });
+
+        // Cargar observaciones
+        this.observations = order.observations ?? [];
       },
       error: () => this.snackBar.open('Error al cargar la orden', 'Cerrar', { duration: 3000 })
     });
@@ -409,6 +440,23 @@ export class ServiceOrderFormComponent implements OnInit {
         }
       });
     }
+  }
+
+  saveObservation(): void {
+    if (!this.orderId || !this.newObservationText.trim()) return;
+    this.isSavingObservation = true;
+    this.serviceOrderService.addObservation(this.orderId, this.newObservationText.trim()).subscribe({
+      next: (obs) => {
+        this.observations = [obs, ...this.observations];
+        this.newObservationText = '';
+        this.isSavingObservation = false;
+        this.snackBar.open('Observación guardada', 'Cerrar', { duration: 2000 });
+      },
+      error: () => {
+        this.isSavingObservation = false;
+        this.snackBar.open('Error al guardar la observación', 'Cerrar', { duration: 3000 });
+      }
+    });
   }
 
   cancel(): void {

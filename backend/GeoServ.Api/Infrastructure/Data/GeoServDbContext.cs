@@ -29,6 +29,7 @@ public class GeoServDbContext : DbContext
     public DbSet<FixedCostCategory> FixedCostCategories { get; set; } = null!;
     public DbSet<FixedCost> FixedCosts { get; set; } = null!;
     public DbSet<AccountingMovement> AccountingMovements { get; set; } = null!;
+    public DbSet<ServiceOrderObservation> ServiceOrderObservations { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -121,6 +122,12 @@ public class GeoServDbContext : DbContext
             .HasMany(s => s.Documents)
             .WithOne(d => d.ServiceOrder)
             .HasForeignKey(d => d.ServiceOrderId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ServiceOrder>()
+            .HasMany(s => s.Observations)
+            .WithOne(o => o.ServiceOrder)
+            .HasForeignKey(o => o.ServiceOrderId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // --- Seed Data ---

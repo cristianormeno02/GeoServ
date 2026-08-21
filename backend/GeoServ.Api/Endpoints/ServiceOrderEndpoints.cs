@@ -78,6 +78,7 @@ public static class ServiceOrderEndpoints
                     .Include(o => o.Activities)
                     .Include(o => o.Distributions).ThenInclude(d => d.DistributionConcept)
                     .Include(o => o.Documents)
+                    .Include(o => o.Observations)
                     .FirstOrDefaultAsync(o => o.Id == id);
 
                 if (order == null) return Results.NotFound();
@@ -97,6 +98,7 @@ public static class ServiceOrderEndpoints
                     Priority = order.Priority.ToString(),
                     PriorityValue = (int)order.Priority,
                     order.Description,
+                    order.BudgetedTasksDetail,
                     order.CurrencyId,
                     CurrencyCode = order.Currency?.Code,
                     CurrencySymbol = order.Currency?.Symbol,
@@ -126,7 +128,8 @@ public static class ServiceOrderEndpoints
                     }),
                     Activities = order.Activities.Select(a => new { a.Id, a.ShortDetail, a.LongDetail, State = a.State.ToString(), StateValue = (int)a.State, a.ProgressPercentage }),
                     Distributions = order.Distributions.Select(d => new { d.Id, d.DistributionConceptId, ConceptName = d.DistributionConcept.Name, d.Percentage, d.ExpectedAmount, d.ActualAmount }),
-                    Documents = order.Documents.Select(d => new { d.Id, d.FileName, d.ContentType, d.IsVisibleToClient, d.UploadedAt, d.UploadedById })
+                    Documents = order.Documents.Select(d => new { d.Id, d.FileName, d.ContentType, d.IsVisibleToClient, d.UploadedAt, d.UploadedById }),
+                    Observations = order.Observations.OrderByDescending(o => o.CreatedAt).Select(o => new { o.Id, o.Text, o.CreatedAt })
                 });
             }
             catch (Exception ex)
@@ -168,6 +171,7 @@ public static class ServiceOrderEndpoints
                     StatusId = request.StatusId,
                     Priority = (ServiceOrderPriority)request.Priority,
                     Description = request.Description,
+                    BudgetedTasksDetail = request.BudgetedTasksDetail,
                     CurrencyId = request.CurrencyId,
                     ForeignAmount = request.ForeignAmount,
                     ExchangeRateAtBudget = request.ExchangeRateAtBudget,
@@ -377,6 +381,7 @@ public static class ServiceOrderEndpoints
                 order.StatusId = request.StatusId;
                 order.Priority = (ServiceOrderPriority)request.Priority;
                 order.Description = request.Description;
+                order.BudgetedTasksDetail = request.BudgetedTasksDetail;
                 order.CurrencyId = request.CurrencyId;
                 order.ForeignAmount = request.ForeignAmount;
                 order.ExchangeRateAtBudget = request.ExchangeRateAtBudget;
@@ -384,6 +389,7 @@ public static class ServiceOrderEndpoints
                 order.BudgetedAmount = request.BudgetedAmount;
                 order.Discount = request.Discount;
                 order.TotalAmount = request.TotalAmount;
+                order.CollectedAmount = request.CollectedAmount;
                 order.UpdatedAt = DateTime.UtcNow;
                 order.RequestDate = request.RequestDate;
                 order.EstimatedStartDate = request.EstimatedStartDate;
@@ -502,10 +508,40 @@ public static class ServiceOrderEndpoints
         })
         .WithName("DeleteServiceOrder")
         .WithOpenApi();
+
+        // 6. Agregar Observación
+        group.MapPost("/{id:guid}/observations", async (Guid id, [FromBody] AddObservationRequest request, GeoServDbContext context) =>
+        {
+            try
+            {
+                var order = await context.ServiceOrders.FindAsync(id);
+                if (order == null) return Results.NotFound();
+
+                var observation = new ServiceOrderObservation
+                {
+                    Id = Guid.NewGuid(),
+                    ServiceOrderId = id,
+                    Text = request.Text,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                context.ServiceOrderObservations.Add(observation);
+                await context.SaveChangesAsync();
+
+                return Results.Ok(new { observation.Id, observation.Text, observation.CreatedAt });
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem(detail: ex.InnerException?.Message ?? ex.Message, title: "Error al agregar observación", statusCode: 500);
+            }
+        })
+        .WithName("AddServiceOrderObservation")
+        .WithOpenApi();
     }
 }
 
 // DTOs
+public record AddObservationRequest(string Text);
 public record CreateServiceOrderRequest(
     string OrderNumber,
     Guid ClientId,
@@ -514,6 +550,7 @@ public record CreateServiceOrderRequest(
     Guid StatusId,
     int Priority,
     string? Description,
+    string? BudgetedTasksDetail,
     Guid CurrencyId,
     decimal? ForeignAmount,
     decimal? ExchangeRateAtBudget,
@@ -536,6 +573,7 @@ public record UpdateServiceOrderRequest(
     Guid StatusId,
     int Priority,
     string? Description,
+    string? BudgetedTasksDetail,
     Guid CurrencyId,
     decimal? ForeignAmount,
     decimal? ExchangeRateAtBudget,
@@ -543,6 +581,7 @@ public record UpdateServiceOrderRequest(
     decimal BudgetedAmount,
     decimal Discount,
     decimal TotalAmount,
+    decimal CollectedAmount,
     DateTime? RequestDate,
     DateTime? EstimatedStartDate,
     DateTime? EstimatedEndDate,

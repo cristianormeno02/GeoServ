@@ -85,4 +85,9 @@ export class ServiceOrderService {
   deleteDocument(orderId: string, documentId: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${orderId}/documents/${documentId}`);
   }
+
+  // 9. Agregar Observación
+  addObservation(orderId: string, text: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/${orderId}/observations`, { text });
+  }
 }
