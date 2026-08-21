@@ -398,36 +398,31 @@ public static class ServiceOrderEndpoints
                 // Sincronizar Distribuciones
                 if (request.Distributions != null)
                 {
-                    // Limpiar las que ya no vienen
-                    var incomingConceptIds = request.Distributions.Select(d => d.DistributionConceptId).ToList();
-                    var distToRemove = order.Distributions.Where(d => !incomingConceptIds.Contains(d.DistributionConceptId)).ToList();
-                    context.ServiceOrderDistributions.RemoveRange(distToRemove);
+                    // Remover las distribuciones actuales tanto del DbSet como de la colección en memoria
+                    var oldDistributions = order.Distributions.ToList();
+                    foreach (var d in oldDistributions)
+                    {
+                        order.Distributions.Remove(d);
+                    }
+                    context.ServiceOrderDistributions.RemoveRange(oldDistributions);
 
+                    // Insertar las nuevas con IDs frescos
                     foreach (var dist in request.Distributions)
                     {
-                        var existing = order.Distributions.FirstOrDefault(d => d.DistributionConceptId == dist.DistributionConceptId);
-                        if (existing != null)
+                        order.Distributions.Add(new ServiceOrderDistribution
                         {
-                            existing.Percentage = dist.Percentage;
-                            existing.ExpectedAmount = dist.ExpectedAmount;
-                            existing.ActualAmount = dist.ActualAmount;
-                        }
-                        else
-                        {
-                            order.Distributions.Add(new ServiceOrderDistribution
-                            {
-                                Id = Guid.NewGuid(),
-                                DistributionConceptId = dist.DistributionConceptId,
-                                Percentage = dist.Percentage,
-                                ExpectedAmount = dist.ExpectedAmount,
-                                ActualAmount = dist.ActualAmount
-                            });
-                        }
+                            Id = Guid.NewGuid(),
+                            DistributionConceptId = dist.DistributionConceptId,
+                            Percentage = dist.Percentage,
+                            ExpectedAmount = dist.ExpectedAmount,
+                            ActualAmount = dist.ActualAmount
+                        });
                     }
                 }
                 else
                 {
                     context.ServiceOrderDistributions.RemoveRange(order.Distributions);
+                    order.Distributions.Clear();
                 }
 
                 // Sincronizar Actividades
