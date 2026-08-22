@@ -7,7 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
+import { MatNativeDateModule, MAT_DATE_LOCALE, DateAdapter, NativeDateAdapter, MAT_DATE_FORMATS } from '@angular/material/core';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 
 import { DirectCost, CreateDirectCostDto } from '../../models/direct-cost.model';
@@ -15,6 +15,30 @@ import { DirectCostCategoryService } from '../../../direct-cost-categories/servi
 import { ProviderService } from '../../../providers/services/provider.service';
 import { UnitService } from '../../../units/services/unit.service';
 import { PaymentMethodService } from '../../../payment-methods/services/payment-method.service';
+
+export class CustomDateAdapter extends NativeDateAdapter {
+  override format(date: Date, displayFormat: Object): string {
+    if (displayFormat === 'input') {
+      let day: string = date.getDate().toString();
+      day = +day < 10 ? '0' + day : day;
+      let month: string = (date.getMonth() + 1).toString();
+      month = +month < 10 ? '0' + month : month;
+      let year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    }
+    return super.format(date, displayFormat);
+  }
+}
+
+export const CUSTOM_DATE_FORMATS = {
+  parse: { dateInput: { month: 'short', year: 'numeric', day: 'numeric' } },
+  display: {
+    dateInput: 'input',
+    monthYearLabel: 'MMM YYYY',
+    dateA11yLabel: 'LL',
+    monthYearA11yLabel: 'MMMM YYYY',
+  }
+};
 
 @Component({
   selector: 'app-direct-cost-dialog',
@@ -24,7 +48,12 @@ import { PaymentMethodService } from '../../../payment-methods/services/payment-
     MatInputModule, MatButtonModule, MatSelectModule, MatDatepickerModule, MatNativeDateModule,
     NgxMaskDirective
   ],
-  providers: [provideNgxMask()],
+  providers: [
+    provideNgxMask(),
+    { provide: MAT_DATE_LOCALE, useValue: 'es-AR' },
+    { provide: DateAdapter, useClass: CustomDateAdapter },
+    { provide: MAT_DATE_FORMATS, useValue: CUSTOM_DATE_FORMATS }
+  ],
   template: `
     <h2 mat-dialog-title>{{ data?.cost ? 'Editar' : 'Registrar' }} Costo Directo</h2>
     <mat-dialog-content>
