@@ -47,5 +47,13 @@ export class DirectCostCategoryDialogComponent implements OnInit {
   }
 
   onCancel() { this.dialogRef.close(); }
-  onSave() { if (this.form.valid) this.dialogRef.close(this.form.value); }
+  onSave() { 
+    if (this.form.valid) {
+      const val = { ...this.form.value };
+      if (!val.id) {
+        delete val.id;
+      }
+      this.dialogRef.close(val);
+    }
+  }
 }
