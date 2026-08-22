@@ -92,6 +92,10 @@ La lógica de distribución de ingresos DEBE ser dinámica a partir de un catál
 - El sistema debe contar con el campo "Monto Real Destinado" por cada ítem. Este campo será editable en la interfaz para que el usuario cargue el valor real definitivo una vez confirmado el cobro.
 - **Fila Totalizadora**: En la sección del formulario de Distribución de Cobro, si existe al menos un registro, debe mostrarse una fila final a modo informativo que sume y totalice el "Porcentaje", "Monto Esperado" y "Monto Real Destinado".
 - **Resaltado de Alerta**: Si el total de los porcentajes sumados en esta fila no es exactamente 100%, el valor debe resaltarse visualmente para indicar la discrepancia.
+- **Copiado desde Otra Orden**: 
+  - La sección debe incluir un botón "Copiar de otra orden" que abra un modal de búsqueda.
+  - Al seleccionar una orden existente, se deben previsualizar sus conceptos de cobro y porcentajes.
+  - Al confirmar, los conceptos de la orden actual se reemplazarán completamente por los conceptos copiados, y el sistema recalculará automáticamente los montos esperados en base a la orden de servicio actual.
 
 ### Requirement: Gestión de Actividades de la Orden
 El sistema DEBE permitir asociar múltiples actividades operativas a cada OS.

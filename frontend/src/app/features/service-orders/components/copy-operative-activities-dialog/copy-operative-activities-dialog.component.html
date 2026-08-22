@@ -1,0 +1,40 @@
+<h2 mat-dialog-title>Copiar Actividades Operativas</h2>
+<mat-dialog-content>
+  <p>Busca una orden de servicio previa para copiar sus actividades operativas.</p>
+
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>Buscar por número o cliente</mat-label>
+    <input type="text" matInput [formControl]="searchControl" [matAutocomplete]="auto">
+    <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn" (optionSelected)="onOptionSelected($event)">
+      <mat-option *ngIf="isLoading" class="is-loading">Cargando...</mat-option>
+      <mat-option *ngFor="let order of filteredOrders" [value]="order">
+        <span class="order-number">{{ order.orderNumber }}</span>
+        <small class="client-name" *ngIf="order.clientName"> - {{ order.clientName }}</small>
+      </mat-option>
+    </mat-autocomplete>
+  </mat-form-field>
+
+  <div class="preview-container" *ngIf="selectedOrderNumber">
+    <h4>Actividades en Orden {{selectedOrderNumber}}:</h4>
+    <div class="preview-box" *ngIf="selectedActivities.length > 0; else noActivities">
+      <mat-list>
+        <mat-list-item *ngFor="let act of selectedActivities">
+          <span matListItemTitle>{{ act.shortDetail || 'Actividad sin título' }}</span>
+          <span matListItemLine *ngIf="act.longDetail">{{ act.longDetail }}</span>
+        </mat-list-item>
+      </mat-list>
+    </div>
+    <ng-template #noActivities>
+      <div class="preview-box">
+        No hay actividades operativas cargadas en esta orden.
+      </div>
+    </ng-template>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancelar</button>
+  <button mat-flat-button color="primary" (click)="onConfirm()" [disabled]="!selectedActivities || selectedActivities.length === 0">
+    Confirmar Copia
+  </button>
+</mat-dialog-actions>

@@ -206,7 +206,12 @@
 
         <div class="section-header">
           <h3>Distribución de Cobro</h3>
-          <button type="button" mat-stroked-button (click)="addDistribution()">+ Agregar Concepto</button>
+          <div>
+            <button type="button" mat-stroked-button (click)="openCopyBillingDistributionDialog()" style="margin-right: 10px;">
+              <mat-icon>content_copy</mat-icon> Copiar de otra orden
+            </button>
+            <button type="button" mat-stroked-button (click)="addDistribution()">+ Agregar Concepto</button>
+          </div>
         </div>
         
         <div formArrayName="distributions">
@@ -276,8 +281,13 @@
               </mat-panel-description>
             </mat-expansion-panel-header>
 
-            <div class="section-header">
-              <button type="button" mat-stroked-button (click)="addActivity()">+ Agregar Actividad</button>
+            <div class="section-header" style="justify-content: flex-end; display: flex;">
+              <div>
+                <button type="button" mat-stroked-button (click)="openCopyOperativeActivitiesDialog()" style="margin-right: 10px;">
+                  <mat-icon>content_copy</mat-icon> Copiar de otra orden
+                </button>
+                <button type="button" mat-stroked-button (click)="addActivity()">+ Agregar Actividad</button>
+              </div>
             </div>
         
         <div formArrayName="activities">

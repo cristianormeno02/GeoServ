@@ -20,6 +20,10 @@ export class MainLayoutComponent {
     { icon: 'assignment', label: 'Órdenes de Servicio', route: '/ordenes-servicio' },
     { icon: 'groups', label: 'Responsables', route: '/responsibles' },
     { icon: 'account_tree', label: 'Tipos de Compañía', route: '/tipos-compania' },
+    { icon: 'monetization_on', label: 'Categorías Costos', route: '/categorias-costos' },
+    { icon: 'local_shipping', label: 'Proveedores', route: '/proveedores' },
+    { icon: 'square_foot', label: 'Unidades', route: '/unidades' },
+    { icon: 'payment', label: 'Medios de Pago', route: '/medios-pago' },
     { icon: 'people', label: 'Usuarios', route: '/usuarios' },
     { icon: 'settings', label: 'Configuración', route: '/configuracion' }
   ];

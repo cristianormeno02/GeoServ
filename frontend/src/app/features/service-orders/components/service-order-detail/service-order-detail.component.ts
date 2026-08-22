@@ -11,9 +11,15 @@ import { MatListModule } from '@angular/material/list';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatTableModule, MatTableDataSource } from '@angular/material/table';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
 import { ServiceOrderService } from '../../services/service-order.service';
 import { ServiceOrder, ServiceOrderDocument } from '../../models/service-order.model';
+import { DirectCostService } from '../../services/direct-cost.service';
+import { DirectCost } from '../../models/direct-cost.model';
+import { DirectCostDialogComponent } from '../direct-cost-dialog/direct-cost-dialog.component';
 
 import { ChangeDetectorRef } from '@angular/core';
 
@@ -31,7 +37,10 @@ import { ChangeDetectorRef } from '@angular/core';
     MatListModule,
     MatCheckboxModule,
     MatSnackBarModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatTabsModule,
+    MatTableModule,
+    MatDialogModule
   ],
   templateUrl: './service-order-detail.component.html',
   styleUrls: ['./service-order-detail.component.scss']
@@ -46,10 +55,17 @@ export class ServiceOrderDetailComponent implements OnInit {
   isVisibleToClient: boolean = false;
   isUploading = false;
 
+  // Variables para Costos Directos
+  directCostsDataSource = new MatTableDataSource<DirectCost>();
+  directCostsColumns: string[] = ['category', 'provider', 'description', 'quantity', 'unit', 'unitPrice', 'totalAmount', 'actions'];
+  isLoadingCosts = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private serviceOrderService: ServiceOrderService,
+    private directCostService: DirectCostService,
+    private dialog: MatDialog,
     private snackBar: MatSnackBar,
     private cdr: ChangeDetectorRef
   ) {}
@@ -58,7 +74,24 @@ export class ServiceOrderDetailComponent implements OnInit {
     this.orderId = this.route.snapshot.paramMap.get('id');
     if (this.orderId) {
       this.loadOrderDetails();
+      this.loadDirectCosts();
     }
+  }
+
+  loadDirectCosts(): void {
+    if (!this.orderId) return;
+    this.isLoadingCosts = true;
+    this.directCostService.getCostsByOrder(this.orderId).subscribe({
+      next: (costs) => {
+        this.directCostsDataSource.data = costs;
+        this.isLoadingCosts = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error(err);
+        this.isLoadingCosts = false;
+      }
+    });
   }
 
   loadOrderDetails(): void {
@@ -164,4 +197,57 @@ export class ServiceOrderDetailComponent implements OnInit {
       });
     }
   }
+
+  // --- MÉTODOS DE COSTOS DIRECTOS ---
+
+  openDirectCostDialog(cost?: DirectCost): void {
+    const dialogRef = this.dialog.open(DirectCostDialogComponent, {
+      width: '600px',
+      data: { cost, serviceOrderId: this.orderId }
+    });
+
+    dialogRef.afterClosed().subscribe((result: any) => {
+      if (result) {
+        if (result.id) {
+          this.directCostService.updateCost(result.id, result).subscribe({
+            next: () => {
+              this.snackBar.open('Costo actualizado.', 'Cerrar', { duration: 3000 });
+              this.loadDirectCosts();
+            },
+            error: (err) => {
+              console.error(err);
+              this.snackBar.open('Error al actualizar costo.', 'Cerrar', { duration: 4000 });
+            }
+          });
+        } else {
+          this.directCostService.createCost(result).subscribe({
+            next: () => {
+              this.snackBar.open('Costo registrado.', 'Cerrar', { duration: 3000 });
+              this.loadDirectCosts();
+            },
+            error: (err) => {
+              console.error(err);
+              this.snackBar.open('Error al registrar costo.', 'Cerrar', { duration: 4000 });
+            }
+          });
+        }
+      }
+    });
+  }
+
+  deleteDirectCost(costId: string): void {
+    if (confirm('¿Estás seguro de que deseas eliminar este costo directo?')) {
+      this.directCostService.deleteCost(costId).subscribe({
+        next: () => {
+          this.snackBar.open('Costo directo eliminado.', 'Cerrar', { duration: 3000 });
+          this.loadDirectCosts();
+        },
+        error: (err) => {
+          console.error(err);
+          this.snackBar.open('Error al eliminar costo directo.', 'Cerrar', { duration: 4000 });
+        }
+      });
+    }
+  }
 }
+

@@ -26,6 +26,10 @@ public class GeoServDbContext : DbContext
     public DbSet<ServiceOrderDocument> ServiceOrderDocuments { get; set; } = null!;
     public DbSet<Currency> Currencies { get; set; } = null!;
     public DbSet<DirectCost> DirectCosts { get; set; } = null!;
+    public DbSet<DirectCostCategory> DirectCostCategories { get; set; } = null!;
+    public DbSet<Provider> Providers { get; set; } = null!;
+    public DbSet<Unit> Units { get; set; } = null!;
+    public DbSet<PaymentMethod> PaymentMethods { get; set; } = null!;
     public DbSet<FixedCostCategory> FixedCostCategories { get; set; } = null!;
     public DbSet<FixedCost> FixedCosts { get; set; } = null!;
     public DbSet<AccountingMovement> AccountingMovements { get; set; } = null!;
@@ -53,7 +57,11 @@ public class GeoServDbContext : DbContext
             .Property(d => d.ActualAmount).HasPrecision(18, 2);
 
         modelBuilder.Entity<DirectCost>()
-            .Property(d => d.Amount).HasPrecision(18, 2);
+            .Property(d => d.Quantity).HasPrecision(18, 2);
+        modelBuilder.Entity<DirectCost>()
+            .Property(d => d.UnitPrice).HasPrecision(18, 2);
+        modelBuilder.Entity<DirectCost>()
+            .Property(d => d.TotalAmount).HasPrecision(18, 2);
 
         modelBuilder.Entity<FixedCost>()
             .Property(f => f.Amount).HasPrecision(18, 2);

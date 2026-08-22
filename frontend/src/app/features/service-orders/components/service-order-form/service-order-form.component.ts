@@ -25,6 +25,8 @@ import { ServiceTypeService } from '../../../service-types/services/service-type
 import { UserService } from '../../../users/services/user.service';
 import { ServiceOrderObservationsComponent } from '../service-order-observations/service-order-observations.component';
 import { CopyOrderDetailsDialogComponent } from '../copy-order-details-dialog/copy-order-details-dialog.component';
+import { CopyBillingDistributionDialogComponent } from '../copy-billing-distribution-dialog/copy-billing-distribution-dialog.component';
+import { CopyOperativeActivitiesDialogComponent } from '../copy-operative-activities-dialog/copy-operative-activities-dialog.component';
 
 @Injectable()
 export class CustomDateAdapter extends NativeDateAdapter {
@@ -519,6 +521,72 @@ export class ServiceOrderFormComponent implements OnInit {
         const currentValue = this.orderForm.get('budgetedTasksDetail')?.value || '';
         const newValue = currentValue ? `${currentValue}\n\n${result}` : result;
         this.orderForm.get('budgetedTasksDetail')?.setValue(newValue);
+      }
+    });
+  }
+
+  openCopyBillingDistributionDialog(): void {
+    const dialogRef = this.dialog.open(CopyBillingDistributionDialogComponent, {
+      width: '600px',
+      disableClose: true
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result && Array.isArray(result) && result.length > 0) {
+        // Remove existing distributions
+        while (this.distributions.length !== 0) {
+          this.distributions.removeAt(0);
+        }
+        
+        // Add new distributions based on result
+        result.forEach(dist => {
+          const group = this.fb.group({
+            distributionConceptId: [dist.distributionConceptId, Validators.required],
+            percentage: [dist.percentage, [Validators.required, Validators.min(0), Validators.max(100)]],
+            expectedAmount: [{ value: 0, disabled: true }],
+            actualAmount: [0]
+          });
+          
+          group.get('percentage')?.valueChanges.subscribe(() => {
+            const finalTotal = this.orderForm.get('totalAmount')?.value || 0;
+            const budget = this.orderForm.get('budgetedAmount')?.value || 0;
+            this.recalculateDistributions(finalTotal, budget);
+          });
+          
+          this.distributions.push(group);
+        });
+        
+        // Trigger calculation
+        this.calculateTotal();
+        this.snackBar.open('Distribución de cobro copiada con éxito', 'Cerrar', { duration: 3000 });
+      }
+    });
+  }
+
+  openCopyOperativeActivitiesDialog(): void {
+    const dialogRef = this.dialog.open(CopyOperativeActivitiesDialogComponent, {
+      width: '600px',
+      disableClose: true
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result && Array.isArray(result) && result.length > 0) {
+        // Remove existing activities
+        while (this.activities.length !== 0) {
+          this.activities.removeAt(0);
+        }
+        
+        // Add new activities based on result
+        result.forEach(act => {
+          this.activities.push(this.fb.group({
+            shortDetail: [act.shortDetail, Validators.required],
+            longDetail: [act.longDetail || ''],
+            status: ['Pendiente'],
+            progressPercentage: [0, [Validators.min(0), Validators.max(100)]]
+          }));
+        });
+        
+        this.snackBar.open('Actividades copiadas con éxito', 'Cerrar', { duration: 3000 });
       }
     });
   }

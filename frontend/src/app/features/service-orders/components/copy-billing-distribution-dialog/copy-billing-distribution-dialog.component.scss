@@ -1,0 +1,35 @@
+.full-width {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.order-number {
+  font-weight: 500;
+}
+
+.client-name {
+  color: var(--text-secondary);
+}
+
+.preview-container {
+  margin-top: 1rem;
+  
+  h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+
+  .preview-box {
+    padding: 1rem;
+    background-color: var(--color-background);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    min-height: 100px;
+    max-height: 250px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+  }
+}

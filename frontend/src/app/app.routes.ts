@@ -20,6 +20,10 @@ export const routes: Routes = [
       { path: 'responsibles', loadComponent: () => import('./features/responsibles/components/responsible-list/responsible-list.component').then(m => m.ResponsibleListComponent) },
       { path: 'responsibles/nuevo', loadComponent: () => import('./features/responsibles/components/responsible-form/responsible-form.component').then(m => m.ResponsibleFormComponent) },
       { path: 'responsibles/editar/:id', loadComponent: () => import('./features/responsibles/components/responsible-form/responsible-form.component').then(m => m.ResponsibleFormComponent) },
+      { path: 'categorias-costos', loadComponent: () => import('./features/direct-cost-categories/components/direct-cost-category-list/direct-cost-category-list.component').then(m => m.DirectCostCategoryListComponent) },
+      { path: 'proveedores', loadComponent: () => import('./features/providers/components/provider-list/provider-list.component').then(m => m.ProviderListComponent) },
+      { path: 'unidades', loadComponent: () => import('./features/units/components/unit-list/unit-list.component').then(m => m.UnitListComponent) },
+      { path: 'medios-pago', loadComponent: () => import('./features/payment-methods/components/payment-method-list/payment-method-list.component').then(m => m.PaymentMethodListComponent) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },

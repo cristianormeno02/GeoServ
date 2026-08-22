@@ -1,0 +1,40 @@
+<h2 mat-dialog-title>Copiar Distribución de Cobro</h2>
+<mat-dialog-content>
+  <p>Busca una orden de servicio previa para copiar su distribución de cobro.</p>
+
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>Buscar por número o cliente</mat-label>
+    <input type="text" matInput [formControl]="searchControl" [matAutocomplete]="auto">
+    <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn" (optionSelected)="onOptionSelected($event)">
+      <mat-option *ngIf="isLoading" class="is-loading">Cargando...</mat-option>
+      <mat-option *ngFor="let order of filteredOrders" [value]="order">
+        <span class="order-number">{{ order.orderNumber }}</span>
+        <small class="client-name" *ngIf="order.clientName"> - {{ order.clientName }}</small>
+      </mat-option>
+    </mat-autocomplete>
+  </mat-form-field>
+
+  <div class="preview-container" *ngIf="selectedOrderNumber">
+    <h4>Conceptos en Orden {{selectedOrderNumber}}:</h4>
+    <div class="preview-box" *ngIf="selectedDistributions.length > 0; else noDistributions">
+      <mat-list>
+        <mat-list-item *ngFor="let dist of selectedDistributions">
+          <span matListItemTitle>{{ dist.conceptName || 'Concepto' }}</span>
+          <span matListItemLine>{{ dist.percentage }}%</span>
+        </mat-list-item>
+      </mat-list>
+    </div>
+    <ng-template #noDistributions>
+      <div class="preview-box">
+        No hay distribución de cobro cargada en esta orden.
+      </div>
+    </ng-template>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancelar</button>
+  <button mat-flat-button color="primary" (click)="onConfirm()" [disabled]="!selectedDistributions || selectedDistributions.length === 0">
+    Confirmar Copia
+  </button>
+</mat-dialog-actions>
