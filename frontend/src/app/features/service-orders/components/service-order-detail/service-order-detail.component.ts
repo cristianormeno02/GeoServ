@@ -94,6 +94,10 @@ export class ServiceOrderDetailComponent implements OnInit {
     });
   }
 
+  getTotalCosts(): number {
+    return this.directCostsDataSource.data.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0);
+  }
+
   loadOrderDetails(): void {
     this.isLoading = true;
     console.log('Iniciando carga de orden:', this.orderId);

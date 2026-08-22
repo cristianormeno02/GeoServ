@@ -623,6 +623,10 @@ export class ServiceOrderFormComponent implements OnInit {
     });
   }
 
+  getTotalCosts(): number {
+    return this.directCostsDataSource.data.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0);
+  }
+
   openDirectCostDialog(cost?: DirectCost): void {
     const dialogRef = this.dialog.open(DirectCostDialogComponent, {
       width: '600px',
