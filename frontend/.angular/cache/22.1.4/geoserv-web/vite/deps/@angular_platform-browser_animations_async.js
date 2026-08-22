@@ -1,5 +1,5 @@
-import { Dc as InjectionToken, Dl as ɵɵdefineInjectable, Fn as Injectable, Hl as _defineProperty, Ic as NgZone, Oc as Injector, Ti as performanceMarkFeature, Ui as setClassMetadata, Wc as RuntimeError, ar as RendererFactory2, cl as inject, hc as DOCUMENT, mc as ChangeDetectionScheduler, ml as makeEnvironmentProviders, qo as ɵɵinvalidFactory, uc as ANIMATION_MODULE_TYPE } from "./core-Dxk3qgKa.js";
-import { r as DomRendererFactory2 } from "./_dom_renderer-chunk-BKd414PZ.js";
+import { Dc as InjectionToken, Dl as ɵɵdefineInjectable, Fn as Injectable, Hl as _defineProperty, Ic as NgZone, Oc as Injector, Ti as performanceMarkFeature, Ui as setClassMetadata, Wc as RuntimeError, ar as RendererFactory2, cl as inject, hc as DOCUMENT, mc as ChangeDetectionScheduler, ml as makeEnvironmentProviders, qo as ɵɵinvalidFactory, uc as ANIMATION_MODULE_TYPE } from "./core-_xwmo-Ov.js";
+import { r as DomRendererFactory2 } from "./_dom_renderer-chunk-DKbZAtZs.js";
 //#region node_modules/@angular/platform-browser/fesm2022/animations-async.mjs
 /**
 * @license Angular v22.1.2
@@ -33,7 +33,7 @@ var AsyncAnimationRendererFactory = class {
 	loadImpl() {
 		const loadFn = () => {
 			var _this$moduleImpl;
-			return (_this$moduleImpl = this.moduleImpl) !== null && _this$moduleImpl !== void 0 ? _this$moduleImpl : import("./browser-D-Yrqssg.js").then((m) => m);
+			return (_this$moduleImpl = this.moduleImpl) !== null && _this$moduleImpl !== void 0 ? _this$moduleImpl : import("./browser-oAi3LMSp.js").then((m) => m);
 		};
 		let moduleImplPromise;
 		if (this.loadingSchedulerFn) moduleImplPromise = this.loadingSchedulerFn(loadFn);

@@ -215,9 +215,8 @@ namespace GeoServ.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<decimal>("Amount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("Date")
                         .HasColumnType("timestamp with time zone");
@@ -226,19 +225,78 @@ namespace GeoServ.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Observations")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("PaidById")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("PaymentMethodId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ProviderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
                     b.Property<Guid>("RegisteredByUserId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("ServiceOrderId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid?>("UnitId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("PaidById");
+
+                    b.HasIndex("PaymentMethodId");
+
+                    b.HasIndex("ProviderId");
 
                     b.HasIndex("RegisteredByUserId");
 
                     b.HasIndex("ServiceOrderId");
 
+                    b.HasIndex("UnitId");
+
                     b.ToTable("DirectCosts");
+                });
+
+            modelBuilder.Entity("GeoServ.Api.Domain.Entities.DirectCostCategory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DirectCostCategories");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.DistributionConcept", b =>
@@ -407,6 +465,24 @@ namespace GeoServ.Api.Migrations
                         });
                 });
 
+            modelBuilder.Entity("GeoServ.Api.Domain.Entities.PaymentMethod", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PaymentMethods");
+                });
+
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.Project", b =>
                 {
                     b.Property<Guid>("Id")
@@ -426,6 +502,24 @@ namespace GeoServ.Api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Projects");
+                });
+
+            modelBuilder.Entity("GeoServ.Api.Domain.Entities.Provider", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Providers");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.Responsible", b =>
@@ -710,6 +804,8 @@ namespace GeoServ.Api.Migrations
 
                     b.HasIndex("ServiceOrderId");
 
+                    b.HasIndex("UserId");
+
                     b.ToTable("ServiceOrderObservations");
                 });
 
@@ -850,6 +946,24 @@ namespace GeoServ.Api.Migrations
                         });
                 });
 
+            modelBuilder.Entity("GeoServ.Api.Domain.Entities.Unit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Units");
+                });
+
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -921,6 +1035,24 @@ namespace GeoServ.Api.Migrations
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.DirectCost", b =>
                 {
+                    b.HasOne("GeoServ.Api.Domain.Entities.DirectCostCategory", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GeoServ.Api.Domain.Entities.Responsible", "PaidBy")
+                        .WithMany()
+                        .HasForeignKey("PaidById");
+
+                    b.HasOne("GeoServ.Api.Domain.Entities.PaymentMethod", "PaymentMethod")
+                        .WithMany()
+                        .HasForeignKey("PaymentMethodId");
+
+                    b.HasOne("GeoServ.Api.Domain.Entities.Provider", "Provider")
+                        .WithMany()
+                        .HasForeignKey("ProviderId");
+
                     b.HasOne("GeoServ.Api.Domain.Entities.User", "RegisteredByUser")
                         .WithMany()
                         .HasForeignKey("RegisteredByUserId")
@@ -933,9 +1065,23 @@ namespace GeoServ.Api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("GeoServ.Api.Domain.Entities.Unit", "Unit")
+                        .WithMany()
+                        .HasForeignKey("UnitId");
+
+                    b.Navigation("Category");
+
+                    b.Navigation("PaidBy");
+
+                    b.Navigation("PaymentMethod");
+
+                    b.Navigation("Provider");
+
                     b.Navigation("RegisteredByUser");
 
                     b.Navigation("ServiceOrder");
+
+                    b.Navigation("Unit");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.FixedCost", b =>
@@ -1054,7 +1200,15 @@ namespace GeoServ.Api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("GeoServ.Api.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("ServiceOrder");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.ServiceOrderResponsible", b =>

@@ -1,9 +1,10 @@
-import { Hl as _defineProperty, Ol as ɵɵdefineInjector, Ui as setClassMetadata, no as ɵɵdefineNgModule, qn as NgModule } from "./core-Dxk3qgKa.js";
-import { t as BidiModule } from "./bidi-Cm_j3zdY.js";
-import { c as ObserversModule } from "./a11y-Cf2vPsCw.js";
-import "./_animation-chunk-DPPrplCe.js";
-import "./platform-BIAD7E5M.js";
-import { a as MAT_SUFFIX, c as MatFormFieldControl, d as MatPrefix, f as MatSuffix, h as getMatFormFieldPlaceholderConflictError, i as MAT_PREFIX, l as MatHint, m as getMatFormFieldMissingControlError, n as MAT_FORM_FIELD, o as MatError, p as getMatFormFieldDuplicatedHintError, r as MAT_FORM_FIELD_DEFAULT_OPTIONS, s as MatFormField, t as MAT_ERROR, u as MatLabel } from "./_form-field-chunk-DPGmx1ub.js";
+import { Hl as _defineProperty, Ol as ɵɵdefineInjector, Ui as setClassMetadata, no as ɵɵdefineNgModule, qn as NgModule } from "./core-_xwmo-Ov.js";
+import { t as BidiModule } from "./bidi-DuFmUtxN.js";
+import { c as ObserversModule } from "./a11y-Du-bg0Ot.js";
+import "./_animation-chunk-B2bbYTBF.js";
+import "./platform-9eNjz43a.js";
+import "./observers-private-K6nsNrJH.js";
+import { a as MAT_SUFFIX, c as MatFormFieldControl, d as MatPrefix, f as MatSuffix, h as getMatFormFieldPlaceholderConflictError, i as MAT_PREFIX, l as MatHint, m as getMatFormFieldMissingControlError, n as MAT_FORM_FIELD, o as MatError, p as getMatFormFieldDuplicatedHintError, r as MAT_FORM_FIELD_DEFAULT_OPTIONS, s as MatFormField, t as MAT_ERROR, u as MatLabel } from "./_form-field-chunk-DExKTSZ0.js";
 //#region node_modules/@angular/material/fesm2022/form-field.mjs
 var _MatFormFieldModule;
 var MatFormFieldModule = class {};
