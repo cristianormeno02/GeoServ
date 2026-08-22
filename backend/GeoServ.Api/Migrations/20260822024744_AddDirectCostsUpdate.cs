@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -195,6 +195,8 @@ namespace GeoServ.Api.Migrations
                 column: "UnitId",
                 principalTable: "Units",
                 principalColumn: "Id");
+
+            migrationBuilder.Sql("DELETE FROM \"ServiceOrderObservations\" WHERE \"UserId\" NOT IN (SELECT \"Id\" FROM \"Users\");");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_ServiceOrderObservations_Users_UserId",
