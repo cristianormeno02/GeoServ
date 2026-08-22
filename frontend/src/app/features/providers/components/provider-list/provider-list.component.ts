@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatTableModule } from '@angular/material/table';
+import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -19,7 +19,7 @@ import { ProviderDialogComponent } from '../provider-dialog/provider-dialog.comp
         <h2>Proveedores</h2>
         <button mat-raised-button color="primary" (click)="openDialog()"><mat-icon>add</mat-icon> Nuevo Proveedor</button>
       </div>
-      <table mat-table [dataSource]="items" class="mat-elevation-z8" style="width:100%;">
+      <table mat-table [dataSource]="dataSource" class="mat-elevation-z8" style="width:100%;">
         <ng-container matColumnDef="name"><th mat-header-cell *matHeaderCellDef>Nombre</th><td mat-cell *matCellDef="let item">{{item.name}}</td></ng-container>
         <ng-container matColumnDef="isActive"><th mat-header-cell *matHeaderCellDef>Activo</th><td mat-cell *matCellDef="let item">{{item.isActive ? 'Sí' : 'No'}}</td></ng-container>
         <ng-container matColumnDef="actions"><th mat-header-cell *matHeaderCellDef>Acciones</th>
@@ -35,13 +35,17 @@ import { ProviderDialogComponent } from '../provider-dialog/provider-dialog.comp
   `
 })
 export class ProviderListComponent implements OnInit {
-  items: Provider[] = [];
+  dataSource = new MatTableDataSource<Provider>([]);
   service = inject(ProviderService);
   dialog = inject(MatDialog);
   snack = inject(MatSnackBar);
 
   ngOnInit() { this.load(); }
-  load() { this.service.getProviders().subscribe(res => this.items = res); }
+  load() {
+    this.service.getProviders().subscribe(res => {
+      this.dataSource.data = res;
+    });
+  }
 
   openDialog(provider?: Provider) {
     this.dialog.open(ProviderDialogComponent, { width: '400px', data: { provider } }).afterClosed().subscribe(res => {
