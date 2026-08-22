@@ -660,7 +660,8 @@ export class ServiceOrderFormComponent implements OnInit {
 
   deleteDirectCost(costId: string): void {
     if (confirm('¿Estás seguro de que deseas eliminar este costo directo?')) {
-      this.directCostService.deleteCost(costId).subscribe({
+      if (!this.orderId) return;
+      this.directCostService.deleteCost(this.orderId, costId).subscribe({
         next: () => {
           this.snackBar.open('Costo directo eliminado.', 'Cerrar', { duration: 3000 });
           this.loadDirectCosts();
