@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 
 import { DirectCost, CreateDirectCostDto } from '../../models/direct-cost.model';
 import { DirectCostCategoryService } from '../../../direct-cost-categories/services/direct-cost-category.service';
@@ -20,8 +21,10 @@ import { PaymentMethodService } from '../../../payment-methods/services/payment-
   standalone: true,
   imports: [
     CommonModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule,
-    MatInputModule, MatButtonModule, MatSelectModule, MatDatepickerModule, MatNativeDateModule
+    MatInputModule, MatButtonModule, MatSelectModule, MatDatepickerModule, MatNativeDateModule,
+    NgxMaskDirective
   ],
+  providers: [provideNgxMask()],
   template: `
     <h2 mat-dialog-title>{{ data?.cost ? 'Editar' : 'Registrar' }} Costo Directo</h2>
     <mat-dialog-content>
@@ -50,7 +53,7 @@ import { PaymentMethodService } from '../../../payment-methods/services/payment-
         <div style="display:flex; gap:10px;">
           <mat-form-field appearance="outline" style="flex:1">
             <mat-label>Cantidad</mat-label>
-            <input matInput type="number" formControlName="quantity" required>
+            <input matInput type="text" formControlName="quantity" required mask="separator.2" thousandSeparator="." decimalMarker="," style="text-align: right;">
           </mat-form-field>
           <mat-form-field appearance="outline" style="flex:1">
             <mat-label>Unidad</mat-label>
@@ -64,11 +67,11 @@ import { PaymentMethodService } from '../../../payment-methods/services/payment-
         <div style="display:flex; gap:10px;">
           <mat-form-field appearance="outline" style="flex:1">
             <mat-label>Precio Unitario</mat-label>
-            <input matInput type="number" formControlName="unitPrice" required>
+            <input matInput type="text" formControlName="unitPrice" required mask="separator.2" thousandSeparator="." decimalMarker="," style="text-align: right;">
           </mat-form-field>
           <mat-form-field appearance="outline" style="flex:1">
             <mat-label>Total (Calculado)</mat-label>
-            <input matInput type="number" formControlName="totalAmount" readonly>
+            <input matInput type="text" formControlName="totalAmount" readonly mask="separator.2" thousandSeparator="." decimalMarker="," style="text-align: right; font-weight: bold;">
           </mat-form-field>
         </div>
 

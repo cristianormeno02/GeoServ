@@ -57,7 +57,7 @@ export class ServiceOrderDetailComponent implements OnInit {
 
   // Variables para Costos Directos
   directCostsDataSource = new MatTableDataSource<DirectCost>();
-  directCostsColumns: string[] = ['category', 'provider', 'description', 'quantity', 'unit', 'unitPrice', 'totalAmount', 'actions'];
+  directCostsColumns: string[] = ['category', 'provider', 'description', 'quantity', 'unit', 'unitPrice', 'totalAmount'];
   isLoadingCosts = false;
 
   constructor(
@@ -200,54 +200,5 @@ export class ServiceOrderDetailComponent implements OnInit {
 
   // --- MÉTODOS DE COSTOS DIRECTOS ---
 
-  openDirectCostDialog(cost?: DirectCost): void {
-    const dialogRef = this.dialog.open(DirectCostDialogComponent, {
-      width: '600px',
-      data: { cost, serviceOrderId: this.orderId }
-    });
-
-    dialogRef.afterClosed().subscribe((result: any) => {
-      if (result) {
-        if (result.id) {
-          this.directCostService.updateCost(result.id, result).subscribe({
-            next: () => {
-              this.snackBar.open('Costo actualizado.', 'Cerrar', { duration: 3000 });
-              this.loadDirectCosts();
-            },
-            error: (err) => {
-              console.error(err);
-              this.snackBar.open('Error al actualizar costo.', 'Cerrar', { duration: 4000 });
-            }
-          });
-        } else {
-          this.directCostService.createCost(result).subscribe({
-            next: () => {
-              this.snackBar.open('Costo registrado.', 'Cerrar', { duration: 3000 });
-              this.loadDirectCosts();
-            },
-            error: (err) => {
-              console.error(err);
-              this.snackBar.open('Error al registrar costo.', 'Cerrar', { duration: 4000 });
-            }
-          });
-        }
-      }
-    });
-  }
-
-  deleteDirectCost(costId: string): void {
-    if (confirm('¿Estás seguro de que deseas eliminar este costo directo?')) {
-      this.directCostService.deleteCost(costId).subscribe({
-        next: () => {
-          this.snackBar.open('Costo directo eliminado.', 'Cerrar', { duration: 3000 });
-          this.loadDirectCosts();
-        },
-        error: (err) => {
-          console.error(err);
-          this.snackBar.open('Error al eliminar costo directo.', 'Cerrar', { duration: 4000 });
-        }
-      });
-    }
-  }
+  // Costos directos is now read-only in this view
 }
-
