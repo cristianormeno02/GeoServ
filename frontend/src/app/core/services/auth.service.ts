@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 
 export interface LoginResponse {
   token: string;
+  refreshToken: string;
   user: {
     id: string;
     name: string;
@@ -12,21 +13,22 @@ export interface LoginResponse {
   };
 }
 
+export interface RefreshTokenResponse {
+  token: string;
+  refreshToken: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private readonly TOKEN_KEY = 'jwt_token';
+  private readonly REFRESH_TOKEN_KEY = 'refresh_token';
   private readonly USER_NAME_KEY = 'user_name';
+  private readonly REMEMBER_ME_KEY = 'remember_me';
 
   constructor(private http: HttpClient) {}
 
-  /**
-   * Realiza la petición de login al backend
-   * @param credentials Datos de inicio de sesión (email, password, etc)
-   * @param tenantId ID del tenant/subdominio actual
-   * @param rememberMe Indica si la sesión debe persistir al cerrar el navegador
-   */
   login(credentials: any, tenantId: string, rememberMe: boolean = false): Observable<LoginResponse> {
     const headers = new HttpHeaders({
       'X-Tenant-Id': tenantId
@@ -35,7 +37,11 @@ export class AuthService {
     return this.http.post<LoginResponse>(`${environment.apiUrl}/login`, credentials, { headers }).pipe(
       tap(response => {
         if (response && response.token) {
+          localStorage.setItem(this.REMEMBER_ME_KEY, rememberMe ? 'true' : 'false');
           this.setToken(response.token, rememberMe);
+          if (response.refreshToken) {
+            this.setRefreshToken(response.refreshToken, rememberMe);
+          }
           if (response.user && response.user.name) {
              this.setUserName(response.user.name, rememberMe);
           }
@@ -43,12 +49,11 @@ export class AuthService {
       })
     );
   }
+  
+  refreshTokenApi(token: string, refreshToken: string): Observable<RefreshTokenResponse> {
+    return this.http.post<RefreshTokenResponse>(`${environment.apiUrl}/refresh-token`, { token, refreshToken });
+  }
 
-  /**
-   * Guarda el token en el almacenamiento correspondiente
-   * @param token El JWT a almacenar
-   * @param rememberMe Si es true usa localStorage, si es false usa sessionStorage
-   */
   setToken(token: string, rememberMe: boolean): void {
     if (rememberMe) {
       localStorage.setItem(this.TOKEN_KEY, token);
@@ -56,6 +61,16 @@ export class AuthService {
     } else {
       sessionStorage.setItem(this.TOKEN_KEY, token);
       localStorage.removeItem(this.TOKEN_KEY);
+    }
+  }
+  
+  setRefreshToken(refreshToken: string, rememberMe: boolean): void {
+    if (rememberMe) {
+      localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
+      sessionStorage.removeItem(this.REFRESH_TOKEN_KEY);
+    } else {
+      sessionStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
+      localStorage.removeItem(this.REFRESH_TOKEN_KEY);
     }
   }
 
@@ -69,11 +84,16 @@ export class AuthService {
     }
   }
 
-  /**
-   * Obtiene el token, buscando primero en localStorage y luego en sessionStorage
-   */
   getToken(): string | null {
     return localStorage.getItem(this.TOKEN_KEY) || sessionStorage.getItem(this.TOKEN_KEY);
+  }
+  
+  getRefreshToken(): string | null {
+    return localStorage.getItem(this.REFRESH_TOKEN_KEY) || sessionStorage.getItem(this.REFRESH_TOKEN_KEY);
+  }
+  
+  isRememberMe(): boolean {
+    return localStorage.getItem(this.REMEMBER_ME_KEY) === 'true';
   }
 
   getUserName(): string {
@@ -82,7 +102,6 @@ export class AuthService {
       return storedName;
     }
     
-    // Fallback: intentar extraer el nombre o email del token si no hay nombre guardado
     const token = this.getToken();
     if (token) {
       try {
@@ -90,7 +109,6 @@ export class AuthService {
         const nameClaim = payload.name || payload.unique_name || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'];
         if (nameClaim) return nameClaim;
         
-        // ClaimTypes.Email en .NET
         return payload.email || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || 'Usuario';
       } catch (e) {
         return 'Usuario';
@@ -100,19 +118,16 @@ export class AuthService {
     return 'Usuario';
   }
 
-  /**
-   * Elimina el token de ambos almacenamientos y cierra la sesión
-   */
   logout(): void {
     localStorage.removeItem(this.TOKEN_KEY);
     sessionStorage.removeItem(this.TOKEN_KEY);
+    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
+    sessionStorage.removeItem(this.REFRESH_TOKEN_KEY);
     localStorage.removeItem(this.USER_NAME_KEY);
     sessionStorage.removeItem(this.USER_NAME_KEY);
+    localStorage.removeItem(this.REMEMBER_ME_KEY);
   }
 
-  /**
-   * Verifica si el usuario está autenticado comprobando si existe un token
-   */
   isLoggedIn(): boolean {
     return !!this.getToken();
   }

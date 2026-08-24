@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace GeoServ.Api.Endpoints;
@@ -14,22 +15,15 @@ public static class AuthEndpoints
     {
         app.MapPost("/api/login", async (LoginRequest request, GeoServDbContext context) =>
         {
-            // Nota: Aquí estamos usando el context que YA está configurado 
-            // apuntando a la base de datos correcta porque el ITenantService 
-            // leyó el header "X-Tenant-Id" (que el front debe enviar en esta petición)
-            
             var user = await context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
             if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
                 return Results.Unauthorized();
             }
 
-            // Generar Token
             var jwtSettings = configuration.GetSection("Jwt");
             var key = Encoding.ASCII.GetBytes(jwtSettings["Key"] ?? throw new InvalidOperationException("Jwt Key is missing"));
             
-            // Para poder propagar el tenant en las futuras peticiones, agregamos el claim.
-            // El TenantId viene en el request (o a través del ITenantService que lo sacó del Header)
             var tenantId = request.TenantId;
             
             var tokenDescriptor = new SecurityTokenDescriptor
@@ -39,7 +33,7 @@ public static class AuthEndpoints
                     new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                     new Claim(ClaimTypes.Email, user.Email),
                     new Claim(ClaimTypes.Name, user.Name ?? ""),
-                    new Claim("TenantId", tenantId) // Inyectamos el tenant en el token
+                    new Claim("TenantId", tenantId)
                 }),
                 Expires = DateTime.UtcNow.AddHours(8),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
@@ -50,14 +44,118 @@ public static class AuthEndpoints
             var tokenHandler = new JwtSecurityTokenHandler();
             var token = tokenHandler.CreateToken(tokenDescriptor);
 
+            var refreshToken = GenerateRefreshToken();
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7); // 7 days for refresh token
+            await context.SaveChangesAsync();
+
             return Results.Ok(new
             {
                 Token = tokenHandler.WriteToken(token),
+                RefreshToken = refreshToken,
                 User = new { user.Id, user.Name, user.Email }
             });
         })
         .WithName("Login")
         .WithOpenApi();
+
+        app.MapPost("/api/refresh-token", async (RefreshTokenRequest request, GeoServDbContext context) =>
+        {
+            var principal = GetPrincipalFromExpiredToken(request.Token, configuration);
+            if (principal == null)
+            {
+                return Results.Unauthorized();
+            }
+
+            var userIdString = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userIdString == null || !Guid.TryParse(userIdString, out Guid userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            var user = await context.Users.FindAsync(userId);
+            if (user == null || user.RefreshToken != request.RefreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+            {
+                return Results.Unauthorized();
+            }
+
+            var jwtSettings = configuration.GetSection("Jwt");
+            var key = Encoding.ASCII.GetBytes(jwtSettings["Key"] ?? throw new InvalidOperationException("Jwt Key is missing"));
+            
+            var tenantIdClaim = principal.FindFirst("TenantId");
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim(ClaimTypes.Name, user.Name ?? ""),
+                    new Claim("TenantId", tenantIdClaim?.Value ?? "")
+                }),
+                Expires = DateTime.UtcNow.AddHours(8),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
+                Issuer = jwtSettings["Issuer"],
+                Audience = jwtSettings["Audience"]
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var newToken = tokenHandler.CreateToken(tokenDescriptor);
+            
+            var newRefreshToken = GenerateRefreshToken();
+            user.RefreshToken = newRefreshToken;
+            await context.SaveChangesAsync();
+
+            return Results.Ok(new
+            {
+                Token = tokenHandler.WriteToken(newToken),
+                RefreshToken = newRefreshToken
+            });
+        })
+        .WithName("RefreshToken")
+        .WithOpenApi();
+    }
+
+    private static string GenerateRefreshToken()
+    {
+        var randomNumber = new byte[32];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(randomNumber);
+        return Convert.ToBase64String(randomNumber);
+    }
+
+    private static ClaimsPrincipal? GetPrincipalFromExpiredToken(string token, IConfiguration configuration)
+    {
+        var jwtSettings = configuration.GetSection("Jwt");
+        var key = Encoding.ASCII.GetBytes(jwtSettings["Key"] ?? throw new InvalidOperationException("Jwt Key is missing"));
+
+        var tokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateAudience = true,
+            ValidAudience = jwtSettings["Audience"],
+            ValidateIssuer = true,
+            ValidIssuer = jwtSettings["Issuer"],
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(key),
+            ValidateLifetime = false // Here we are saying that we don't care about the token's expiration date
+        };
+
+        var tokenHandler = new JwtSecurityTokenHandler();
+        try
+        {
+            var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken);
+            if (securityToken is not JwtSecurityToken jwtSecurityToken || 
+                !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+            {
+                return null;
+            }
+
+            return principal;
+        }
+        catch
+        {
+            return null;
+        }
     }
 }
 
@@ -65,5 +163,11 @@ public class LoginRequest
 {
     public string Email { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
-    public string TenantId { get; set; } = string.Empty; // Ej. "geocobre"
+    public string TenantId { get; set; } = string.Empty;
+}
+
+public class RefreshTokenRequest
+{
+    public string Token { get; set; } = string.Empty;
+    public string RefreshToken { get; set; } = string.Empty;
 }
