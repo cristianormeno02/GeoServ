@@ -1,7 +1,7 @@
 <div class="page-container">
   <div class="page-header">
     <h1>Cuentas Bancarias y Cajas</h1>
-    <button mat-raised-button color="primary">
+    <button mat-raised-button color="primary" (click)="openAddDialog()">
       <mat-icon>add</mat-icon>
       Nueva Cuenta
     </button>
@@ -23,7 +23,12 @@
 
         <ng-container matColumnDef="accountType">
           <th mat-header-cell *matHeaderCellDef> Tipo </th>
-          <td mat-cell *matCellDef="let element"> {{element.accountType}} </td>
+          <td mat-cell *matCellDef="let element">
+            <span *ngIf="element.accountType === 'BankAccount'">Cuenta Bancaria</span>
+            <span *ngIf="element.accountType === 'Cash'">Efectivo</span>
+            <span *ngIf="element.accountType === 'DigitalWallet'">Billetera Virtual</span>
+            <span *ngIf="!['BankAccount', 'Cash', 'DigitalWallet'].includes(element.accountType)">{{element.accountType}}</span>
+          </td>
         </ng-container>
 
         <ng-container matColumnDef="currencyName">
@@ -43,10 +48,10 @@
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef> Acciones </th>
           <td mat-cell *matCellDef="let element">
-            <button mat-icon-button color="primary">
+            <button mat-icon-button color="primary" (click)="openEditDialog(element)" title="Editar">
               <mat-icon>edit</mat-icon>
             </button>
-            <button mat-icon-button color="warn">
+            <button mat-icon-button color="warn" (click)="deleteAccount(element)" title="Eliminar">
               <mat-icon>delete</mat-icon>
             </button>
           </td>
