@@ -17,7 +17,7 @@ export interface FinancialAccount {
   providedIn: 'root'
 })
 export class FinancialAccountService {
-  private apiUrl = `${environment.apiUrl}/api/financial-accounts`;
+  private apiUrl = `${environment.apiUrl}/financial-accounts`;
 
   constructor(private http: HttpClient) {}
 
