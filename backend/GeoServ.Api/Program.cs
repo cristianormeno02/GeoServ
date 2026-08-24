@@ -132,6 +132,8 @@ GeoServ.Api.Endpoints.ResponsibleEndpoints.MapResponsibleEndpoints(app);
 GeoServ.Api.Endpoints.DirectCostMasterEndpoints.MapDirectCostMasterEndpoints(app);
 GeoServ.Api.Endpoints.DirectCostEndpoints.MapDirectCostEndpoints(app);
 GeoServ.Api.Endpoints.FinancialAccountEndpoints.MapFinancialAccountEndpoints(app);
+GeoServ.Api.Endpoints.AssetEndpoints.MapAssetEndpoints(app);
+GeoServ.Api.Endpoints.CheckEndpoints.MapCheckEndpoints(app);
 
 var summaries = new[]
 {
