@@ -34,6 +34,9 @@ public class GeoServDbContext : DbContext
     public DbSet<FixedCost> FixedCosts { get; set; } = null!;
     public DbSet<AccountingMovement> AccountingMovements { get; set; } = null!;
     public DbSet<ServiceOrderObservation> ServiceOrderObservations { get; set; } = null!;
+    public DbSet<FinancialAccount> FinancialAccounts { get; set; } = null!;
+    public DbSet<Asset> Assets { get; set; } = null!;
+    public DbSet<Check> Checks { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -68,6 +71,18 @@ public class GeoServDbContext : DbContext
 
         modelBuilder.Entity<AccountingMovement>()
             .Property(a => a.Amount).HasPrecision(18, 2);
+
+        modelBuilder.Entity<Asset>()
+            .Property(a => a.PurchasePrice).HasPrecision(18, 2);
+
+        modelBuilder.Entity<Check>()
+            .Property(c => c.Amount).HasPrecision(18, 2);
+
+        modelBuilder.Entity<AccountingMovement>()
+            .HasOne(am => am.ServiceOrder)
+            .WithMany()
+            .HasForeignKey(am => am.ServiceOrderId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // Índices únicos
         modelBuilder.Entity<User>()
