@@ -26,6 +26,10 @@ export const routes: Routes = [
       { path: 'proveedores', loadComponent: () => import('./features/providers/components/provider-list/provider-list.component').then(m => m.ProviderListComponent) },
       { path: 'unidades', loadComponent: () => import('./features/units/components/unit-list/unit-list.component').then(m => m.UnitListComponent) },
       { path: 'medios-pago', loadComponent: () => import('./features/payment-methods/components/payment-method-list/payment-method-list.component').then(m => m.PaymentMethodListComponent) },
+      { path: 'movimientos', loadComponent: () => import('./features/finance/movimientos/movimientos').then(m => m.Movimientos) },
+      { path: 'cuentas-financieras', loadComponent: () => import('./features/finance/cuentas-financieras/cuentas-financieras').then(m => m.CuentasFinancieras) },
+      { path: 'cheques', loadComponent: () => import('./features/finance/cheques/cheques').then(m => m.Cheques) },
+      { path: 'activos', loadComponent: () => import('./features/finance/activos/activos').then(m => m.Activos) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },
