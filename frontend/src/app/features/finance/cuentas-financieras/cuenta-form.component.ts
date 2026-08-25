@@ -105,7 +105,7 @@ export class CuentaFormComponent implements OnInit {
       name: [data?.account?.name || '', Validators.required],
       accountType: [data?.account?.accountType || '', Validators.required],
       accountNumber: [data?.account?.accountNumber || ''],
-      currencyId: [data?.account?.currencyId || '', Validators.required],
+      currencyId: [data?.account?.currencyId?.toLowerCase() || '', Validators.required],
       isActive: [data?.account?.isActive ?? true]
     });
   }
@@ -122,9 +122,9 @@ export class CuentaFormComponent implements OnInit {
     // Actually, I'll fetch them from an endpoint. If it doesn't exist, this might fail, so let me quickly add hardcoded fallbacks or create the endpoint.
     // Looking at seed data in GeoServDbContext:
     this.currencies = [
-      { id: 'F1111111-1111-1111-1111-111111111111', code: 'ARS', name: 'Peso Argentino' },
-      { id: 'F2222222-2222-2222-2222-222222222222', code: 'USD', name: 'Dólar Estadounidense' },
-      { id: 'F3333333-3333-3333-3333-333333333333', code: 'CLP', name: 'Peso Chileno' }
+      { id: 'f1111111-1111-1111-1111-111111111111', code: 'ARS', name: 'Peso Argentino' },
+      { id: 'f2222222-2222-2222-2222-222222222222', code: 'USD', name: 'Dólar Estadounidense' },
+      { id: 'f3333333-3333-3333-3333-333333333333', code: 'CLP', name: 'Peso Chileno' }
     ];
   }
 
