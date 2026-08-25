@@ -20,6 +20,7 @@ export class SidebarComponent implements OnInit {
     { name: 'Órdenes de Servicio', path: '/ordenes-servicio', icon: 'build' },
     { name: 'Finanzas', path: '/finanzas', icon: 'attach_money' },
     { name: 'Movimientos', path: '/movimientos', icon: 'swap_horiz' },
+    { name: 'Categorías de Movimiento', path: '/categorias-movimiento', icon: 'category' },
     { name: 'Cuentas Bancarias', path: '/cuentas-financieras', icon: 'account_balance' },
     { name: 'Cheques', path: '/cheques', icon: 'receipt_long' },
     { name: 'Activos', path: '/activos', icon: 'precision_manufacturing' },

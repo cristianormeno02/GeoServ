@@ -30,6 +30,7 @@ export const routes: Routes = [
       { path: 'cuentas-financieras', loadComponent: () => import('./features/finance/cuentas-financieras/cuentas-financieras').then(m => m.CuentasFinancieras) },
       { path: 'cheques', loadComponent: () => import('./features/finance/cheques/cheques').then(m => m.Cheques) },
       { path: 'activos', loadComponent: () => import('./features/finance/activos/activos').then(m => m.Activos) },
+      { path: 'categorias-movimiento', loadComponent: () => import('./features/finance/categorias-movimiento/categorias-movimiento').then(m => m.CategoriasMovimiento) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },
