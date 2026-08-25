@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { NgxMaskDirective } from 'ngx-mask';
 import { Check, CheckService } from '../services/check.service';
 
 @Component({
@@ -22,7 +23,8 @@ import { Check, CheckService } from '../services/check.service';
     MatInputModule,
     MatSelectModule,
     MatDatepickerModule,
-    MatNativeDateModule
+    MatNativeDateModule,
+    NgxMaskDirective
   ],
   template: `
     <h2 mat-dialog-title>{{ isEditMode ? 'Editar Cheque' : 'Nuevo Cheque' }}</h2>
@@ -46,7 +48,8 @@ import { Check, CheckService } from '../services/check.service';
 
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Monto</mat-label>
-          <input matInput type="number" formControlName="amount" required>
+          <span matTextPrefix>$&nbsp;</span>
+          <input matInput type="text" formControlName="amount" mask="separator.2" thousandSeparator="." decimalMarker="," class="text-right" required>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width">
@@ -97,6 +100,9 @@ import { Check, CheckService } from '../services/check.service';
     }
     .full-width {
       width: 100%;
+    }
+    .text-right {
+      text-align: right !important;
     }
   `]
 })

@@ -31,12 +31,15 @@ export function initializeAppFactory(authService: AuthService, empresaConfigServ
   };
 }
 
+import { provideEnvironmentNgxMask } from 'ngx-mask';
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideAnimationsAsync(),
     provideHttpClient(withInterceptors([authInterceptor, loadingInterceptor])),
+    provideEnvironmentNgxMask(),
     {
       provide: APP_INITIALIZER,
       useFactory: initializeAppFactory,

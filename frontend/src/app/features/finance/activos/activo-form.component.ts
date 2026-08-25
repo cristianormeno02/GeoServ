@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { NgxMaskDirective } from 'ngx-mask';
 import { Asset, AssetService } from '../services/asset.service';
 
 @Component({
@@ -20,7 +21,8 @@ import { Asset, AssetService } from '../services/asset.service';
     MatFormFieldModule,
     MatInputModule,
     MatDatepickerModule,
-    MatNativeDateModule
+    MatNativeDateModule,
+    NgxMaskDirective
   ],
   template: `
     <h2 mat-dialog-title>{{ isEditMode ? 'Editar Activo' : 'Nuevo Activo' }}</h2>
@@ -39,7 +41,8 @@ import { Asset, AssetService } from '../services/asset.service';
 
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Precio de Compra</mat-label>
-          <input matInput type="number" formControlName="purchasePrice" required>
+          <span matTextPrefix>$&nbsp;</span>
+          <input matInput type="text" formControlName="purchasePrice" mask="separator.2" thousandSeparator="." decimalMarker="," class="text-right" required>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width">
@@ -68,6 +71,9 @@ import { Asset, AssetService } from '../services/asset.service';
     }
     .full-width {
       width: 100%;
+    }
+    .text-right {
+      text-align: right !important;
     }
   `]
 })
