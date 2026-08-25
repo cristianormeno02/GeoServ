@@ -14,6 +14,8 @@ import { NgxMaskDirective } from 'ngx-mask';
 import { Movement, MovementService } from '../services/movement.service';
 import { FinancialAccount, FinancialAccountService } from '../services/financial-account.service';
 
+import { MovementCategoryService } from '../services/movement-category.service';
+
 @Component({
   selector: 'app-movimiento-form',
   standalone: true,
@@ -120,7 +122,7 @@ export class MovimientoFormComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: { movement?: Movement },
     private movementService: MovementService,
     private accountService: FinancialAccountService,
-    private categoryService: import('../services/movement-category.service').MovementCategoryService
+    private categoryService: MovementCategoryService
   ) {
     this.isEditMode = !!data?.movement;
     this.movementForm = this.fb.group({
