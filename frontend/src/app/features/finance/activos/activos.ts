@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -21,7 +21,8 @@ export class Activos implements OnInit {
 
   constructor(
     private assetService: AssetService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -30,7 +31,10 @@ export class Activos implements OnInit {
 
   loadAssets() {
     this.assetService.getAssets().subscribe({
-      next: (data) => this.assets = data,
+      next: (data) => {
+        this.assets = [...data];
+        this.cdr.detectChanges();
+      },
       error: (err) => console.error(err)
     });
   }
