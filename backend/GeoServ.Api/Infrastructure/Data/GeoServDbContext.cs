@@ -10,6 +10,7 @@ public class GeoServDbContext : DbContext
     }
 
     public DbSet<Empresa> Empresas { get; set; } = null!;
+    public DbSet<EmpresaConfiguracion> EmpresaConfiguraciones { get; set; } = null!;
     public DbSet<Role> Roles { get; set; } = null!;
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<Client> Clients { get; set; } = null!;
@@ -86,6 +87,10 @@ public class GeoServDbContext : DbContext
             .OnDelete(DeleteBehavior.Restrict);
 
         // Índices únicos
+        modelBuilder.Entity<EmpresaConfiguracion>()
+            .HasIndex(ec => new { ec.EmpresaId, ec.Key })
+            .IsUnique();
+
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Email)
             .IsUnique();

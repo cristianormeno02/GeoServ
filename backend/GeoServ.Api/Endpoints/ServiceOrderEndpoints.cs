@@ -172,12 +172,39 @@ public static class ServiceOrderEndpoints
         .WithOpenApi();
 
         // 3. Crear Orden de Servicio
-        group.MapPost("/", async (CreateServiceOrderRequest request, GeoServDbContext context) =>
+        group.MapPost("/", async (CreateServiceOrderRequest request, GeoServDbContext context, GeoServ.Api.Infrastructure.Services.IEmpresaConfiguracionService configService) =>
         {
             try 
             {
+                var osNumberFormat = await configService.GetValueAsync("os_number_format");
+                string finalOrderNumber = request.OrderNumber;
+
+                if (osNumberFormat == "auto")
+                {
+                    // Obtener el máximo y sumar 1. (En concurrencia, puede fallar si no hay lock, 
+                    // EF lanzará excepción de unicidad que se podría reintentar).
+                    var maxNumberStr = await context.ServiceOrders
+                        .OrderByDescending(o => o.OrderNumber)
+                        .Select(o => o.OrderNumber)
+                        .FirstOrDefaultAsync();
+
+                    int nextNumber = 1;
+                    if (maxNumberStr != null && int.TryParse(maxNumberStr, out int maxNumber))
+                    {
+                        nextNumber = maxNumber + 1;
+                    }
+                    finalOrderNumber = nextNumber.ToString("D8");
+                }
+                else
+                {
+                    if (string.IsNullOrWhiteSpace(finalOrderNumber))
+                    {
+                        return Results.BadRequest(new { message = "El número de orden es requerido." });
+                    }
+                }
+
                 // Validar unicidad de número de orden
-                if (await context.ServiceOrders.AnyAsync(o => o.OrderNumber == request.OrderNumber))
+                if (await context.ServiceOrders.AnyAsync(o => o.OrderNumber == finalOrderNumber))
                     return Results.BadRequest(new { message = "El número de orden ya existe." });
 
                 // Validar distribuciones al 100%
@@ -195,7 +222,7 @@ public static class ServiceOrderEndpoints
                 var order = new ServiceOrder
                 {
                     Id = Guid.NewGuid(),
-                    OrderNumber = request.OrderNumber,
+                    OrderNumber = finalOrderNumber,
                     ClientId = request.ClientId,
                     ProjectId = request.ProjectId,
                     ServiceTypeId = request.ServiceTypeId,

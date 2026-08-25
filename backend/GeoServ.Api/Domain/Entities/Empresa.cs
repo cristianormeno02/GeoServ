@@ -12,4 +12,6 @@ public class Empresa
     
     // El subdominio identifica la empresa desde la URL (ej. "geocobre")
     public string Subdominio { get; set; } = string.Empty;
+
+    public virtual ICollection<EmpresaConfiguracion> Configuraciones { get; set; } = new List<EmpresaConfiguracion>();
 }

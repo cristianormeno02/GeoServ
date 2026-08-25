@@ -10,6 +10,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<GeoServ.Api.Infrastructure.Services.ITenantService, GeoServ.Api.Infrastructure.Services.TenantService>();
+builder.Services.AddScoped<GeoServ.Api.Infrastructure.Services.IEmpresaConfiguracionService, GeoServ.Api.Infrastructure.Services.EmpresaConfiguracionService>();
 
 builder.Services.AddDbContext<GeoServDbContext>((serviceProvider, options) =>
 {

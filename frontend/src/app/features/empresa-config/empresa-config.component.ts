@@ -12,6 +12,9 @@ import { ChangeDetectorRef } from '@angular/core';
 
 import { EmpresaConfigService, EmpresaConfigData } from './empresa-config.service';
 
+import { forkJoin } from 'rxjs';
+import { MatSelectModule } from '@angular/material/select';
+
 @Component({
   selector: 'app-empresa-config',
   standalone: true,
@@ -23,7 +26,8 @@ import { EmpresaConfigService, EmpresaConfigData } from './empresa-config.servic
     MatButtonModule,
     MatIconModule,
     MatCardModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatSelectModule
   ],
   templateUrl: './empresa-config.component.html',
   styleUrls: ['./empresa-config.component.css']
@@ -36,6 +40,7 @@ export class EmpresaConfigComponent implements OnInit {
   private cdr = inject(ChangeDetectorRef);
 
   configForm: FormGroup;
+  settingsForm: FormGroup;
   selectedFile: File | null = null;
   currentLogoSvg: SafeHtml | null = null;
   isLoading = false;
@@ -49,10 +54,28 @@ export class EmpresaConfigComponent implements OnInit {
       taxId: [''],
       subdominio: ['', Validators.required]
     });
+
+    this.settingsForm = this.fb.group({
+      os_number_format: ['manual']
+    });
   }
 
   ngOnInit(): void {
     this.loadConfig();
+    this.loadSettings();
+  }
+
+  loadSettings() {
+    this.empresaService.getSettings().subscribe({
+      next: (settings: any) => {
+        if (settings['os_number_format']) {
+          this.settingsForm.patchValue({
+            os_number_format: settings['os_number_format'].value
+          });
+        }
+      },
+      error: (err) => console.error(err)
+    });
   }
 
   private prepareSvgUrl(svg: string): SafeHtml {
@@ -108,15 +131,16 @@ export class EmpresaConfigComponent implements OnInit {
     }
   }
 
-  save() {
-    if (this.configForm.invalid) {
+  saveAll() {
+    if (this.configForm.invalid || this.settingsForm.invalid) {
       return;
     }
 
     this.isLoading = true;
+
+    // 1. Preparar datos de empresa
     const formData = new FormData();
     const formValues = this.configForm.value;
-
     formData.append('Nombre', formValues.nombre);
     formData.append('Correo', formValues.correo);
     formData.append('Telefono', formValues.telefono || '');
@@ -128,18 +152,30 @@ export class EmpresaConfigComponent implements OnInit {
       formData.append('LogoFile', this.selectedFile);
     }
 
-    this.empresaService.saveConfig(formData).subscribe({
-      next: (res) => {
-        console.log('Respuesta del servidor al guardar:', res);
+    // 2. Preparar configuraciones adicionales
+    const settings = {
+      os_number_format: {
+        value: this.settingsForm.value.os_number_format,
+        valueType: 'string',
+        description: 'Formato de numeración de órdenes de servicio'
+      }
+    };
+
+    // 3. Ejecutar ambas peticiones en paralelo
+    forkJoin({
+      config: this.empresaService.saveConfig(formData),
+      settings: this.empresaService.updateSettings(settings)
+    }).subscribe({
+      next: (results) => {
         this.isLoading = false;
-        this.showSuccess(res.message || 'Configuración guardada exitosamente');
+        this.showSuccess('Configuraciones guardadas exitosamente');
         this.selectedFile = null;
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('Error capturado en save():', err);
+        console.error('Error capturado en saveAll():', err);
         this.isLoading = false;
-        const errorMsg = err.error?.message || err.error?.title || 'Error al guardar la configuración';
+        const errorMsg = err.error?.message || err.error?.title || 'Error al guardar las configuraciones';
         this.showError(errorMsg);
         this.cdr.detectChanges();
       }

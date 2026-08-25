@@ -9,7 +9,7 @@
         Cargando... <!-- Puedes usar mat-spinner si lo importas -->
       </div>
 
-      <form [formGroup]="configForm" class="config-form" (ngSubmit)="save()">
+      <div [formGroup]="configForm" class="config-form">
         
         <div class="form-grid">
           <!-- Columna Izquierda: Datos de la Empresa -->
@@ -74,13 +74,35 @@
             </div>
           </div>
         </div>
-
-        <div class="actions">
-          <button mat-raised-button color="primary" type="submit" [disabled]="configForm.invalid || isLoading">
-            <mat-icon>save</mat-icon> Guardar
-          </button>
-        </div>
-      </form>
+      </div>
     </mat-card-content>
   </mat-card>
+
+  <mat-card class="form-card mat-elevation-z8" style="margin-top: 20px;">
+    <mat-card-header>
+      <mat-card-title>Configuraciones Adicionales</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div [formGroup]="settingsForm" class="config-form">
+        <div class="form-grid">
+          <div class="form-column">
+            <mat-form-field appearance="outline">
+              <mat-label>Formato de numeración de OS</mat-label>
+              <mat-select formControlName="os_number_format">
+                <mat-option value="manual">Manual</mat-option>
+                <mat-option value="auto">Auto-incremental (8 dígitos)</mat-option>
+              </mat-select>
+              <mat-hint>Si elige auto-incremental no podrá editar el número al crear OS.</mat-hint>
+            </mat-form-field>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <div class="actions" style="margin-top: 20px; text-align: right;">
+    <button mat-raised-button color="primary" (click)="saveAll()" [disabled]="configForm.invalid || settingsForm.invalid || isLoading">
+      <mat-icon>save</mat-icon> Guardar Configuraciones
+    </button>
+  </div>
 </div>

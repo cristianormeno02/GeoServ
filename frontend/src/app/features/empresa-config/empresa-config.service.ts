@@ -27,4 +27,12 @@ export class EmpresaConfigService {
   saveConfig(formData: FormData): Observable<any> {
     return this.http.post(`${this.apiUrl}/inicializar`, formData);
   }
+
+  getSettings(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/settings`);
+  }
+
+  updateSettings(settings: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/settings`, { settings });
+  }
 }

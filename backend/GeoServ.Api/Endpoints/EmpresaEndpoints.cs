@@ -36,6 +36,52 @@ public static class EmpresaEndpoints
         .WithName("GetEmpresaConfig")
         .WithOpenApi();
 
+        group.MapGet("/settings", async (GeoServDbContext context) =>
+        {
+            var empresa = await context.Empresas.Include(e => e.Configuraciones).FirstOrDefaultAsync();
+            if (empresa == null) return Results.NotFound();
+
+            var settings = empresa.Configuraciones.ToDictionary(c => c.Key, c => new { c.Value, c.ValueType, c.Description });
+            return Results.Ok(settings);
+        })
+        .RequireAuthorization()
+        .WithName("GetEmpresaSettings")
+        .WithOpenApi();
+
+        group.MapPut("/settings", async (UpdateSettingsRequest request, GeoServDbContext context, GeoServ.Api.Infrastructure.Services.IEmpresaConfiguracionService configService) =>
+        {
+            try
+            {
+                if (request.Settings.TryGetValue("os_number_format", out var osNumberFormat))
+                {
+                    // Validar si hay OS creadas
+                    var hasOrders = await context.ServiceOrders.AnyAsync();
+                    if (hasOrders)
+                    {
+                        var currentFormat = await configService.GetValueAsync("os_number_format");
+                        if (currentFormat != osNumberFormat.Value)
+                        {
+                            return Results.BadRequest(new { message = "No es posible cambiar el formato de numeración porque el sistema detectó que ya existen Órdenes de Servicio creadas para esta empresa. Esta configuración solo puede modificarse cuando no hay órdenes registradas, a fin de evitar inconsistencias en los números asignados." });
+                        }
+                    }
+                }
+
+                foreach (var setting in request.Settings)
+                {
+                    await configService.SetValueAsync(setting.Key, setting.Value.Value, setting.Value.ValueType, setting.Value.Description);
+                }
+
+                return Results.Ok();
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem(detail: ex.Message);
+            }
+        })
+        .RequireAuthorization()
+        .WithName("UpdateEmpresaSettings")
+        .WithOpenApi();
+
         // Endpoint auxiliar para inicializar la empresa en su propia base de datos
         // NOTA: Para producción este endpoint debería estar protegido o no existir, 
         // usarse scripts u otro mecanismo.
@@ -106,3 +152,7 @@ public class EmpresaInitFormRequest
     public string TaxId { get; set; } = string.Empty;
     public Microsoft.AspNetCore.Http.IFormFile? LogoFile { get; set; }
 }
+
+public record UpdateSettingsRequest(Dictionary<string, SettingValueDto> Settings);
+public record SettingValueDto(string Value, string ValueType = "string", string? Description = null);
+

@@ -22,6 +22,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 
 import { ServiceOrderService } from '../../services/service-order.service';
+import { EmpresaConfigService } from '../../../empresa-config/empresa-config.service';
 import { ClientService } from '../../../clients/services/client.service';
 import { ServiceTypeService } from '../../../service-types/services/service-type.service';
 import { UserService } from '../../../users/services/user.service';
@@ -152,13 +153,29 @@ export class ServiceOrderFormComponent implements OnInit {
     private serviceTypeService: ServiceTypeService,
     private userService: UserService,
     private dialog: MatDialog,
-    private directCostService: DirectCostService
+    private directCostService: DirectCostService,
+    private empresaConfigService: EmpresaConfigService
   ) {
     this.createForm();
   }
 
   ngOnInit(): void {
     this.loadCatalogs();
+    
+    this.empresaConfigService.getSettings().subscribe({
+      next: (settings: any) => {
+        if (settings['os_number_format'] && settings['os_number_format'].value === 'auto') {
+          if (!this.isEditMode) {
+            this.orderForm.get('orderNumber')?.disable();
+            this.orderForm.get('orderNumber')?.clearValidators();
+            this.orderForm.get('orderNumber')?.setValue('Auto-generado');
+            this.orderForm.get('orderNumber')?.updateValueAndValidity();
+          } else {
+            this.orderForm.get('orderNumber')?.disable();
+          }
+        }
+      }
+    });
     
     this.orderId = this.route.snapshot.paramMap.get('id');
     if (this.orderId) {
@@ -448,7 +465,7 @@ export class ServiceOrderFormComponent implements OnInit {
       return;
     }
 
-    const formValue = { ...this.orderForm.value };
+    const formValue = { ...this.orderForm.getRawValue() };
     if (formValue.projectId === '') {
       formValue.projectId = null;
     }
