@@ -14,13 +14,47 @@ public static class AccountingMovementEndpoints
     {
         var group = app.MapGroup("/api/movements").RequireAuthorization();
 
-        group.MapGet("/", async (GeoServDbContext context) =>
+        group.MapGet("/", async (
+            int? page, 
+            int? pageSize, 
+            DateTime? startDate, 
+            DateTime? endDate, 
+            Guid? categoryId, 
+            Guid? financialAccountId, 
+            bool? isIncome, 
+            GeoServDbContext context) =>
         {
-            var movements = await context.AccountingMovements
+            var query = context.AccountingMovements
                 .Include(m => m.FinancialAccount)
+                .Include(m => m.Category)
                 .Include(m => m.PaymentMethod)
                 .Include(m => m.ServiceOrder)
-                .OrderByDescending(m => m.Date)
+                .AsQueryable();
+
+            if (startDate.HasValue)
+                query = query.Where(m => m.Date >= startDate.Value.Date);
+            if (endDate.HasValue)
+                query = query.Where(m => m.Date <= endDate.Value.Date.AddDays(1).AddTicks(-1));
+            
+            if (categoryId.HasValue)
+                query = query.Where(m => m.CategoryId == categoryId.Value);
+            
+            if (financialAccountId.HasValue)
+                query = query.Where(m => m.FinancialAccountId == financialAccountId.Value);
+            
+            if (isIncome.HasValue)
+                query = query.Where(m => m.IsIncome == isIncome.Value);
+
+            var totalCount = await query.CountAsync();
+
+            var actualPage = page ?? 1;
+            var actualPageSize = pageSize ?? 10;
+
+            var items = await query
+                .OrderBy(m => m.Date)
+                .ThenBy(m => m.CreatedAt)
+                .Skip((actualPage - 1) * actualPageSize)
+                .Take(actualPageSize)
                 .Select(m => new
                 {
                     m.Id,
@@ -29,6 +63,7 @@ public static class AccountingMovementEndpoints
                     CategoryName = m.Category.Name,
                     m.Amount,
                     m.Date,
+                    m.CreatedAt,
                     m.Description,
                     FinancialAccountName = m.FinancialAccount.Name,
                     PaymentMethodName = m.PaymentMethod != null ? m.PaymentMethod.Name : null,
@@ -37,7 +72,13 @@ public static class AccountingMovementEndpoints
                 })
                 .ToListAsync();
 
-            return Results.Ok(movements);
+            return Results.Ok(new
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = actualPage,
+                PageSize = actualPageSize
+            });
         })
         .WithName("GetMovements")
         .WithOpenApi();

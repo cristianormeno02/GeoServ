@@ -15,32 +15,48 @@
   font-weight: 500;
 }
 
+.filter-card {
+  margin-bottom: 20px;
+}
+
+.filter-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: center;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: -15px; /* adjust for mat-form-field bottom margin */
+}
+
 .empty-state {
   padding: 40px;
   text-align: center;
   color: #666;
 }
 
-.text-right {
-  text-align: right !important;
-  justify-content: flex-end;
-}
-
 .type-badge {
   padding: 4px 8px;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: bold;
 }
 
-.income {
+.type-badge.income {
   background-color: #e8f5e9;
   color: #2e7d32;
 }
 
-.expense {
+.type-badge.expense {
   background-color: #ffebee;
   color: #c62828;
+}
+
+.text-right {
+  text-align: right !important;
 }
 
 .text-income {

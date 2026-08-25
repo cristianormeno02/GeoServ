@@ -11,6 +11,7 @@ public class AccountingMovement
     public MovementCategory Category { get; set; } = null!;
     public decimal Amount { get; set; }
     public DateTime Date { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public string Description { get; set; } = string.Empty;
 
     // --- ¿De dónde sale o a dónde entra la plata? ---

@@ -7,6 +7,58 @@
     </button>
   </div>
 
+  <mat-card class="filter-card">
+    <mat-card-content>
+      <form [formGroup]="filterForm" class="filter-form">
+        
+        <mat-form-field appearance="outline">
+          <mat-label>Fechas</mat-label>
+          <mat-date-range-input [rangePicker]="picker">
+            <input matStartDate formControlName="startDate" placeholder="Desde">
+            <input matEndDate formControlName="endDate" placeholder="Hasta">
+          </mat-date-range-input>
+          <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-date-range-picker #picker></mat-date-range-picker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Categoría</mat-label>
+          <mat-select formControlName="categoryId">
+            <mat-option value="">Todas</mat-option>
+            <mat-option *ngFor="let cat of categories" [value]="cat.id">
+              {{ cat.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Cuenta</mat-label>
+          <mat-select formControlName="financialAccountId">
+            <mat-option value="">Todas</mat-option>
+            <mat-option *ngFor="let acc of accounts" [value]="acc.id">
+              {{ acc.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo</mat-label>
+          <mat-select formControlName="isIncome">
+            <mat-option value="">Todos</mat-option>
+            <mat-option value="true">Ingresos</mat-option>
+            <mat-option value="false">Egresos</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div class="filter-actions">
+          <button mat-raised-button color="primary" (click)="applyFilter()">Filtrar</button>
+          <button mat-button (click)="resetFilter()">Limpiar</button>
+        </div>
+
+      </form>
+    </mat-card-content>
+  </mat-card>
+
   <mat-card>
     <mat-card-content>
       <table mat-table [dataSource]="movements" class="mat-elevation-z2" style="width: 100%;">
@@ -64,8 +116,18 @@
       </table>
 
       <div *ngIf="movements.length === 0" class="empty-state">
-        <p>No hay movimientos financieros registrados.</p>
+        <p>No hay movimientos financieros para los filtros seleccionados.</p>
       </div>
+
+      <mat-paginator 
+        [length]="totalCount"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="[5, 10, 25, 100]"
+        [pageIndex]="pageIndex"
+        (page)="onPageChange($event)"
+        aria-label="Seleccionar página">
+      </mat-paginator>
+
     </mat-card-content>
   </mat-card>
 </div>

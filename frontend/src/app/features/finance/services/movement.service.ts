@@ -25,6 +25,13 @@ export interface Movement {
   registeredByUserId?: string;
 }
 
+export interface PagedMovementResponse {
+  items: Movement[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -33,8 +40,23 @@ export class MovementService {
 
   constructor(private http: HttpClient) {}
 
-  getMovements(): Observable<Movement[]> {
-    return this.http.get<Movement[]>(this.apiUrl);
+  getMovements(
+    page: number = 1,
+    pageSize: number = 10,
+    startDate?: string,
+    endDate?: string,
+    categoryId?: string,
+    financialAccountId?: string,
+    isIncome?: boolean
+  ): Observable<PagedMovementResponse> {
+    let params: any = { page, pageSize };
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    if (categoryId) params.categoryId = categoryId;
+    if (financialAccountId) params.financialAccountId = financialAccountId;
+    if (isIncome !== undefined && isIncome !== null) params.isIncome = isIncome;
+
+    return this.http.get<PagedMovementResponse>(this.apiUrl, { params });
   }
 
   getMovement(id: string): Observable<Movement> {
