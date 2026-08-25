@@ -61,19 +61,4 @@ export class Movimientos implements OnInit {
       });
     }
   }
-
-  getCategoryName(category: number): string {
-    const categories: Record<number, string> = {
-      1: 'Cobro OS',
-      2: 'Pago Gasto Fijo',
-      3: 'Pago Costo Directo',
-      4: 'Compra Activo',
-      5: 'Honorarios',
-      6: 'Depósito Cheque',
-      7: 'Acreditación Cheque',
-      8: 'Rechazo Cheque',
-      9: 'Transferencia'
-    };
-    return categories[category] || 'Otro';
-  }
 }

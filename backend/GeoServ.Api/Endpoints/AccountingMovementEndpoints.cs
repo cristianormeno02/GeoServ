@@ -25,7 +25,8 @@ public static class AccountingMovementEndpoints
                 {
                     m.Id,
                     m.IsIncome,
-                    m.Category,
+                    m.CategoryId,
+                    CategoryName = m.Category.Name,
                     m.Amount,
                     m.Date,
                     m.Description,
@@ -44,6 +45,7 @@ public static class AccountingMovementEndpoints
         group.MapGet("/{id:guid}", async (Guid id, GeoServDbContext context) =>
         {
             var movement = await context.AccountingMovements
+                .Include(m => m.Category)
                 .FirstOrDefaultAsync(m => m.Id == id);
             return movement is not null ? Results.Ok(movement) : Results.NotFound();
         })
@@ -65,7 +67,7 @@ public static class AccountingMovementEndpoints
                 {
                     Id = Guid.NewGuid(),
                     IsIncome = request.IsIncome,
-                    Category = request.Category,
+                    CategoryId = request.CategoryId,
                     Amount = request.Amount,
                     Date = request.Date,
                     Description = request.Description ?? string.Empty,
@@ -101,7 +103,7 @@ public static class AccountingMovementEndpoints
                 if (movement == null) return Results.NotFound();
 
                 movement.IsIncome = request.IsIncome;
-                movement.Category = request.Category;
+                movement.CategoryId = request.CategoryId;
                 movement.Amount = request.Amount;
                 movement.Date = request.Date;
                 movement.Description = request.Description ?? string.Empty;
@@ -141,7 +143,7 @@ public static class AccountingMovementEndpoints
 
 public record CreateMovementRequest(
     bool IsIncome,
-    MovementCategory Category,
+    Guid CategoryId,
     decimal Amount,
     DateTime Date,
     string? Description,
@@ -157,7 +159,7 @@ public record CreateMovementRequest(
 
 public record UpdateMovementRequest(
     bool IsIncome,
-    MovementCategory Category,
+    Guid CategoryId,
     decimal Amount,
     DateTime Date,
     string? Description,

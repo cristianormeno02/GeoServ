@@ -44,7 +44,7 @@ import { FinancialAccount, FinancialAccountService } from '../services/financial
 
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Categoría</mat-label>
-          <mat-select formControlName="category" required>
+          <mat-select formControlName="categoryId" required>
             <mat-option *ngFor="let cat of filteredCategories" [value]="cat.value">
               {{ cat.label }}
             </mat-option>
@@ -112,32 +112,20 @@ export class MovimientoFormComponent implements OnInit {
   isEditMode = false;
   isSubmitting = false;
   accounts: FinancialAccount[] = [];
-
-  allCategories = [
-    { value: 1, label: 'Cobro de Orden de Servicio', isIncome: true },
-    { value: 7, label: 'Acreditación de Cheque', isIncome: true },
-    { value: 9, label: 'Transferencia Interna (Ingreso a esta cuenta)', isIncome: true },
-
-    { value: 2, label: 'Pago de Gasto Fijo', isIncome: false },
-    { value: 3, label: 'Pago de Costo Directo', isIncome: false },
-    { value: 4, label: 'Compra de Activo', isIncome: false },
-    { value: 5, label: 'Pago de Honorarios', isIncome: false },
-    { value: 6, label: 'Depósito de Cheque', isIncome: false },
-    { value: 8, label: 'Rechazo de Cheque', isIncome: false },
-    { value: 9, label: 'Transferencia Interna (Salida de esta cuenta)', isIncome: false }
-  ];
+  allCategories: any[] = []; // Fetched from backend
 
   constructor(
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<MovimientoFormComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { movement?: Movement },
     private movementService: MovementService,
-    private accountService: FinancialAccountService
+    private accountService: FinancialAccountService,
+    private categoryService: import('../services/movement-category.service').MovementCategoryService
   ) {
     this.isEditMode = !!data?.movement;
     this.movementForm = this.fb.group({
       isIncome: [data?.movement?.isIncome ?? true],
-      category: [data?.movement?.category || '', Validators.required],
+      categoryId: [data?.movement?.categoryId?.toLowerCase() || '', Validators.required],
       description: [data?.movement?.description || '', Validators.required],
       amount: [data?.movement?.amount || '', [Validators.required, Validators.min(0.01)]],
       date: [data?.movement?.date ? new Date(data.movement.date) : new Date(), Validators.required],
@@ -147,10 +135,11 @@ export class MovimientoFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadAccounts();
+    this.loadCategories();
 
     // Reset category when income/expense toggle changes
     this.isIncomeCtrl.valueChanges.subscribe(() => {
-      this.movementForm.get('category')?.setValue('');
+      this.movementForm.get('categoryId')?.setValue('');
     });
   }
 
@@ -159,7 +148,7 @@ export class MovimientoFormComponent implements OnInit {
   }
 
   get filteredCategories() {
-    return this.allCategories.filter(c => c.isIncome === this.isIncomeCtrl.value);
+    return this.allCategories.filter(c => c.isIncome === this.isIncomeCtrl.value && c.isActive);
   }
 
   loadAccounts() {
@@ -169,12 +158,27 @@ export class MovimientoFormComponent implements OnInit {
     });
   }
 
+  loadCategories() {
+    this.categoryService.getCategories().subscribe({
+      next: (data) => {
+        // Map backend objects for template
+        this.allCategories = data.map(c => ({
+          value: c.id?.toLowerCase(),
+          label: c.name,
+          isIncome: c.isIncome,
+          isActive: c.isActive
+        }));
+      },
+      error: (err) => console.error('Error fetching categories:', err)
+    });
+  }
+
   save() {
     if (this.movementForm.invalid) return;
     
     this.isSubmitting = true;
     const formVal = this.movementForm.value;
-    const movementData: Movement = {
+    const movementData: any = {
       ...formVal,
       date: formVal.date.toISOString()
     };

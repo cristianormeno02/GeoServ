@@ -6,7 +6,9 @@ public class AccountingMovement
 {
     public Guid Id { get; set; }
     public bool IsIncome { get; set; } // true = Ingreso, false = Egreso
-    public MovementCategory Category { get; set; }
+    
+    public Guid CategoryId { get; set; }
+    public MovementCategory Category { get; set; } = null!;
     public decimal Amount { get; set; }
     public DateTime Date { get; set; }
     public string Description { get; set; } = string.Empty;

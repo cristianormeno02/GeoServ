@@ -15,6 +15,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatChipsModule } from '@angular/material/chips';
 
 // ngx-mask
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
@@ -76,6 +78,8 @@ export const CUSTOM_DATE_FORMATS = {
     MatIconModule,
     MatSnackBarModule,
     MatExpansionModule,
+    MatTabsModule,
+    MatChipsModule,
     MatTableModule,
     MatProgressSpinnerModule,
     NgxMaskDirective,
@@ -97,7 +101,21 @@ export class ServiceOrderFormComponent implements OnInit {
   orderId: string | null = null;
   isSaving = false;
 
-  // Variables para Costos Directos
+  get selectedClientName(): string {
+    const clientId = this.orderForm?.get('clientId')?.value;
+    if (!clientId) return '';
+    const client = this.clients.find(c => c.id === clientId);
+    return client ? client.companyName : '';
+  }
+
+  get selectedProjectName(): string {
+    const projectId = this.orderForm?.get('projectId')?.value;
+    if (!projectId) return '';
+    const project = this.projects.find(p => p.id === projectId);
+    return project ? project.name : '';
+  }
+
+  // Catálogos para Costos Directos
   directCostsDataSource = new MatTableDataSource<DirectCost>();
   directCostsColumns: string[] = ['category', 'provider', 'description', 'quantity', 'unit', 'unitPrice', 'totalAmount', 'actions'];
   isLoadingCosts = false;

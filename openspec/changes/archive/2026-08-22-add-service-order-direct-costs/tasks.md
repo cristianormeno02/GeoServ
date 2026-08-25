@@ -9,4 +9,4 @@
 - [x] 7. Frontend: Modificar la vista de detalle de Orden de Servicio para incluir la pestaña de "Costos Directos".
 - [x] 8. Frontend: Desarrollar el listado de costos directos dentro de la pestaña.
 - [x] 9. Frontend: Desarrollar el formulario (Modal) para crear y editar un costo directo, integrando los selectores a los endpoints de mantenedores.
-- [ ] 10. Pruebas integrales del flujo completo (crear mantenedor -> cargar costo en orden de servicio -> validar guardado).
+- [x] 10. Pruebas integrales del flujo completo (crear mantenedor -> cargar costo en orden de servicio -> validar guardado).

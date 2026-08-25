@@ -27,7 +27,7 @@
 
         <ng-container matColumnDef="category">
           <th mat-header-cell *matHeaderCellDef> Categoría </th>
-          <td mat-cell *matCellDef="let element"> {{getCategoryName(element.category)}} </td>
+          <td mat-cell *matCellDef="let element"> {{element.categoryName}} </td>
         </ng-container>
 
         <ng-container matColumnDef="description">

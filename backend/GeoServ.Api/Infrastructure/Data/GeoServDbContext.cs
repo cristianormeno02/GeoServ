@@ -37,6 +37,7 @@ public class GeoServDbContext : DbContext
     public DbSet<FinancialAccount> FinancialAccounts { get; set; } = null!;
     public DbSet<Asset> Assets { get; set; } = null!;
     public DbSet<Check> Checks { get; set; } = null!;
+    public DbSet<MovementCategory> MovementCategories { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -204,6 +205,20 @@ public class GeoServDbContext : DbContext
             new Currency { Id = Guid.Parse("F1111111-1111-1111-1111-111111111111"), Code = "ARS", Symbol = "$", Name = "Peso Argentino", IsActive = true },
             new Currency { Id = Guid.Parse("F2222222-2222-2222-2222-222222222222"), Code = "USD", Symbol = "U$D", Name = "Dólar Estadounidense", IsActive = true },
             new Currency { Id = Guid.Parse("F3333333-3333-3333-3333-333333333333"), Code = "CLP", Symbol = "$", Name = "Peso Chileno", IsActive = true }
+        );
+
+        modelBuilder.Entity<MovementCategory>().HasData(
+            new MovementCategory { Id = Guid.Parse("A1111111-1111-1111-1111-111111111111"), Name = "Cobro de Orden de Servicio", Description = "Ingreso por trabajos realizados", IsIncome = true, IsActive = true },
+            new MovementCategory { Id = Guid.Parse("A2222222-2222-2222-2222-222222222222"), Name = "Acreditación de Cheque", Description = "Ingreso de fondos por cheque", IsIncome = true, IsActive = true },
+            new MovementCategory { Id = Guid.Parse("A3333333-3333-3333-3333-333333333333"), Name = "Transferencia Interna (Ingreso)", Description = "Entrada de fondos desde otra cuenta propia", IsIncome = true, IsActive = true },
+            new MovementCategory { Id = Guid.Parse("A4444444-4444-4444-4444-444444444444"), Name = "Aporte de Socios / Capital", Description = "Ingreso por aportes de capital", IsIncome = true, IsActive = true },
+            new MovementCategory { Id = Guid.Parse("A5555555-5555-5555-5555-555555555555"), Name = "Subsidio / Aporte Estatal", Description = "Ingreso por subsidios", IsIncome = true, IsActive = true },
+
+            new MovementCategory { Id = Guid.Parse("A6666666-6666-6666-6666-666666666666"), Name = "Pago de Gasto Fijo", Description = "Luz, internet, alquiler", IsIncome = false, IsActive = true },
+            new MovementCategory { Id = Guid.Parse("A7777777-7777-7777-7777-777777777777"), Name = "Pago de Costo Directo", Description = "Insumos para obras", IsIncome = false, IsActive = true },
+            new MovementCategory { Id = Guid.Parse("A8888888-8888-8888-8888-888888888888"), Name = "Compra de Activo", Description = "Equipamiento, rodados", IsIncome = false, IsActive = true },
+            new MovementCategory { Id = Guid.Parse("A9999999-9999-9999-9999-999999999999"), Name = "Pago de Honorarios", Description = "Honorarios de socios o terceros", IsIncome = false, IsActive = true },
+            new MovementCategory { Id = Guid.Parse("AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"), Name = "Transferencia Interna (Egreso)", Description = "Salida de fondos hacia otra cuenta propia", IsIncome = false, IsActive = true }
         );
     }
 }

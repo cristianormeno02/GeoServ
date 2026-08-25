@@ -6,7 +6,8 @@ import { environment } from '../../../../environments/environment';
 export interface Movement {
   id?: string;
   isIncome: boolean;
-  category: number;
+  categoryId: string;
+  categoryName?: string;
   amount: number;
   date: string;
   description?: string;
