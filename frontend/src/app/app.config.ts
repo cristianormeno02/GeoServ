@@ -10,6 +10,7 @@ import { EmpresaConfigService } from './core/services/empresa-config.service';
 import { catchError, of } from 'rxjs';
 import { MatPaginatorIntl } from '@angular/material/paginator';
 import { CustomMatPaginatorIntl } from './core/providers/custom-mat-paginator-intl';
+import { MAT_DATE_LOCALE } from '@angular/material/core';
 
 import { registerLocaleData } from '@angular/common';
 import localeEsAr from '@angular/common/locales/es-AR';
@@ -40,6 +41,7 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     provideHttpClient(withInterceptors([authInterceptor, loadingInterceptor])),
     provideEnvironmentNgxMask(),
+    provideNativeDateAdapter(),
     {
       provide: APP_INITIALIZER,
       useFactory: initializeAppFactory,
@@ -47,6 +49,7 @@ export const appConfig: ApplicationConfig = {
       multi: true
     },
     { provide: MatPaginatorIntl, useClass: CustomMatPaginatorIntl },
-    { provide: LOCALE_ID, useValue: 'es-AR' }
+    { provide: LOCALE_ID, useValue: 'es-AR' },
+    { provide: MAT_DATE_LOCALE, useValue: 'es-AR' }
   ]
 };

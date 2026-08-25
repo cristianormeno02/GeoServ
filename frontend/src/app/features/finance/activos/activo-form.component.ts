@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { NgxMaskDirective } from 'ngx-mask';
+import { MatIconModule } from '@angular/material/icon';
 import { Asset, AssetService } from '../services/asset.service';
 
 @Component({
@@ -22,7 +23,8 @@ import { Asset, AssetService } from '../services/asset.service';
     MatInputModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    NgxMaskDirective
+    NgxMaskDirective,
+    MatIconModule
   ],
   template: `
     <h2 mat-dialog-title>{{ isEditMode ? 'Editar Activo' : 'Nuevo Activo' }}</h2>

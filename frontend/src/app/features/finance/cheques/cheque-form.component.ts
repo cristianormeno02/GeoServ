@@ -9,6 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { NgxMaskDirective } from 'ngx-mask';
+import { MatIconModule } from '@angular/material/icon';
 import { Check, CheckService } from '../services/check.service';
 
 @Component({
@@ -24,7 +25,8 @@ import { Check, CheckService } from '../services/check.service';
     MatSelectModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    NgxMaskDirective
+    NgxMaskDirective,
+    MatIconModule
   ],
   template: `
     <h2 mat-dialog-title>{{ isEditMode ? 'Editar Cheque' : 'Nuevo Cheque' }}</h2>
