@@ -31,3 +31,8 @@
 .status-2 { background-color: #fff3e0; color: #e65100; } /* Depositado */
 .status-3 { background-color: #e8f5e9; color: #2e7d32; } /* Acreditado */
 .status-4 { background-color: #ffebee; color: #c62828; } /* Rechazado */
+
+.text-right {
+  text-align: right !important;
+  justify-content: flex-end;
+}

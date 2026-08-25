@@ -1,4 +1,4 @@
-import { ApplicationConfig, provideZoneChangeDetection, APP_INITIALIZER } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection, APP_INITIALIZER, LOCALE_ID } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
@@ -10,6 +10,10 @@ import { EmpresaConfigService } from './core/services/empresa-config.service';
 import { catchError, of } from 'rxjs';
 import { MatPaginatorIntl } from '@angular/material/paginator';
 import { CustomMatPaginatorIntl } from './core/providers/custom-mat-paginator-intl';
+
+import { registerLocaleData } from '@angular/common';
+import localeEsAr from '@angular/common/locales/es-AR';
+registerLocaleData(localeEsAr, 'es-AR');
 
 export function initializeAppFactory(authService: AuthService, empresaConfigService: EmpresaConfigService) {
   return () => {
@@ -39,6 +43,7 @@ export const appConfig: ApplicationConfig = {
       deps: [AuthService, EmpresaConfigService],
       multi: true
     },
-    { provide: MatPaginatorIntl, useClass: CustomMatPaginatorIntl }
+    { provide: MatPaginatorIntl, useClass: CustomMatPaginatorIntl },
+    { provide: LOCALE_ID, useValue: 'es-AR' }
   ]
 };
