@@ -10,7 +10,7 @@ import { EmpresaConfigService } from './core/services/empresa-config.service';
 import { catchError, of } from 'rxjs';
 import { MatPaginatorIntl } from '@angular/material/paginator';
 import { CustomMatPaginatorIntl } from './core/providers/custom-mat-paginator-intl';
-import { MAT_DATE_LOCALE } from '@angular/material/core';
+import { MAT_DATE_LOCALE, provideNativeDateAdapter } from '@angular/material/core';
 
 import { registerLocaleData } from '@angular/common';
 import localeEsAr from '@angular/common/locales/es-AR';
