@@ -45,15 +45,9 @@ import { FinancialAccount, FinancialAccountService } from '../services/financial
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Categoría</mat-label>
           <mat-select formControlName="category" required>
-            <mat-option [value]="1">Cobro de Orden de Servicio</mat-option>
-            <mat-option [value]="2">Pago de Gasto Fijo</mat-option>
-            <mat-option [value]="3">Pago de Costo Directo</mat-option>
-            <mat-option [value]="4">Compra de Activo</mat-option>
-            <mat-option [value]="5">Pago de Honorarios</mat-option>
-            <mat-option [value]="6">Depósito de Cheque</mat-option>
-            <mat-option [value]="7">Acreditación de Cheque</mat-option>
-            <mat-option [value]="8">Rechazo de Cheque</mat-option>
-            <mat-option [value]="9">Transferencia Interna</mat-option>
+            <mat-option *ngFor="let cat of filteredCategories" [value]="cat.value">
+              {{ cat.label }}
+            </mat-option>
           </mat-select>
         </mat-form-field>
 
@@ -119,6 +113,20 @@ export class MovimientoFormComponent implements OnInit {
   isSubmitting = false;
   accounts: FinancialAccount[] = [];
 
+  allCategories = [
+    { value: 1, label: 'Cobro de Orden de Servicio', isIncome: true },
+    { value: 7, label: 'Acreditación de Cheque', isIncome: true },
+    { value: 9, label: 'Transferencia Interna (Ingreso a esta cuenta)', isIncome: true },
+
+    { value: 2, label: 'Pago de Gasto Fijo', isIncome: false },
+    { value: 3, label: 'Pago de Costo Directo', isIncome: false },
+    { value: 4, label: 'Compra de Activo', isIncome: false },
+    { value: 5, label: 'Pago de Honorarios', isIncome: false },
+    { value: 6, label: 'Depósito de Cheque', isIncome: false },
+    { value: 8, label: 'Rechazo de Cheque', isIncome: false },
+    { value: 9, label: 'Transferencia Interna (Salida de esta cuenta)', isIncome: false }
+  ];
+
   constructor(
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<MovimientoFormComponent>,
@@ -139,10 +147,19 @@ export class MovimientoFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadAccounts();
+
+    // Reset category when income/expense toggle changes
+    this.isIncomeCtrl.valueChanges.subscribe(() => {
+      this.movementForm.get('category')?.setValue('');
+    });
   }
 
   get isIncomeCtrl() {
     return this.movementForm.get('isIncome')!;
+  }
+
+  get filteredCategories() {
+    return this.allCategories.filter(c => c.isIncome === this.isIncomeCtrl.value);
   }
 
   loadAccounts() {
