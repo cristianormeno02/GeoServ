@@ -8,6 +8,8 @@ public class Asset
     public decimal PurchasePrice { get; set; }
     public DateTime PurchaseDate { get; set; }
     
+    public int UsefulLifeMonths { get; set; }
+    
     public Guid? ProviderId { get; set; }
     public Provider? Provider { get; set; }
 }

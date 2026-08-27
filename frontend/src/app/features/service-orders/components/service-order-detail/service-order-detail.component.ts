@@ -205,4 +205,21 @@ export class ServiceOrderDetailComponent implements OnInit {
   // --- MÉTODOS DE COSTOS DIRECTOS ---
 
   // Costos directos is now read-only in this view
+
+
+  getStatusClass(status: string | undefined): string {
+    if (!status) return 'bg-info';
+    const s = status.toLowerCase();
+    if (s.includes('aprobado') || s.includes('completado') || s.includes('pagado') || s.includes('cobrado') || s.includes('activo') || s.includes('procesado') || s.includes('entregada') || s.includes('entregado') || s.includes('ingreso')) {
+      return 'bg-success';
+    }
+    if (s.includes('pendiente') || s.includes('revisión') || s.includes('revision')) {
+      return 'bg-warning';
+    }
+    if (s.includes('error') || s.includes('rechazado')) {
+      return 'bg-error';
+    }
+    return 'bg-info';
+  }
 }
+

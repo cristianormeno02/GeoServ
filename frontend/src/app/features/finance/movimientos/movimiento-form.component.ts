@@ -1,4 +1,5 @@
-import { Component, Inject, OnInit } from '@angular/core';
+﻿import {  Component, Inject, OnInit  } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -122,7 +123,8 @@ export class MovimientoFormComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: { movement?: Movement },
     private movementService: MovementService,
     private accountService: FinancialAccountService,
-    private categoryService: MovementCategoryService
+    private categoryService: MovementCategoryService,
+    private snackBar: MatSnackBar
   ) {
     this.isEditMode = !!data?.movement;
     this.movementForm = this.fb.group({
@@ -187,17 +189,23 @@ export class MovimientoFormComponent implements OnInit {
 
     if (this.isEditMode && this.data.movement?.id) {
       this.movementService.updateMovement(this.data.movement.id, movementData).subscribe({
-        next: () => this.dialogRef.close(true),
+        next: () => {
+          this.snackBar.open('Movimiento guardado con éxito', 'Cerrar');
+          this.dialogRef.close(true);
+        },
         error: (err) => {
-          console.error(err);
+          this.snackBar.open(err.error?.message || 'Error al guardar el movimiento', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] });
           this.isSubmitting = false;
         }
       });
     } else {
       this.movementService.createMovement(movementData).subscribe({
-        next: () => this.dialogRef.close(true),
+        next: () => {
+          this.snackBar.open('Movimiento guardado con éxito', 'Cerrar');
+          this.dialogRef.close(true);
+        },
         error: (err) => {
-          console.error(err);
+          this.snackBar.open(err.error?.message || 'Error al guardar el movimiento', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] });
           this.isSubmitting = false;
         }
       });

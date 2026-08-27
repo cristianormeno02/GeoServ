@@ -71,4 +71,14 @@ export class Cheques implements OnInit {
       default: return 'Desconocido';
     }
   }
+
+  getStatusClass(status: number): string {
+    switch (status) {
+      case 1: return 'bg-info';
+      case 2: return 'bg-warning';
+      case 3: return 'bg-success';
+      case 4: return 'bg-error';
+      default: return 'bg-info';
+    }
+  }
 }

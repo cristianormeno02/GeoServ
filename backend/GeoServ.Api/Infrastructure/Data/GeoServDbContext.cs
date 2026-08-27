@@ -39,6 +39,11 @@ public class GeoServDbContext : DbContext
     public DbSet<Asset> Assets { get; set; } = null!;
     public DbSet<Check> Checks { get; set; } = null!;
     public DbSet<MovementCategory> MovementCategories { get; set; } = null!;
+    public DbSet<ConsumableType> ConsumableTypes { get; set; } = null!;
+    public DbSet<ConsumableClass> ConsumableClasses { get; set; } = null!;
+    public DbSet<Consumable> Consumables { get; set; } = null!;
+    public DbSet<FixedCostItem> FixedCostItems { get; set; } = null!;
+    public DbSet<FixedCostPayment> FixedCostPayments { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -70,6 +75,19 @@ public class GeoServDbContext : DbContext
 
         modelBuilder.Entity<FixedCost>()
             .Property(f => f.Amount).HasPrecision(18, 2);
+
+        modelBuilder.Entity<FixedCostItem>()
+            .Property(f => f.InitialAmount).HasPrecision(18, 2);
+
+        modelBuilder.Entity<FixedCostPayment>()
+            .Property(f => f.Amount).HasPrecision(18, 2);
+
+        modelBuilder.Entity<Consumable>()
+            .Property(c => c.Quantity).HasPrecision(18, 2);
+        modelBuilder.Entity<Consumable>()
+            .Property(c => c.UnitCost).HasPrecision(18, 2);
+        modelBuilder.Entity<Consumable>()
+            .Property(c => c.TotalCost).HasPrecision(18, 2);
 
         modelBuilder.Entity<AccountingMovement>()
             .Property(a => a.Amount).HasPrecision(18, 2);
@@ -157,6 +175,32 @@ public class GeoServDbContext : DbContext
             .HasMany(s => s.Observations)
             .WithOne(o => o.ServiceOrder)
             .HasForeignKey(o => o.ServiceOrderId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Relaciones Insumos
+        modelBuilder.Entity<ConsumableClass>()
+            .HasOne(c => c.ConsumableType)
+            .WithMany(t => t.ConsumableClasses)
+            .HasForeignKey(c => c.ConsumableTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Consumable>()
+            .HasOne(c => c.ConsumableClass)
+            .WithMany(cl => cl.Consumables)
+            .HasForeignKey(c => c.ConsumableClassId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Relaciones Gastos Fijos
+        modelBuilder.Entity<FixedCostItem>()
+            .HasOne(f => f.Category)
+            .WithMany(c => c.FixedCostItems)
+            .HasForeignKey(f => f.CategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<FixedCostPayment>()
+            .HasOne(p => p.FixedCostItem)
+            .WithMany(i => i.Payments)
+            .HasForeignKey(p => p.FixedCostItemId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // --- Seed Data ---

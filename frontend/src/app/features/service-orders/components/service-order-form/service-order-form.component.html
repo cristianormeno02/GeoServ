@@ -86,8 +86,12 @@
           <mat-tab>
             <ng-template mat-tab-label>
               Fechas
-              <span class="badge error-badge" *ngIf="isFechasInvalid()" style="margin-left: 8px;">!</span>
-              <span class="badge success-badge" *ngIf="isFechasComplete() && !isFechasInvalid()" style="margin-left: 8px;">✓</span>
+              <span class="status-badge bg-error" *ngIf="isFechasInvalid()" style="margin-left: 8px;">
+                <mat-icon style="font-size: 16px; width: 16px; height: 16px; line-height: 16px;">error</mat-icon>
+              </span>
+              <span class="status-badge bg-success" *ngIf="isFechasComplete() && !isFechasInvalid()" style="margin-left: 8px;">
+                <mat-icon style="font-size: 16px; width: 16px; height: 16px; line-height: 16px;">check_circle</mat-icon>
+              </span>
             </ng-template>
             <div style="padding-top: 16px;">
           
@@ -156,10 +160,12 @@
             <ng-template mat-tab-label>
               Finanzas
               
-                <span class="badge error-badge" *ngIf="isFinanzasInvalid()">
-                  Faltan datos o distribución inválida
+                <span class="status-badge bg-error" *ngIf="isFinanzasInvalid()" style="margin-left: 8px;">
+                  <mat-icon style="font-size: 16px; width: 16px; height: 16px; line-height: 16px;">error</mat-icon> Incompleto
                 </span>
-                <span class="badge success-badge" *ngIf="isFinanzasComplete() && !isFinanzasInvalid()">✓</span>
+                <span class="status-badge bg-success" *ngIf="isFinanzasComplete() && !isFinanzasInvalid()" style="margin-left: 8px;">
+                  <mat-icon style="font-size: 16px; width: 16px; height: 16px; line-height: 16px;">check_circle</mat-icon>
+                </span>
               
             </ng-template>
             <div style="padding-top: 16px;">
@@ -339,10 +345,12 @@
             <ng-template mat-tab-label>
               Equipo de Trabajo
               
-                <span class="badge error-badge" *ngIf="isEquipoInvalid()">
-                  Debe asignar un responsable
+                <span class="status-badge bg-error" *ngIf="isEquipoInvalid()" style="margin-left: 8px;">
+                  <mat-icon style="font-size: 16px; width: 16px; height: 16px; line-height: 16px;">error</mat-icon> Requerido
                 </span>
-                <span class="badge success-badge" *ngIf="isEquipoComplete() && !isEquipoInvalid()">✓</span>
+                <span class="status-badge bg-success" *ngIf="isEquipoComplete() && !isEquipoInvalid()" style="margin-left: 8px;">
+                  <mat-icon style="font-size: 16px; width: 16px; height: 16px; line-height: 16px;">check_circle</mat-icon>
+                </span>
               
             </ng-template>
             <div style="padding-top: 16px;">
@@ -361,7 +369,7 @@
           </mat-tab>
 
           <!-- Costos Directos -->
-          <mat-tab label="Costos Directos" *ngIf="isEditMode">
+          <mat-tab label="Costos Directos">
             <div style="padding-top: 16px;">
         
         <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
@@ -436,7 +444,7 @@
           </mat-tab>
 
           <!-- Bitácora y Observaciones -->
-          <mat-tab label="Bitácora y Observaciones" *ngIf="isEditMode">
+          <mat-tab label="Bitácora y Observaciones">
             <div style="padding-top: 16px;">
         
         <app-service-order-observations 

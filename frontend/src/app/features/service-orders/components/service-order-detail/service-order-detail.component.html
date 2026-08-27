@@ -38,7 +38,14 @@
               </mat-list-item>
               <mat-list-item>
                 <span matListItemTitle>Estado actual</span>
-                <span matListItemLine class="badge status-badge">{{ order.statusName }}</span>
+                <span class="status-badge" [ngClass]="getStatusClass(order.statusName)">
+                  <mat-icon style="font-size: 16px; width: 16px; height: 16px; line-height: 16px;">
+                    {{ getStatusClass(order.statusName) === 'bg-success' ? 'check_circle' : 
+                       getStatusClass(order.statusName) === 'bg-warning' ? 'warning' :
+                       getStatusClass(order.statusName) === 'bg-error' ? 'error' : 'info' }}
+                  </mat-icon>
+                  {{ order.statusName }}
+                </span>
               </mat-list-item>
               <mat-list-item>
                 <span matListItemTitle>Prioridad</span>

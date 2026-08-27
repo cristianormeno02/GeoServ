@@ -1,4 +1,5 @@
-import { Component, OnInit, ChangeDetectorRef, ViewChild } from '@angular/core';
+import {  Component, OnInit, ChangeDetectorRef, ViewChild  } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
@@ -54,7 +55,8 @@ export class Movimientos implements OnInit {
     private accountService: FinancialAccountService,
     private dialog: MatDialog,
     private cdr: ChangeDetectorRef,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private snackBar: MatSnackBar
   ) {
     const today = new Date();
     this.filterForm = this.fb.group({
@@ -140,8 +142,8 @@ export class Movimientos implements OnInit {
   deleteMovement(movement: Movement) {
     if (confirm(`¿Estás seguro de eliminar este movimiento por $${movement.amount}?`)) {
       this.movementService.deleteMovement(movement.id!).subscribe({
-        next: () => this.loadMovements(),
-        error: (err) => console.error(err)
+        next: () => { this.snackBar.open('Eliminado con éxito', 'Cerrar'); this.loadMovements(); },
+        error: (err) => { console.error(err); this.snackBar.open(err.error?.message || 'Error al eliminar', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] }); }
       });
     }
   }

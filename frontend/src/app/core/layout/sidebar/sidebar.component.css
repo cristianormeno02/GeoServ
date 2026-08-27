@@ -1,7 +1,35 @@
+:host {
+  display: block;
+  height: 100%;
+  background-color: var(--color-primary);
+  color: var(--text-primary);
+}
+
+mat-nav-list {
+  background-color: var(--color-primary);
+}
+
+.mdc-list-item__primary-text,
+.mat-mdc-list-item, 
+mat-list-item {
+  color: var(--text-primary) !important;
+}
+
+.mat-mdc-list-item-icon, 
+mat-icon {
+  color: var(--text-primary) !important;
+}
+
 .active-link {
-  background-color: rgba(0, 0, 0, 0.04);
+  background-color: rgba(255, 255, 255, 0.1) !important;
   font-weight: 500;
-  color: var(--color-accent);
+  color: var(--color-accent) !important;
+}
+
+.active-link .mdc-list-item__primary-text,
+.active-link .mat-mdc-list-item-icon,
+.active-link mat-icon {
+  color: var(--color-accent) !important;
 }
 
 .user-profile {
@@ -9,27 +37,65 @@
   flex-direction: column;
   align-items: center;
   padding: 24px 16px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .user-avatar {
   font-size: 64px;
   width: 64px;
   height: 64px;
-  color: #757575;
+  color: rgba(255, 255, 255, 0.7);
   margin-bottom: 8px;
 }
 
 .user-name {
   font-size: 16px;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
-.logout-item {
-  color: var(--color-error);
+.logout-item, 
+.logout-item .mdc-list-item__primary-text {
+  color: #ef4444 !important; /* brighter red for dark theme */
 }
 
+.logout-item .mat-mdc-list-item-icon,
 .logout-item mat-icon {
-  color: var(--color-error);
+  color: #ef4444 !important;
+}
+
+/* Styles for nested menu */
+.menu-group-panel {
+  background: transparent;
+  box-shadow: none !important;
+  color: var(--text-primary);
+}
+
+mat-expansion-panel-header {
+  padding: 0 16px;
+  font-size: 14px;
+}
+
+mat-panel-title {
+  display: flex;
+  align-items: center;
+  color: var(--text-primary) !important;
+}
+
+.group-icon {
+  margin-right: 16px;
+  color: var(--text-primary);
+}
+
+.menu-group-items {
+  padding-left: 16px;
+}
+
+.menu-divider {
+  border-top-color: rgba(255, 255, 255, 0.12) !important;
+  margin: 8px 0;
+}
+
+::ng-deep .mat-expansion-panel-body {
+  padding: 0 0 0 16px !important;
 }

@@ -98,7 +98,7 @@ export class ResponsibleFormComponent implements OnInit {
       this.isEditMode = true;
       this.responsibleService.getResponsibleById(this.responsibleId).subscribe({
         next: (data) => this.form.patchValue(data),
-        error: () => this.snackBar.open('Error al cargar', 'Cerrar', { duration: 3000 })
+        error: () => this.snackBar.open('Error al cargar', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] })
       });
     }
   }
@@ -114,7 +114,7 @@ export class ResponsibleFormComponent implements OnInit {
           this.snackBar.open('Actualizado con éxito', 'Cerrar', { duration: 3000 });
           this.router.navigate(['/responsibles']);
         },
-        error: (err) => this.snackBar.open(err.error?.message || err.error || 'Error', 'Cerrar', { duration: 3000 })
+        error: (err) => this.snackBar.open(err.error?.message || err.error || 'Error', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] })
       });
     } else {
       this.responsibleService.createResponsible(req).subscribe({
@@ -122,7 +122,7 @@ export class ResponsibleFormComponent implements OnInit {
           this.snackBar.open('Creado con éxito', 'Cerrar', { duration: 3000 });
           this.router.navigate(['/responsibles']);
         },
-        error: (err) => this.snackBar.open(err.error?.message || err.error || 'Error', 'Cerrar', { duration: 3000 })
+        error: (err) => this.snackBar.open(err.error?.message || err.error || 'Error', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] })
       });
     }
   }

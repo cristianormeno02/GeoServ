@@ -34,6 +34,9 @@ export function initializeAppFactory(authService: AuthService, empresaConfigServ
 
 import { provideEnvironmentNgxMask } from 'ngx-mask';
 
+import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
+import { DEFAULT_CURRENCY_CODE } from '@angular/core';
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
@@ -50,6 +53,16 @@ export const appConfig: ApplicationConfig = {
     },
     { provide: MatPaginatorIntl, useClass: CustomMatPaginatorIntl },
     { provide: LOCALE_ID, useValue: 'es-AR' },
-    { provide: MAT_DATE_LOCALE, useValue: 'es-AR' }
+    { provide: DEFAULT_CURRENCY_CODE, useValue: 'ARS' },
+    { provide: MAT_DATE_LOCALE, useValue: 'es-AR' },
+    { 
+      provide: MAT_SNACK_BAR_DEFAULT_OPTIONS, 
+      useValue: { 
+        duration: 3000, 
+        verticalPosition: 'top', 
+        horizontalPosition: 'center',
+        panelClass: ['snackbar-success']
+      } 
+    }
   ]
 };

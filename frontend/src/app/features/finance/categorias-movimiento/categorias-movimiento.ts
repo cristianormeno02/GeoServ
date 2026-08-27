@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import {  Component, OnInit  } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -22,7 +23,8 @@ export class CategoriasMovimiento implements OnInit {
 
   constructor(
     private categoryService: MovementCategoryService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {

@@ -137,7 +137,8 @@ GeoServ.Api.Endpoints.AssetEndpoints.MapAssetEndpoints(app);
 GeoServ.Api.Endpoints.CheckEndpoints.MapCheckEndpoints(app);
 GeoServ.Api.Endpoints.MovementCategoryEndpoints.MapMovementCategoryEndpoints(app);
 GeoServ.Api.Endpoints.AccountingMovementEndpoints.MapAccountingMovementEndpoints(app);
-
+GeoServ.Api.Endpoints.ConsumableEndpoints.MapConsumableEndpoints(app);
+GeoServ.Api.Endpoints.FixedCostItemEndpoints.MapFixedCostItemEndpoints(app);
 var summaries = new[]
 {
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"

@@ -4,38 +4,63 @@ import { RouterModule, Router } from '@angular/router';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatExpansionModule } from '@angular/material/expansion';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatListModule, MatIconModule, MatDividerModule],
+  imports: [CommonModule, RouterModule, MatListModule, MatIconModule, MatDividerModule, MatExpansionModule],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.css'
 })
 export class SidebarComponent implements OnInit {
   userName = 'Usuario';
-  links = [
-    { name: 'Dashboard', path: '/dashboard', icon: 'dashboard' },
-    { name: 'Órdenes de Servicio', path: '/ordenes-servicio', icon: 'build' },
-    { name: 'Finanzas', path: '/finanzas', icon: 'attach_money' },
-    { name: 'Movimientos', path: '/movimientos', icon: 'swap_horiz' },
-    { name: 'Categorías de Movimiento', path: '/categorias-movimiento', icon: 'category' },
-    { name: 'Cuentas Bancarias', path: '/cuentas-financieras', icon: 'account_balance' },
-    { name: 'Cheques', path: '/cheques', icon: 'receipt_long' },
-    { name: 'Activos', path: '/activos', icon: 'precision_manufacturing' },
-    { name: 'Clientes', path: '/clientes', icon: 'people' },
-    { name: 'Proyectos', path: '/proyectos', icon: 'folder' },
-    { name: 'Tipos de Compañía', path: '/tipos-compania', icon: 'category' },
-    { name: 'Tipos de Servicio', path: '/tipos-servicio', icon: 'miscellaneous_services' },
-    { name: 'Usuarios', path: '/usuarios', icon: 'manage_accounts' },
-    { name: 'Responsables', path: '/responsibles', icon: 'badge' },
-    { name: 'Categorías Costos', path: '/categorias-costos', icon: 'monetization_on' },
-    { name: 'Proveedores', path: '/proveedores', icon: 'local_shipping' },
-    { name: 'Unidades', path: '/unidades', icon: 'square_foot' },
-    { name: 'Medios Pago', path: '/medios-pago', icon: 'payment' },
-    { name: 'Inventario', path: '/inventario', icon: 'inventory' },
-    { name: 'Configuración', path: '/configuracion', icon: 'settings' }
+  menuGroups = [
+    {
+      name: 'Inicio', icon: 'home', children: [
+        { name: 'Dashboard', path: '/dashboard', icon: 'dashboard' }
+      ]
+    },
+    {
+      name: 'Operaciones', icon: 'work', children: [
+        { name: 'Órdenes de Servicio', path: '/ordenes-servicio', icon: 'build' },
+        { name: 'Proyectos', path: '/proyectos', icon: 'folder' },
+        { name: 'Tipos de Servicio', path: '/tipos-servicio', icon: 'miscellaneous_services' }
+      ]
+    },
+    {
+      name: 'Contactos', icon: 'contacts', children: [
+        { name: 'Clientes', path: '/clientes', icon: 'people' },
+        { name: 'Proveedores', path: '/proveedores', icon: 'local_shipping' },
+        { name: 'Responsables', path: '/responsibles', icon: 'badge' },
+        { name: 'Tipos de Compañía', path: '/tipos-compania', icon: 'category' }
+      ]
+    },
+    {
+      name: 'Recursos', icon: 'inventory_2', children: [
+        { name: 'Inventario', path: '/inventario', icon: 'inventory' },
+        { name: 'Activos', path: '/activos', icon: 'precision_manufacturing' },
+        { name: 'Unidades', path: '/unidades', icon: 'square_foot' }
+      ]
+    },
+    {
+      name: 'Finanzas', icon: 'account_balance', children: [
+        { name: 'Resumen', path: '/finanzas', icon: 'attach_money' },
+        { name: 'Movimientos', path: '/movimientos', icon: 'swap_horiz' },
+        { name: 'Cheques', path: '/cheques', icon: 'receipt_long' },
+        { name: 'Cuentas Bancarias', path: '/cuentas-financieras', icon: 'account_balance_wallet' },
+        { name: 'Categorías de Movimiento', path: '/categorias-movimiento', icon: 'category' },
+        { name: 'Categorías de Costos', path: '/categorias-costos', icon: 'monetization_on' },
+        { name: 'Medios de Pago', path: '/medios-pago', icon: 'payment' }
+      ]
+    },
+    {
+      name: 'Administración', icon: 'admin_panel_settings', children: [
+        { name: 'Usuarios', path: '/usuarios', icon: 'manage_accounts' },
+        { name: 'Configuración', path: '/configuracion', icon: 'settings' }
+      ]
+    }
   ];
 
   constructor(private authService: AuthService, private router: Router) {}

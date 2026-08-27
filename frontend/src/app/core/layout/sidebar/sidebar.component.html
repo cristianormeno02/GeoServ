@@ -3,13 +3,26 @@
   <div class="user-name">{{ userName }}</div>
 </div>
 
-<mat-nav-list>
-  <a mat-list-item *ngFor="let link of links" [routerLink]="link.path" routerLinkActive="active-link">
-    <mat-icon matListItemIcon>{{ link.icon }}</mat-icon>
-    <div matListItemTitle>{{ link.name }}</div>
-  </a>
+<mat-nav-list class="nested-menu-list">
+  <mat-accordion displayMode="flat" multi="false">
+    <mat-expansion-panel *ngFor="let group of menuGroups" class="menu-group-panel">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <mat-icon class="group-icon">{{ group.icon }}</mat-icon>
+          <span>{{ group.name }}</span>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      
+      <div class="menu-group-items">
+        <a mat-list-item *ngFor="let child of group.children" [routerLink]="child.path" routerLinkActive="active-link" class="child-item">
+          <mat-icon matListItemIcon>{{ child.icon }}</mat-icon>
+          <div matListItemTitle>{{ child.name }}</div>
+        </a>
+      </div>
+    </mat-expansion-panel>
+  </mat-accordion>
 
-  <mat-divider></mat-divider>
+  <mat-divider class="menu-divider"></mat-divider>
 
   <a mat-list-item (click)="logout()" class="logout-item">
     <mat-icon matListItemIcon>logout</mat-icon>

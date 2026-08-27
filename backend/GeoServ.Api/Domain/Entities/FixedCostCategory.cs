@@ -7,4 +7,5 @@ public class FixedCostCategory
     public string? Description { get; set; }
     
     public ICollection<FixedCost> FixedCosts { get; set; } = new List<FixedCost>();
+    public ICollection<FixedCostItem> FixedCostItems { get; set; } = new List<FixedCostItem>();
 }

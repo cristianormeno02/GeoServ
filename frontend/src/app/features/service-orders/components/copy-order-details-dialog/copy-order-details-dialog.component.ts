@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
@@ -33,14 +33,18 @@ export class CopyOrderDetailsDialogComponent implements OnInit {
 
   constructor(
     public dialogRef: MatDialogRef<CopyOrderDetailsDialogComponent>,
-    private serviceOrderService: ServiceOrderService
+    private serviceOrderService: ServiceOrderService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     this.searchControl.valueChanges.pipe(
       debounceTime(300),
       distinctUntilChanged(),
-      tap(() => this.isLoading = true),
+      tap(() => {
+        this.isLoading = true;
+        this.cdr.detectChanges();
+      }),
       switchMap(value => {
         if (typeof value === 'string' && value.length > 0) {
           return this.serviceOrderService.searchServiceOrders(value);
@@ -51,10 +55,12 @@ export class CopyOrderDetailsDialogComponent implements OnInit {
       next: (results) => {
         this.filteredOrders = results;
         this.isLoading = false;
+        this.cdr.detectChanges();
       },
       error: () => {
         this.filteredOrders = [];
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -66,6 +72,7 @@ export class CopyOrderDetailsDialogComponent implements OnInit {
   onOptionSelected(event: any): void {
     const order = event.option.value;
     this.selectedDetails = order?.budgetedTasksDetail || 'No hay detalle cargado en esta orden.';
+    this.cdr.detectChanges();
   }
 
   onCancel(): void {

@@ -11,6 +11,8 @@ import { NgxMaskDirective } from 'ngx-mask';
 import { MatIconModule } from '@angular/material/icon';
 import { Asset, AssetService } from '../services/asset.service';
 
+import { MatSnackBar } from '@angular/material/snack-bar';
+
 @Component({
   selector: 'app-activo-form',
   standalone: true,
@@ -88,7 +90,8 @@ export class ActivoFormComponent {
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<ActivoFormComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { asset?: Asset },
-    private assetService: AssetService
+    private assetService: AssetService,
+    private snackBar: MatSnackBar
   ) {
     this.isEditMode = !!data?.asset;
     this.assetForm = this.fb.group({
@@ -111,17 +114,23 @@ export class ActivoFormComponent {
 
     if (this.isEditMode && this.data.asset?.id) {
       this.assetService.updateAsset(this.data.asset.id, assetData).subscribe({
-        next: () => this.dialogRef.close(true),
+        next: () => {
+          this.snackBar.open('Activo actualizado con éxito', 'Cerrar');
+          this.dialogRef.close(true);
+        },
         error: (err) => {
-          console.error(err);
+          this.snackBar.open(err.error?.message || 'Error al actualizar el activo', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] });
           this.isSubmitting = false;
         }
       });
     } else {
       this.assetService.createAsset(assetData).subscribe({
-        next: () => this.dialogRef.close(true),
+        next: () => {
+          this.snackBar.open('Activo creado con éxito', 'Cerrar');
+          this.dialogRef.close(true);
+        },
         error: (err) => {
-          console.error(err);
+          this.snackBar.open(err.error?.message || 'Error al crear el activo', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] });
           this.isSubmitting = false;
         }
       });

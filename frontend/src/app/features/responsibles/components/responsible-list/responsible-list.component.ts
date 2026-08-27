@@ -76,7 +76,7 @@ export class ResponsibleListComponent implements OnInit {
   loadData(): void {
     this.responsibleService.getResponsibles().subscribe({
       next: (data) => this.responsibles.data = data,
-      error: () => this.snackBar.open('Error al cargar', 'Cerrar', { duration: 3000 })
+      error: () => this.snackBar.open('Error al cargar', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] })
     });
   }
 
@@ -95,7 +95,7 @@ export class ResponsibleListComponent implements OnInit {
           this.snackBar.open('Eliminado correctamente', 'Cerrar', { duration: 3000 });
           this.loadData();
         },
-        error: (err) => this.snackBar.open(err.error?.message || 'Error al eliminar', 'Cerrar', { duration: 3000 })
+        error: (err) => this.snackBar.open(err.error?.message || 'Error al eliminar', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] })
       });
     }
   }

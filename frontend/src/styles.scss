@@ -1,0 +1,307 @@
+/* You can add global styles to this file, and also import other style files */
+
+:root {
+  /* Identidad */
+  --color-primary: #1E293B;
+  --color-accent: #D97706;
+
+  /* Estados */
+  --color-success: #059669;
+  --color-error: #DC2626;
+  --color-warning: #F59E0B;
+  --color-info: #2563EB;
+
+  /* Superficies */
+  --color-background: #F8FAFC;
+  --color-surface: #FFFFFF;
+
+  /* Texto */
+  --text-primary: #FFFFFF;
+  --text-secondary: #1E293B;
+
+  /* Bordes */
+  --border-color: #E2E8F0;
+
+  /* Material MDC variables overrides for primary color (Copper: #D97706) */
+  --mdc-theme-primary: #D97706;
+  --mdc-theme-on-primary: #ffffff;
+  --mdc-theme-primary-container: #f5d9b3;
+  --mdc-theme-on-primary-container: #1e293b;
+}
+
+html, body { 
+  height: 100%; 
+  background-color: var(--color-background); 
+}
+body { 
+  margin: 0; 
+  font-family: Roboto, "Helvetica Neue", sans-serif; 
+}
+
+/* =========================================================================
+   MATERIAL OVERRIDES: Primary Color -> Copper (#D97706)
+   ========================================================================= */
+
+/* Action Buttons (Raised, Flat, FABs) */
+.mat-mdc-raised-button.mat-primary, 
+.mat-mdc-unelevated-button.mat-primary,
+.mat-mdc-fab.mat-primary,
+.mat-mdc-mini-fab.mat-primary,
+.mat-raised-button.mat-primary, 
+.mat-fab.mat-primary,
+.mat-mini-fab.mat-primary {
+  --mdc-protected-button-container-color: var(--color-accent) !important;
+  --mdc-filled-button-container-color: var(--color-accent) !important;
+  --mdc-fab-container-color: var(--color-accent) !important;
+  background-color: var(--color-accent) !important;
+  color: white !important;
+}
+
+/* Text, Outlined, Icon Buttons */
+.mat-mdc-outlined-button.mat-primary,
+.mat-mdc-button.mat-primary,
+.mat-mdc-icon-button.mat-primary,
+.mat-button.mat-primary,
+.mat-stroked-button.mat-primary,
+.mat-icon-button.mat-primary {
+  --mdc-outlined-button-label-text-color: var(--color-accent) !important;
+  --mdc-text-button-label-text-color: var(--color-accent) !important;
+  --mdc-icon-button-icon-color: var(--color-accent) !important;
+  color: var(--color-accent) !important;
+}
+
+/* Form field focus (Outlined & Filled) */
+.mat-mdc-text-field-wrapper.mdc-text-field--outlined.mdc-text-field--focused .mdc-notched-outline__leading,
+.mat-mdc-text-field-wrapper.mdc-text-field--outlined.mdc-text-field--focused .mdc-notched-outline__notch,
+.mat-mdc-text-field-wrapper.mdc-text-field--outlined.mdc-text-field--focused .mdc-notched-outline__trailing {
+  border-color: var(--color-accent) !important;
+  border-width: 2px !important;
+}
+
+.mat-mdc-text-field-wrapper.mdc-text-field--filled.mdc-text-field--focused .mdc-line-ripple::before {
+  border-bottom-color: var(--color-accent) !important;
+}
+
+/* Form field floating label focused */
+.mat-mdc-form-field.mat-focused .mdc-floating-label,
+.mat-mdc-form-field.mat-focused .mat-mdc-select-value {
+  color: var(--color-accent) !important;
+}
+
+/* Select arrow focused */
+.mat-mdc-form-field.mat-focused.mat-primary .mat-mdc-select-arrow {
+  color: var(--color-accent) !important;
+}
+
+/* Tabs active state */
+.mat-mdc-tab-group .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
+  color: var(--color-accent) !important;
+}
+.mat-mdc-tab-group .mat-mdc-tab .mdc-tab-indicator__content--underline {
+  border-color: var(--color-accent) !important;
+}
+
+/* Checkboxes and Radios (if primary) */
+.mat-mdc-checkbox.mat-primary .mdc-checkbox__native-control:checked ~ .mdc-checkbox__background {
+  border-color: var(--color-accent) !important;
+  background-color: var(--color-accent) !important;
+}
+.mat-mdc-radio-button.mat-primary .mdc-radio__native-control:checked ~ .mdc-radio__background .mdc-radio__outer-circle {
+  border-color: var(--color-accent) !important;
+}
+.mat-mdc-radio-button.mat-primary .mdc-radio__native-control:checked ~ .mdc-radio__background .mdc-radio__inner-circle {
+  border-color: var(--color-accent) !important;
+}
+
+/* Global focus visible outline */
+*:focus-visible {
+  outline-color: var(--color-accent) !important;
+}
+
+/* Spinner (mat-spinner) primary color */
+.mat-mdc-progress-spinner {
+  --mdc-circular-progress-active-indicator-color: var(--color-accent) !important;
+}
+
+.mat-mdc-progress-spinner circle,
+.mdc-circular-progress__indeterminate-circle-graphic {
+  stroke: var(--color-accent) !important;
+}
+
+/* Warn Buttons */
+.mat-mdc-raised-button.mat-warn, 
+.mat-mdc-unelevated-button.mat-warn,
+.mat-mdc-fab.mat-warn,
+.mat-mdc-mini-fab.mat-warn {
+  --mdc-protected-button-container-color: var(--color-error) !important;
+  --mdc-filled-button-container-color: var(--color-error) !important;
+  --mdc-fab-container-color: var(--color-error) !important;
+  background-color: var(--color-error) !important;
+  color: white !important;
+}
+
+.mat-mdc-outlined-button.mat-warn,
+.mat-mdc-button.mat-warn,
+.mat-mdc-icon-button.mat-warn {
+  --mdc-outlined-button-label-text-color: var(--color-error) !important;
+  --mdc-text-button-label-text-color: var(--color-error) !important;
+  --mdc-icon-button-icon-color: var(--color-error) !important;
+  color: var(--color-error) !important;
+}
+
+/* =========================================================================
+   SNACKBAR CUSTOMIZATIONS
+   ========================================================================= */
+
+/* Centrado vertical en la pantalla */
+.cdk-global-overlay-wrapper {
+  z-index: 99999 !important;
+}
+
+.mat-mdc-snack-bar-container {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  z-index: 999999 !important;
+}
+
+/* Success */
+.mat-mdc-snack-bar-container.snackbar-success .mdc-snackbar__surface {
+  background-color: var(--color-success) !important;
+  color: white !important;
+}
+.mat-mdc-snack-bar-container.snackbar-success .mdc-snackbar__label::before {
+  content: '\2714 \00a0 '; /* ✔ Check mark */
+  font-size: 18px;
+  vertical-align: middle;
+}
+
+/* Error */
+.mat-mdc-snack-bar-container.snackbar-error .mdc-snackbar__surface {
+  background-color: var(--color-error) !important;
+  color: white !important;
+}
+.mat-mdc-snack-bar-container.snackbar-error .mdc-snackbar__label::before {
+  content: '\2716 \00a0 '; /* ✖ Cross mark */
+  font-size: 18px;
+  vertical-align: middle;
+}
+
+/* Warning */
+.mat-mdc-snack-bar-container.snackbar-warning .mdc-snackbar__surface {
+  background-color: var(--color-warning) !important;
+  color: white !important;
+}
+.mat-mdc-snack-bar-container.snackbar-warning .mdc-snackbar__label::before {
+  content: '\26A0 \00a0 '; /* ⚠ Warning sign */
+  font-size: 18px;
+  vertical-align: middle;
+}
+
+/* Make text and button stand out in all custom snackbars */
+.mat-mdc-snack-bar-container.snackbar-success .mdc-snackbar__label,
+.mat-mdc-snack-bar-container.snackbar-error .mdc-snackbar__label,
+.mat-mdc-snack-bar-container.snackbar-warning .mdc-snackbar__label {
+  color: white !important;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+.mat-mdc-snack-bar-container.snackbar-success .mat-mdc-snack-bar-action,
+.mat-mdc-snack-bar-container.snackbar-error .mat-mdc-snack-bar-action,
+.mat-mdc-snack-bar-container.snackbar-warning .mat-mdc-snack-bar-action {
+  color: #fff !important;
+  font-weight: bold !important;
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  padding: 0 12px !important;
+  border-radius: 4px !important;
+  margin-left: 16px !important;
+}
+
+/* Superficies globales */
+.mat-mdc-card, 
+.mat-mdc-dialog-surface,
+.mat-mdc-select-panel,
+.mat-mdc-autocomplete-panel,
+.mat-mdc-menu-panel,
+.mdc-menu-surface,
+.mat-mdc-datepicker-content,
+.mat-datepicker-content {
+  background-color: var(--color-surface) !important;
+}
+
+/* Utilidades de Estado Semántico */
+.text-success { color: var(--color-success) !important; }
+.text-warning { color: var(--color-warning) !important; }
+.text-error { color: var(--color-error) !important; }
+.text-info { color: var(--color-info) !important; }
+
+.bg-success { background-color: var(--color-success) !important; color: white !important; }
+.bg-warning { background-color: var(--color-warning) !important; color: white !important; }
+.bg-error { background-color: var(--color-error) !important; color: white !important; }
+.bg-info { background-color: var(--color-info) !important; color: white !important; }
+
+.border-success { border-color: var(--color-success) !important; }
+.border-warning { border-color: var(--color-warning) !important; }
+.border-error { border-color: var(--color-error) !important; }
+.border-info { border-color: var(--color-info) !important; }
+
+/* Global Status Badge */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.85em;
+  font-weight: 500;
+  line-height: 1;
+}
+
+
+/* =========================================================================
+
+
+/* =========================================================================
+   FORM FIELDS (INPUT BORDERS)
+   ========================================================================= */
+
+/* Normal state */
+.mat-mdc-text-field-wrapper.mdc-text-field--outlined .mdc-notched-outline__leading,
+.mat-mdc-text-field-wrapper.mdc-text-field--outlined .mdc-notched-outline__notch,
+.mat-mdc-text-field-wrapper.mdc-text-field--outlined .mdc-notched-outline__trailing {
+  border-color: var(--border-color) !important;
+}
+
+/* Error state */
+.mat-mdc-form-field.mat-form-field-invalid .mdc-notched-outline__leading,
+.mat-mdc-form-field.mat-form-field-invalid .mdc-notched-outline__notch,
+.mat-mdc-form-field.mat-form-field-invalid .mdc-notched-outline__trailing {
+  border-color: var(--color-error) !important;
+  border-width: 2px !important;
+}
+
+.mat-mdc-form-field.mat-form-field-invalid .mdc-floating-label,
+.mat-mdc-form-field.mat-form-field-invalid .mat-mdc-form-field-error-wrapper {
+  color: var(--color-error) !important;
+}
+
+/* Fix para el padding interno de los inputs, textareas y selects */
+.mat-mdc-form-field-infix {
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+}
+
+/* Ajuste para que el ícono de prefijo/sufijo (ej. la lupa) no quede pegado al borde */
+.mat-mdc-form-field-icon-suffix, 
+.mat-mdc-form-field-text-suffix {
+  padding-right: 12px !important;
+}
+
+.mat-mdc-form-field-icon-prefix,
+.mat-mdc-form-field-text-prefix {
+  padding-left: 12px !important;
+}

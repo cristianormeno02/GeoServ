@@ -1,4 +1,4 @@
-import { Component, OnInit, Injectable } from '@angular/core';
+import { Component, OnInit, Injectable, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -154,7 +154,8 @@ export class ServiceOrderFormComponent implements OnInit {
     private userService: UserService,
     private dialog: MatDialog,
     private directCostService: DirectCostService,
-    private empresaConfigService: EmpresaConfigService
+    private empresaConfigService: EmpresaConfigService,
+    private cdr: ChangeDetectorRef
   ) {
     this.createForm();
   }
@@ -356,13 +357,46 @@ export class ServiceOrderFormComponent implements OnInit {
     return this.orderForm.get('activities') as FormArray;
   }
 
+  createActivityGroup(initialData?: any): FormGroup {
+    const group = this.fb.group({
+      shortDetail: [initialData?.shortDetail || '', Validators.required],
+      longDetail: [initialData?.longDetail || ''],
+      status: [initialData?.status || 'Pendiente'],
+      progressPercentage: [{ value: initialData?.progressPercentage || 0, disabled: true }, [Validators.min(0), Validators.max(100)]]
+    });
+
+    group.get('status')?.valueChanges.subscribe(status => {
+      const progressCtrl = group.get('progressPercentage');
+      if (status === 'Pendiente' || status === 'Cancelado') {
+        progressCtrl?.setValue(0, { emitEvent: false });
+        progressCtrl?.disable({ emitEvent: false });
+      } else if (status === 'Finalizado') {
+        progressCtrl?.setValue(100, { emitEvent: false });
+        progressCtrl?.disable({ emitEvent: false });
+      } else if (status === 'En Proceso') {
+        progressCtrl?.enable({ emitEvent: false });
+        // Optional: clear validators and add new ones for 0-99? Or handle in onSubmit
+      }
+    });
+
+    // Initialize state properly
+    const status = group.get('status')?.value;
+    const progressCtrl = group.get('progressPercentage');
+    if (status === 'Pendiente' || status === 'Cancelado') {
+      progressCtrl?.disable({ emitEvent: false });
+      progressCtrl?.setValue(0, { emitEvent: false });
+    } else if (status === 'Finalizado') {
+      progressCtrl?.disable({ emitEvent: false });
+      progressCtrl?.setValue(100, { emitEvent: false });
+    } else if (status === 'En Proceso') {
+      progressCtrl?.enable({ emitEvent: false });
+    }
+
+    return group;
+  }
+
   addActivity() {
-    this.activities.push(this.fb.group({
-      shortDetail: ['', Validators.required],
-      longDetail: [''],
-      status: ['Pendiente'],
-      progressPercentage: [0, [Validators.min(0), Validators.max(100)]]
-    }));
+    this.activities.push(this.createActivityGroup());
   }
 
   removeActivity(index: number) {
@@ -441,33 +475,58 @@ export class ServiceOrderFormComponent implements OnInit {
 
         // Cargar actividades
         order.activities?.forEach((a: any) => {
-          this.addActivity();
-          const newGroup = this.activities.at(this.activities.length - 1);
-          newGroup.patchValue({
+          this.activities.push(this.createActivityGroup({
             shortDetail: a.shortDetail,
             longDetail: a.longDetail,
             status: a.state,
             progressPercentage: a.progressPercentage
-          });
+          }));
         });
 
         // Cargar observaciones
         this.observations = order.observations ?? [];
       },
-      error: () => this.snackBar.open('Error al cargar la orden', 'Cerrar', { duration: 3000 })
+      error: () => this.snackBar.open('Error al cargar la orden', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] })
     });
   }
 
   onSubmit(): void {
     if (this.orderForm.invalid) {
       this.orderForm.markAllAsTouched();
-      this.snackBar.open('Por favor, revise los campos del formulario.', 'Cerrar', { duration: 3000 });
+      this.snackBar.open('Por favor, revise los campos del formulario.', 'Cerrar', { duration: 3000, panelClass: ['snackbar-warning'] });
       return;
     }
 
     const formValue = { ...this.orderForm.getRawValue() };
     if (formValue.projectId === '') {
       formValue.projectId = null;
+    }
+
+    // Validación de Actividades Operativas
+    if (formValue.activities && formValue.activities.length > 0) {
+      const statusId = formValue.statusId;
+      const selectedStatus = this.statuses.find(s => s.id === statusId);
+      const isEntregada = selectedStatus && selectedStatus.name.toLowerCase() === 'entregada';
+
+      for (const a of formValue.activities) {
+        const prog = Number(a.progressPercentage) || 0;
+        if ((a.status === 'Pendiente' || a.status === 'Cancelado') && prog !== 0) {
+          this.snackBar.open(`La actividad "${a.shortDetail}" está en ${a.status} y su progreso debe ser 0%.`, 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
+          return;
+        }
+        if (a.status === 'Finalizado' && prog !== 100) {
+          this.snackBar.open(`La actividad "${a.shortDetail}" está Finalizada y su progreso debe ser 100%.`, 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
+          return;
+        }
+        if (a.status === 'En Proceso' && (prog < 0 || prog > 99)) {
+          this.snackBar.open(`La actividad "${a.shortDetail}" está En Proceso y su progreso debe estar entre 0% y 99%.`, 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
+          return;
+        }
+        if (isEntregada && (a.status !== 'Finalizado' && a.status !== 'Cancelado')) {
+          this.snackBar.open('Para guardar la orden en estado Entregada, todas las actividades operativas deben estar Finalizadas o Canceladas.', 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
+          return;
+        }
+      }
     }
     
     // Helper para limpiar montos numéricos que pueden venir como string (ngx-mask) o como number puro
@@ -510,7 +569,7 @@ export class ServiceOrderFormComponent implements OnInit {
     if (formValue.distributions && formValue.distributions.length > 0) {
       const totalPercentage = formValue.distributions.reduce((acc: number, curr: any) => acc + (Number(curr.percentage) || 0), 0);
       if (totalPercentage !== 100) {
-        this.snackBar.open('La suma de los porcentajes de distribución debe ser exactamente 100.', 'Cerrar', { duration: 4000 });
+        this.snackBar.open('La suma de los porcentajes de distribución debe ser exactamente 100.', 'Cerrar', { duration: 4000, panelClass: ['snackbar-warning'] });
         return;
       }
     }
@@ -525,10 +584,24 @@ export class ServiceOrderFormComponent implements OnInit {
         },
         error: (err) => {
           this.isSaving = false;
-          this.snackBar.open(err.error?.detail || err.error?.message || 'Error al actualizar', 'Cerrar', { duration: 5000 });
+          this.snackBar.open(err.error?.detail || err.error?.message || 'Error al actualizar', 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
         }
       });
     } else {
+      // Agregar colecciones locales
+      if (this.observations.length > 0) {
+         formValue.observations = this.observations.map(o => ({
+            text: o.text,
+            observationType: o.observationType
+         }));
+      }
+      if (this.directCostsDataSource.data.length > 0) {
+         formValue.directCosts = this.directCostsDataSource.data.map(c => {
+            const { id, ...rest } = c as any;
+            return rest;
+         });
+      }
+
       this.serviceOrderService.createServiceOrder(formValue).subscribe({
         next: () => {
           this.snackBar.open('Orden creada con éxito', 'Cerrar', { duration: 3000 });
@@ -537,13 +610,25 @@ export class ServiceOrderFormComponent implements OnInit {
         },
         error: (err) => {
           this.isSaving = false;
-          this.snackBar.open(err.error?.detail || err.error?.message || 'Error al crear', 'Cerrar', { duration: 5000 });
+          this.snackBar.open(err.error?.detail || err.error?.message || 'Error al crear', 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
         }
       });
     }
   }
 
   onObservationAdded(payload: any): void {
+    if (!this.isEditMode) {
+      // Almacenar localmente si estamos en creación
+      const tempObs = {
+        id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(),
+        text: payload.text,
+        observationType: payload.observationType,
+        createdAt: new Date().toISOString()
+      };
+      this.observations = [tempObs, ...this.observations];
+      this.snackBar.open('Observación registrada', 'Cerrar', { duration: 2000 });
+      return;
+    }
     if (!this.orderId) return;
     this.serviceOrderService.addObservation(this.orderId, payload).subscribe({
       next: (obs) => {
@@ -551,7 +636,7 @@ export class ServiceOrderFormComponent implements OnInit {
         this.snackBar.open('Observación guardada', 'Cerrar', { duration: 2000 });
       },
       error: () => {
-        this.snackBar.open('Error al guardar observación', 'Cerrar', { duration: 3000 });
+        this.snackBar.open('Error al guardar observación', 'Cerrar', { duration: 3000, panelClass: ['snackbar-error'] });
       }
     });
   }
@@ -608,6 +693,7 @@ export class ServiceOrderFormComponent implements OnInit {
         
         // Trigger calculation
         this.calculateTotal();
+        this.cdr.detectChanges();
         this.snackBar.open('Distribución de cobro copiada con éxito', 'Cerrar', { duration: 3000 });
       }
     });
@@ -628,14 +714,15 @@ export class ServiceOrderFormComponent implements OnInit {
         
         // Add new activities based on result
         result.forEach(act => {
-          this.activities.push(this.fb.group({
-            shortDetail: [act.shortDetail, Validators.required],
-            longDetail: [act.longDetail || ''],
-            status: ['Pendiente'],
-            progressPercentage: [0, [Validators.min(0), Validators.max(100)]]
+          this.activities.push(this.createActivityGroup({
+            shortDetail: act.shortDetail,
+            longDetail: act.longDetail,
+            status: 'Pendiente',
+            progressPercentage: 0
           }));
         });
         
+        this.cdr.detectChanges();
         this.snackBar.open('Actividades copiadas con éxito', 'Cerrar', { duration: 3000 });
       }
     });
@@ -670,6 +757,21 @@ export class ServiceOrderFormComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe((result: any) => {
       if (result) {
+        if (!this.isEditMode) {
+          if (result.id) {
+             const idx = this.directCostsDataSource.data.findIndex(c => c.id === result.id);
+             if (idx >= 0) {
+                 this.directCostsDataSource.data[idx] = result;
+                 this.directCostsDataSource.data = [...this.directCostsDataSource.data];
+             }
+          } else {
+             result.id = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString();
+             this.directCostsDataSource.data = [...this.directCostsDataSource.data, result];
+          }
+          this.snackBar.open('Costo registrado localmente.', 'Cerrar', { duration: 3000 });
+          return;
+        }
+
         if (result.id) {
           this.directCostService.updateCost(result.id, result).subscribe({
             next: () => {
@@ -678,7 +780,7 @@ export class ServiceOrderFormComponent implements OnInit {
             },
             error: (err) => {
               console.error(err);
-              this.snackBar.open('Error al actualizar costo.', 'Cerrar', { duration: 4000 });
+              this.snackBar.open('Error al actualizar costo.', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] });
             }
           });
         } else {
@@ -689,7 +791,7 @@ export class ServiceOrderFormComponent implements OnInit {
             },
             error: (err) => {
               console.error(err);
-              this.snackBar.open('Error al registrar costo.', 'Cerrar', { duration: 4000 });
+              this.snackBar.open('Error al registrar costo.', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] });
             }
           });
         }
@@ -699,6 +801,11 @@ export class ServiceOrderFormComponent implements OnInit {
 
   deleteDirectCost(costId: string): void {
     if (confirm('¿Estás seguro de que deseas eliminar este costo directo?')) {
+      if (!this.isEditMode) {
+          this.directCostsDataSource.data = this.directCostsDataSource.data.filter(c => c.id !== costId);
+          this.snackBar.open('Costo directo eliminado localmente.', 'Cerrar', { duration: 3000 });
+          return;
+      }
       if (!this.orderId) return;
       this.directCostService.deleteCost(this.orderId, costId).subscribe({
         next: () => {
@@ -707,7 +814,7 @@ export class ServiceOrderFormComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
-          this.snackBar.open('Error al eliminar costo directo.', 'Cerrar', { duration: 4000 });
+          this.snackBar.open('Error al eliminar costo directo.', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] });
         }
       });
     }

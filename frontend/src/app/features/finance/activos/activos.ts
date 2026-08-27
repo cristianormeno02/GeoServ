@@ -8,6 +8,8 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { Asset, AssetService } from '../services/asset.service';
 import { ActivoFormComponent } from './activo-form.component';
 
+import { MatSnackBar } from '@angular/material/snack-bar';
+
 @Component({
   selector: 'app-activos',
   standalone: true,
@@ -22,7 +24,8 @@ export class Activos implements OnInit {
   constructor(
     private assetService: AssetService,
     private dialog: MatDialog,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
@@ -35,7 +38,10 @@ export class Activos implements OnInit {
         this.assets = [...data];
         this.cdr.detectChanges();
       },
-      error: (err) => console.error(err)
+      error: (err) => {
+        console.error(err);
+        this.snackBar.open('Error al cargar activos', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] });
+      }
     });
   }
 
@@ -56,8 +62,14 @@ export class Activos implements OnInit {
   deleteAsset(asset: Asset) {
     if (confirm(`¿Estás seguro de eliminar el activo "${asset.name}"?`)) {
       this.assetService.deleteAsset(asset.id!).subscribe({
-        next: () => this.loadAssets(),
-        error: (err) => console.error(err)
+        next: () => {
+          this.snackBar.open('Activo eliminado con éxito', 'Cerrar');
+          this.loadAssets();
+        },
+        error: (err) => {
+          console.error(err);
+          this.snackBar.open(err.error?.message || 'Error al eliminar activo', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] });
+        }
       });
     }
   }

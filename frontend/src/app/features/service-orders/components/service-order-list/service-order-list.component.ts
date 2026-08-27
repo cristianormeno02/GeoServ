@@ -9,9 +9,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { ServiceOrderService } from '../../services/service-order.service';
 import { ServiceOrderListItem } from '../../models/service-order.model';
+import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-service-order-list',
@@ -26,7 +29,9 @@ import { ServiceOrderListItem } from '../../models/service-order.model';
     MatIconModule,
     MatInputModule,
     MatFormFieldModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatDialogModule,
+    MatSnackBarModule
   ],
   templateUrl: './service-order-list.component.html',
   styleUrls: ['./service-order-list.component.scss']
@@ -48,7 +53,9 @@ export class ServiceOrderListComponent implements OnInit {
 
   constructor(
     private serviceOrderService: ServiceOrderService,
-    private router: Router
+    private router: Router,
+    private dialog: MatDialog,
+    private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
@@ -69,18 +76,18 @@ export class ServiceOrderListComponent implements OnInit {
   }
 
   getStatusClass(status: string): string {
-    if (!status) return 'status-info';
+    if (!status) return 'bg-info';
     const s = status.toLowerCase();
-    if (s.includes('aprobado') || s.includes('completado') || s.includes('pagado') || s.includes('cobrado') || s.includes('activo') || s.includes('procesado')) {
-      return 'status-success';
+    if (s.includes('aprobado') || s.includes('completado') || s.includes('pagado') || s.includes('cobrado') || s.includes('activo') || s.includes('procesado') || s.includes('entregada') || s.includes('entregado') || s.includes('ingreso')) {
+      return 'bg-success';
     }
     if (s.includes('pendiente') || s.includes('revisión') || s.includes('revision')) {
-      return 'status-warning';
+      return 'bg-warning';
     }
     if (s.includes('error') || s.includes('rechazado')) {
-      return 'status-error';
+      return 'bg-error';
     }
-    return 'status-info';
+    return 'bg-info';
   }
 
   applyFilter(event: Event): void {
@@ -101,16 +108,35 @@ export class ServiceOrderListComponent implements OnInit {
   }
 
   deleteOrder(id: string): void {
-    if (confirm('¿Estás seguro de que deseas eliminar esta orden de servicio? Todos los documentos, actividades y responsables asociados también se eliminarán.')) {
-      this.serviceOrderService.deleteServiceOrder(id).subscribe({
-        next: () => {
-          this.loadOrders();
-        },
-        error: (err) => {
-          console.error('Error al eliminar la orden', err);
-          alert('Hubo un error al eliminar la orden.');
-        }
-      });
-    }
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '450px',
+      data: {
+        title: 'Eliminar Orden de Servicio',
+        message: '¿Estás seguro de que deseas eliminar esta orden de servicio? Todos los documentos, actividades y responsables asociados también se eliminarán.',
+        isDestructive: true,
+        confirmText: 'Eliminar'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.serviceOrderService.deleteServiceOrder(id).subscribe({
+          next: () => {
+            this.snackBar.open('Orden de servicio eliminada exitosamente', 'Cerrar', { 
+              duration: 3000, 
+              panelClass: ['snackbar-success'] 
+            });
+            this.loadOrders();
+          },
+          error: (err) => {
+            console.error('Error al eliminar la orden', err);
+            this.snackBar.open('Hubo un error al eliminar la orden.', 'Cerrar', { 
+              duration: 5000, 
+              panelClass: ['snackbar-error'] 
+            });
+          }
+        });
+      }
+    });
   }
 }

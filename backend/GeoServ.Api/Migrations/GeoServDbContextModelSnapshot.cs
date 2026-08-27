@@ -124,6 +124,9 @@ namespace GeoServ.Api.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
 
+                    b.Property<int>("UsefulLifeMonths")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ProviderId");
@@ -273,6 +276,89 @@ namespace GeoServ.Api.Migrations
                             Id = new Guid("d7777777-7777-7777-7777-777777777777"),
                             Name = "Otro"
                         });
+                });
+
+            modelBuilder.Entity("GeoServ.Api.Domain.Entities.Consumable", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ConsumableClassId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Observation")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("ProviderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("PurchaseDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("TotalCost")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("UnitCost")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid>("UnitId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConsumableClassId");
+
+                    b.HasIndex("ProviderId");
+
+                    b.HasIndex("UnitId");
+
+                    b.ToTable("Consumables");
+                });
+
+            modelBuilder.Entity("GeoServ.Api.Domain.Entities.ConsumableClass", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ConsumableTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConsumableTypeId");
+
+                    b.ToTable("ConsumableClasses");
+                });
+
+            modelBuilder.Entity("GeoServ.Api.Domain.Entities.ConsumableType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ConsumableTypes");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.Currency", b =>
@@ -644,6 +730,78 @@ namespace GeoServ.Api.Migrations
                             Description = "Contadores, abogados (fijos)",
                             Name = "Honorarios Profesionales"
                         });
+                });
+
+            modelBuilder.Entity("GeoServ.Api.Domain.Entities.FixedCostItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("InitialAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<bool>("IsRecurring")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Observation")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("ProviderId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("ProviderId");
+
+                    b.ToTable("FixedCostItems");
+                });
+
+            modelBuilder.Entity("GeoServ.Api.Domain.Entities.FixedCostPayment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("DueDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("FixedCostItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsPaid")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("PaymentDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("PaymentMethodId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ReceiptNumber")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FixedCostItemId");
+
+                    b.HasIndex("PaymentMethodId");
+
+                    b.ToTable("FixedCostPayments");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.MovementCategory", b =>
@@ -1398,6 +1556,42 @@ namespace GeoServ.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("GeoServ.Api.Domain.Entities.Consumable", b =>
+                {
+                    b.HasOne("GeoServ.Api.Domain.Entities.ConsumableClass", "ConsumableClass")
+                        .WithMany("Consumables")
+                        .HasForeignKey("ConsumableClassId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("GeoServ.Api.Domain.Entities.Provider", "Provider")
+                        .WithMany()
+                        .HasForeignKey("ProviderId");
+
+                    b.HasOne("GeoServ.Api.Domain.Entities.Unit", "Unit")
+                        .WithMany()
+                        .HasForeignKey("UnitId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ConsumableClass");
+
+                    b.Navigation("Provider");
+
+                    b.Navigation("Unit");
+                });
+
+            modelBuilder.Entity("GeoServ.Api.Domain.Entities.ConsumableClass", b =>
+                {
+                    b.HasOne("GeoServ.Api.Domain.Entities.ConsumableType", "ConsumableType")
+                        .WithMany("ConsumableClasses")
+                        .HasForeignKey("ConsumableTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ConsumableType");
+                });
+
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.DirectCost", b =>
                 {
                     b.HasOne("GeoServ.Api.Domain.Entities.DirectCostCategory", "Category")
@@ -1480,6 +1674,40 @@ namespace GeoServ.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("GeoServ.Api.Domain.Entities.FixedCostItem", b =>
+                {
+                    b.HasOne("GeoServ.Api.Domain.Entities.FixedCostCategory", "Category")
+                        .WithMany("FixedCostItems")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("GeoServ.Api.Domain.Entities.Provider", "Provider")
+                        .WithMany()
+                        .HasForeignKey("ProviderId");
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Provider");
+                });
+
+            modelBuilder.Entity("GeoServ.Api.Domain.Entities.FixedCostPayment", b =>
+                {
+                    b.HasOne("GeoServ.Api.Domain.Entities.FixedCostItem", "FixedCostItem")
+                        .WithMany("Payments")
+                        .HasForeignKey("FixedCostItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GeoServ.Api.Domain.Entities.PaymentMethod", "PaymentMethod")
+                        .WithMany()
+                        .HasForeignKey("PaymentMethodId");
+
+                    b.Navigation("FixedCostItem");
+
+                    b.Navigation("PaymentMethod");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.Responsible", b =>
@@ -1638,6 +1866,16 @@ namespace GeoServ.Api.Migrations
                     b.Navigation("Clients");
                 });
 
+            modelBuilder.Entity("GeoServ.Api.Domain.Entities.ConsumableClass", b =>
+                {
+                    b.Navigation("Consumables");
+                });
+
+            modelBuilder.Entity("GeoServ.Api.Domain.Entities.ConsumableType", b =>
+                {
+                    b.Navigation("ConsumableClasses");
+                });
+
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.DistributionConcept", b =>
                 {
                     b.Navigation("ServiceOrderDistributions");
@@ -1650,7 +1888,14 @@ namespace GeoServ.Api.Migrations
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.FixedCostCategory", b =>
                 {
+                    b.Navigation("FixedCostItems");
+
                     b.Navigation("FixedCosts");
+                });
+
+            modelBuilder.Entity("GeoServ.Api.Domain.Entities.FixedCostItem", b =>
+                {
+                    b.Navigation("Payments");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.Project", b =>

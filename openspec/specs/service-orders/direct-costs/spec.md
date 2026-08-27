@@ -23,6 +23,10 @@ Cada registro de costo directo deberá tener los siguientes campos:
 - **Estado:** Selector con opciones ("pagado", "pendiente").
 - **Observaciones:** Campo de texto amplio.
 
+#### Scenario: Cargar costos directos en creación
+- **WHEN** el usuario crea una nueva Orden de Servicio
+- **THEN** puede ver la pestaña de Costos Directos y agregar registros antes de guardar la orden por primera vez
+
 ### Mantenedores Secundarios Requeridos
 El sistema debe proveer (si no existen) mantenedores separados para:
 - **Categorías de Costos Directos:** (ID, Nombre, Activo)

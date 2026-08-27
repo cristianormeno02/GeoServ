@@ -9,6 +9,8 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSelectModule } from '@angular/material/select';
 import { MovementCategory, MovementCategoryService } from '../services/movement-category.service';
 
+import { MatSnackBar } from '@angular/material/snack-bar';
+
 @Component({
   selector: 'app-categoria-form',
   standalone: true,
@@ -84,7 +86,8 @@ export class CategoriaFormComponent {
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<CategoriaFormComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { category?: MovementCategory },
-    private categoryService: MovementCategoryService
+    private categoryService: MovementCategoryService,
+    private snackBar: MatSnackBar
   ) {
     this.isEditMode = !!data?.category;
     this.categoryForm = this.fb.group({
@@ -103,17 +106,23 @@ export class CategoriaFormComponent {
 
     if (this.isEditMode && this.data.category?.id) {
       this.categoryService.updateCategory(this.data.category.id, formVal).subscribe({
-        next: () => this.dialogRef.close(true),
+        next: () => {
+          this.snackBar.open('Categoría actualizada con éxito', 'Cerrar');
+          this.dialogRef.close(true);
+        },
         error: (err) => {
-          console.error(err);
+          this.snackBar.open(err.error?.message || 'Error al actualizar', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] });
           this.isSubmitting = false;
         }
       });
     } else {
       this.categoryService.createCategory(formVal).subscribe({
-        next: () => this.dialogRef.close(true),
+        next: () => {
+          this.snackBar.open('Categoría creada con éxito', 'Cerrar');
+          this.dialogRef.close(true);
+        },
         error: (err) => {
-          console.error(err);
+          this.snackBar.open(err.error?.message || 'Error al crear', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] });
           this.isSubmitting = false;
         }
       });
