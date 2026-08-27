@@ -51,10 +51,10 @@ export class FixedCostDialogComponent implements OnInit {
 
   save() {
     if (this.form.invalid) return;
-    const req = this.data 
-      ? this.fixedCostService.updateItem(this.data.id, this.form.value)
-      : this.fixedCostService.createItem(this.form.value);
-
-    req.subscribe(() => this.dialogRef.close(true));
+    if (this.data) {
+      this.fixedCostService.updateItem(this.data.id, this.form.value).subscribe(() => this.dialogRef.close(true));
+    } else {
+      this.fixedCostService.createItem(this.form.value).subscribe(() => this.dialogRef.close(true));
+    }
   }
 }

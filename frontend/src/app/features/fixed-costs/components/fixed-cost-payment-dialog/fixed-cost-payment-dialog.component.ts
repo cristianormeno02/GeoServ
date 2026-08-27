@@ -64,10 +64,10 @@ export class FixedCostPaymentDialogComponent implements OnInit {
 
   save() {
     if (this.form.invalid) return;
-    const req = this.data.payment 
-      ? this.fixedCostService.updatePayment(this.data.payment.id, this.form.value)
-      : this.fixedCostService.createPayment(this.form.value);
-
-    req.subscribe(() => this.dialogRef.close(true));
+    if (this.data.payment) {
+      this.fixedCostService.updatePayment(this.data.payment.id, this.form.value).subscribe(() => this.dialogRef.close(true));
+    } else {
+      this.fixedCostService.createPayment(this.form.value).subscribe(() => this.dialogRef.close(true));
+    }
   }
 }

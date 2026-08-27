@@ -87,10 +87,10 @@ export class ConsumableDialogComponent implements OnInit {
 
   save() {
     if (this.form.invalid) return;
-    const req = this.data 
-      ? this.consumableService.updateConsumable(this.data.id, this.form.value)
-      : this.consumableService.createConsumable(this.form.value);
-
-    req.subscribe(() => this.dialogRef.close(true));
+    if (this.data) {
+      this.consumableService.updateConsumable(this.data.id, this.form.value).subscribe(() => this.dialogRef.close(true));
+    } else {
+      this.consumableService.createConsumable(this.form.value).subscribe(() => this.dialogRef.close(true));
+    }
   }
 }
