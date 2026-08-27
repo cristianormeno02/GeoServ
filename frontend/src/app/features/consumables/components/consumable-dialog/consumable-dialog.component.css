@@ -1,0 +1,5 @@
+.dialog-form { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.row { display: flex; gap: 16px; }
+.row > * { flex: 1; }
+.small-field { flex: 1; }
+.full-width { width: 100%; }

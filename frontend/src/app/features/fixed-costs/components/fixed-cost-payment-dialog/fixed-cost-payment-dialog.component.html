@@ -1,0 +1,44 @@
+<h2 mat-dialog-title>{{ data.payment ? 'Editar' : 'Nuevo' }} Vencimiento / Pago</h2>
+<mat-dialog-content>
+  <form [formGroup]="form" class="dialog-form">
+    
+    <mat-form-field appearance="outline">
+      <mat-label>Fecha de Vencimiento</mat-label>
+      <input matInput [matDatepicker]="pickerDue" formControlName="dueDate">
+      <mat-datepicker-toggle matIconSuffix [for]="pickerDue"></mat-datepicker-toggle>
+      <mat-datepicker #pickerDue></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Importe</mat-label>
+      <input matInput type="number" formControlName="amount">
+    </mat-form-field>
+
+    <mat-checkbox formControlName="isPaid" color="primary">¿Pagado?</mat-checkbox>
+
+    <div *ngIf="form.get('isPaid')?.value" class="payment-details">
+      <mat-form-field appearance="outline">
+        <mat-label>Fecha de Pago</mat-label>
+        <input matInput [matDatepicker]="pickerPay" formControlName="paymentDate">
+        <mat-datepicker-toggle matIconSuffix [for]="pickerPay"></mat-datepicker-toggle>
+        <mat-datepicker #pickerPay></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Medio de Pago</mat-label>
+        <mat-select formControlName="paymentMethodId">
+          <mat-option *ngFor="let pm of paymentMethods" [value]="pm.id">{{pm.name}}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Nro. Comprobante</mat-label>
+        <input matInput formControlName="receiptNumber">
+      </mat-form-field>
+    </div>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancelar</button>
+  <button mat-raised-button color="primary" [disabled]="form.invalid" (click)="save()">Guardar</button>
+</mat-dialog-actions>

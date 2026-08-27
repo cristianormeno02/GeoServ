@@ -41,12 +41,16 @@ export class SidebarComponent implements OnInit {
       name: 'Recursos', icon: 'inventory_2', children: [
         { name: 'Inventario', path: '/inventario', icon: 'inventory' },
         { name: 'Activos', path: '/activos', icon: 'precision_manufacturing' },
+        { name: 'Insumos', path: '/insumos', icon: 'shopping_cart' },
+        { name: 'Tipos de Insumo', path: '/tipos-insumo', icon: 'category' },
+        { name: 'Clases de Insumo', path: '/clases-insumo', icon: 'category' },
         { name: 'Unidades', path: '/unidades', icon: 'square_foot' }
       ]
     },
     {
       name: 'Finanzas', icon: 'account_balance', children: [
         { name: 'Resumen', path: '/finanzas', icon: 'attach_money' },
+        { name: 'Gastos Fijos', path: '/gastos-fijos', icon: 'event_repeat' },
         { name: 'Movimientos', path: '/movimientos', icon: 'swap_horiz' },
         { name: 'Cheques', path: '/cheques', icon: 'receipt_long' },
         { name: 'Cuentas Bancarias', path: '/cuentas-financieras', icon: 'account_balance_wallet' },
