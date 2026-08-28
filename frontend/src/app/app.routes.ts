@@ -32,6 +32,7 @@ export const routes: Routes = [
       { path: 'activos', loadComponent: () => import('./features/finance/activos/activos').then(m => m.Activos) },
       { path: 'categorias-movimiento', loadComponent: () => import('./features/finance/categorias-movimiento/categorias-movimiento').then(m => m.CategoriasMovimiento) },
       { path: 'gastos-fijos', loadComponent: () => import('./features/fixed-costs/components/fixed-cost-list/fixed-cost-list.component').then(m => m.FixedCostListComponent) },
+      { path: 'categorias-gastos-fijos', loadComponent: () => import('./features/fixed-costs/components/fixed-cost-category-list/fixed-cost-category-list.component').then(m => m.FixedCostCategoryListComponent) },
       { path: 'insumos', loadComponent: () => import('./features/consumables/components/consumable-list/consumable-list.component').then(m => m.ConsumableListComponent) },
       { path: 'tipos-insumo', loadComponent: () => import('./features/consumables/components/consumable-type-list/consumable-type-list.component').then(m => m.ConsumableTypeListComponent) },
       { path: 'clases-insumo', loadComponent: () => import('./features/consumables/components/consumable-class-list/consumable-class-list.component').then(m => m.ConsumableClassListComponent) },

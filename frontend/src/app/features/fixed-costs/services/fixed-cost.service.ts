@@ -10,8 +10,25 @@ import { environment } from '../../../../environments/environment';
 export class FixedCostService {
   private itemsUrl = `${environment.apiUrl}/fixed-cost-items`;
   private paymentsUrl = `${environment.apiUrl}/fixed-cost-payments`;
+  private categoriesUrl = `${environment.apiUrl}/fixed-cost-categories`;
 
   constructor(private http: HttpClient) { }
+
+  getCategories(): Observable<any[]> {
+    return this.http.get<any[]>(this.categoriesUrl);
+  }
+
+  createCategory(data: any): Observable<any> {
+    return this.http.post<any>(this.categoriesUrl, data);
+  }
+
+  updateCategory(id: string, data: any): Observable<void> {
+    return this.http.put<void>(`${this.categoriesUrl}/${id}`, data);
+  }
+
+  deleteCategory(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.categoriesUrl}/${id}`);
+  }
 
   getItems(): Observable<FixedCostItem[]> {
     return this.http.get<FixedCostItem[]>(this.itemsUrl);

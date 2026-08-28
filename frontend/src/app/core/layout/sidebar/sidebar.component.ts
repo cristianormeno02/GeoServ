@@ -51,6 +51,7 @@ export class SidebarComponent implements OnInit {
       name: 'Finanzas', icon: 'account_balance', children: [
         { name: 'Resumen', path: '/finanzas', icon: 'attach_money' },
         { name: 'Gastos Fijos', path: '/gastos-fijos', icon: 'event_repeat' },
+        { name: 'Categorías Gastos Fijos', path: '/categorias-gastos-fijos', icon: 'category' },
         { name: 'Movimientos', path: '/movimientos', icon: 'swap_horiz' },
         { name: 'Cheques', path: '/cheques', icon: 'receipt_long' },
         { name: 'Cuentas Bancarias', path: '/cuentas-financieras', icon: 'account_balance_wallet' },
