@@ -9,6 +9,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+});
 builder.Services.AddScoped<GeoServ.Api.Infrastructure.Services.ITenantService, GeoServ.Api.Infrastructure.Services.TenantService>();
 builder.Services.AddScoped<GeoServ.Api.Infrastructure.Services.IEmpresaConfiguracionService, GeoServ.Api.Infrastructure.Services.EmpresaConfiguracionService>();
 
