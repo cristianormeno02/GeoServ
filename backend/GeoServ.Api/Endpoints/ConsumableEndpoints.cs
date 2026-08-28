@@ -77,7 +77,7 @@ public static class ConsumableEndpoints
         var typesGroup = app.MapGroup("/api/consumable-types").RequireAuthorization();
         typesGroup.MapGet("/", async (GeoServDbContext context) =>
         {
-            return Results.Ok(await context.ConsumableTypes.ToListAsync());
+            return Results.Ok(await context.ConsumableTypes.OrderBy(t => t.Name).ToListAsync());
         }).WithName("GetConsumableTypes").WithOpenApi();
 
         typesGroup.MapPost("/", async (CreateConsumableTypeRequest request, GeoServDbContext context) =>
@@ -107,7 +107,7 @@ public static class ConsumableEndpoints
         var classesGroup = app.MapGroup("/api/consumable-classes").RequireAuthorization();
         classesGroup.MapGet("/", async (GeoServDbContext context) =>
         {
-            return Results.Ok(await context.ConsumableClasses.Include(c => c.ConsumableType).ToListAsync());
+            return Results.Ok(await context.ConsumableClasses.Include(c => c.ConsumableType).OrderBy(c => c.Name).ToListAsync());
         }).WithName("GetConsumableClasses").WithOpenApi();
 
         classesGroup.MapPost("/", async (CreateConsumableClassRequest request, GeoServDbContext context) =>
