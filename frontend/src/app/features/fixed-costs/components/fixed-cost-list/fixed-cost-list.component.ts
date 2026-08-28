@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -35,7 +35,8 @@ export class FixedCostListComponent implements OnInit {
   constructor(
     private fixedCostService: FixedCostService,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -45,6 +46,7 @@ export class FixedCostListComponent implements OnInit {
   loadItems() {
     this.fixedCostService.getItems().subscribe(res => {
       this.items = res;
+      this.cdr.detectChanges();
     });
   }
 
