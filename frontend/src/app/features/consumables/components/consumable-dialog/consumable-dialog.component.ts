@@ -14,11 +14,12 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
 
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { NgxMaskDirective } from 'ngx-mask';
 
 @Component({
   selector: 'app-consumable-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatDatepickerModule, MatNativeDateModule, MatSnackBarModule],
+  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatDatepickerModule, MatNativeDateModule, MatSnackBarModule, NgxMaskDirective],
   templateUrl: './consumable-dialog.component.html',
   styleUrls: ['./consumable-dialog.component.css']
 })

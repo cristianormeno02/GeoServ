@@ -11,10 +11,12 @@ import { FixedCostService } from '../../services/fixed-cost.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
 
+import { NgxMaskDirective } from 'ngx-mask';
+
 @Component({
   selector: 'app-fixed-cost-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatButtonModule],
+  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatButtonModule, NgxMaskDirective],
   templateUrl: './fixed-cost-dialog.component.html',
   styleUrls: ['./fixed-cost-dialog.component.css']
 })

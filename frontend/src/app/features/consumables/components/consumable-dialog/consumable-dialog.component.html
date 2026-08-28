@@ -55,13 +55,15 @@
 
       <mat-form-field appearance="outline" class="small-field">
         <mat-label>Costo Unitario</mat-label>
-        <input matInput type="number" formControlName="unitCost">
+        <span matTextPrefix>$&nbsp;</span>
+        <input matInput type="text" formControlName="unitCost" mask="separator.2" thousandSeparator="." decimalMarker="," class="text-right">
       </mat-form-field>
     </div>
 
     <mat-form-field appearance="outline">
       <mat-label>Costo Total</mat-label>
-      <input matInput type="number" formControlName="totalCost" readonly>
+      <span matTextPrefix>$&nbsp;</span>
+      <input matInput type="text" formControlName="totalCost" mask="separator.2" thousandSeparator="." decimalMarker="," class="text-right" readonly>
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full-width">

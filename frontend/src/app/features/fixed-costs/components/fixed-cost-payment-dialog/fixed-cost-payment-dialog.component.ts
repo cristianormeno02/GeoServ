@@ -13,10 +13,12 @@ import { FixedCostService } from '../../services/fixed-cost.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
 
+import { NgxMaskDirective } from 'ngx-mask';
+
 @Component({
   selector: 'app-fixed-cost-payment-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatButtonModule, MatDatepickerModule, MatNativeDateModule],
+  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatButtonModule, MatDatepickerModule, MatNativeDateModule, NgxMaskDirective],
   templateUrl: './fixed-cost-payment-dialog.component.html',
   styleUrls: ['./fixed-cost-payment-dialog.component.css']
 })

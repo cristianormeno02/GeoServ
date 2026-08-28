@@ -23,7 +23,8 @@
 
     <mat-form-field appearance="outline">
       <mat-label>Importe Inicial</mat-label>
-      <input matInput type="number" formControlName="initialAmount">
+      <span matTextPrefix>$&nbsp;</span>
+      <input matInput type="text" formControlName="initialAmount" mask="separator.2" thousandSeparator="." decimalMarker="," class="text-right">
     </mat-form-field>
 
     <mat-checkbox formControlName="isRecurring" color="primary">Es Recurrente</mat-checkbox>
