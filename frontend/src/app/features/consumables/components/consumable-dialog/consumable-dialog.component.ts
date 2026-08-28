@@ -13,10 +13,12 @@ import { ConsumableType, ConsumableClass } from '../../models/consumable.model';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
 
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+
 @Component({
   selector: 'app-consumable-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatDatepickerModule, MatNativeDateModule],
+  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatDatepickerModule, MatNativeDateModule, MatSnackBarModule],
   templateUrl: './consumable-dialog.component.html',
   styleUrls: ['./consumable-dialog.component.css']
 })
@@ -34,7 +36,8 @@ export class ConsumableDialogComponent implements OnInit {
     private http: HttpClient,
     public dialogRef: MatDialogRef<ConsumableDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private snackBar: MatSnackBar
   ) {
     this.form = this.fb.group({
       purchaseDate: [new Date(), Validators.required],
@@ -89,10 +92,25 @@ export class ConsumableDialogComponent implements OnInit {
 
   save() {
     if (this.form.invalid) return;
+    
+    const obs = {
+      next: () => {
+        this.dialogRef.close(true);
+      },
+      error: (err: any) => {
+        console.error(err);
+        let msg = err.error?.message || err.error?.title || 'Error al guardar';
+        if (err.status === 400 && err.error?.errors) {
+          msg = 'Error de validación. Revisa los campos.';
+        }
+        this.snackBar.open(msg, 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] });
+      }
+    };
+
     if (this.data) {
-      this.consumableService.updateConsumable(this.data.id, this.form.value).subscribe(() => this.dialogRef.close(true));
+      this.consumableService.updateConsumable(this.data.id, this.form.value).subscribe(obs);
     } else {
-      this.consumableService.createConsumable(this.form.value).subscribe(() => this.dialogRef.close(true));
+      this.consumableService.createConsumable(this.form.value).subscribe(obs);
     }
   }
 }
