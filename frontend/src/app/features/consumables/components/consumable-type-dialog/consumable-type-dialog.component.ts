@@ -37,7 +37,7 @@ export class ConsumableTypeDialogComponent {
     req.subscribe({
       next: () => this.dialogRef.close(true),
       error: (err: any) => { 
-        this.snackBar.open(err.error?.message || 'Error al guardar', 'Cerrar', { duration: 3000 });
+        this.snackBar.open(err.error?.message || 'Error al guardar', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] });
       }
     });
   }

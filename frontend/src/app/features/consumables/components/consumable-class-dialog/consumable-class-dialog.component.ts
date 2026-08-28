@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -26,7 +26,8 @@ export class ConsumableClassDialogComponent implements OnInit {
     private fb: FormBuilder, private http: HttpClient,
     public dialogRef: MatDialogRef<ConsumableClassDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private cdr: ChangeDetectorRef
   ) {
     this.form = this.fb.group({ 
       name: [data?.name || '', Validators.required],
@@ -35,7 +36,10 @@ export class ConsumableClassDialogComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.http.get<any[]>(`${environment.apiUrl}/consumable-types`).subscribe(res => this.types = res);
+    this.http.get<any[]>(`${environment.apiUrl}/consumable-types`).subscribe(res => {
+      this.types = res;
+      this.cdr.detectChanges();
+    });
   }
 
   save() {
@@ -46,7 +50,7 @@ export class ConsumableClassDialogComponent implements OnInit {
     req.subscribe({
       next: () => this.dialogRef.close(true),
       error: (err: any) => { 
-        this.snackBar.open(err.error?.message || 'Error al guardar', 'Cerrar', { duration: 3000 });
+        this.snackBar.open(err.error?.message || 'Error al guardar', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] });
       }
     });
   }

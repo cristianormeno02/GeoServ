@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -33,7 +33,8 @@ export class ConsumableDialogComponent implements OnInit {
     private consumableService: ConsumableService,
     private http: HttpClient,
     public dialogRef: MatDialogRef<ConsumableDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any
+    @Inject(MAT_DIALOG_DATA) public data: any,
+    private cdr: ChangeDetectorRef
   ) {
     this.form = this.fb.group({
       purchaseDate: [new Date(), Validators.required],
@@ -68,15 +69,16 @@ export class ConsumableDialogComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.consumableService.getConsumableTypes().subscribe(res => this.types = res);
+    this.consumableService.getConsumableTypes().subscribe(res => { this.types = res; this.cdr.detectChanges(); });
     this.consumableService.getConsumableClasses().subscribe(res => {
       this.allClasses = res;
       if (this.data && this.data.consumableClass) {
         this.filteredClasses = res.filter(c => c.consumableTypeId === this.data.consumableClass.consumableTypeId);
       }
+      this.cdr.detectChanges();
     });
-    this.http.get<any[]>(`${environment.apiUrl}/providers`).subscribe(res => this.providers = res);
-    this.http.get<any[]>(`${environment.apiUrl}/units`).subscribe(res => this.units = res);
+    this.http.get<any[]>(`${environment.apiUrl}/providers`).subscribe(res => { this.providers = res; this.cdr.detectChanges(); });
+    this.http.get<any[]>(`${environment.apiUrl}/units`).subscribe(res => { this.units = res; this.cdr.detectChanges(); });
   }
 
   calculateTotal() {
