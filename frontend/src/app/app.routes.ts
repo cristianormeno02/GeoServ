@@ -33,8 +33,8 @@ export const routes: Routes = [
       { path: 'categorias-movimiento', loadComponent: () => import('./features/finance/categorias-movimiento/categorias-movimiento').then(m => m.CategoriasMovimiento) },
       { path: 'gastos-fijos', loadComponent: () => import('./features/fixed-costs/components/fixed-cost-list/fixed-cost-list.component').then(m => m.FixedCostListComponent) },
       { path: 'insumos', loadComponent: () => import('./features/consumables/components/consumable-list/consumable-list.component').then(m => m.ConsumableListComponent) },
-      { path: 'tipos-insumo', loadComponent: () => import('./features/consumables/components/consumable-type-list/consumable-type-list').then(m => m.ConsumableTypeList) },
-      { path: 'clases-insumo', loadComponent: () => import('./features/consumables/components/consumable-class-list/consumable-class-list').then(m => m.ConsumableClassList) },
+      { path: 'tipos-insumo', loadComponent: () => import('./features/consumables/components/consumable-type-list/consumable-type-list.component').then(m => m.ConsumableTypeListComponent) },
+      { path: 'clases-insumo', loadComponent: () => import('./features/consumables/components/consumable-class-list/consumable-class-list.component').then(m => m.ConsumableClassListComponent) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },
