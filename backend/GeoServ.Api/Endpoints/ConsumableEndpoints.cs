@@ -82,11 +82,27 @@ public static class ConsumableEndpoints
 
         typesGroup.MapPost("/", async (CreateConsumableTypeRequest request, GeoServDbContext context) =>
         {
+            if (await context.ConsumableTypes.AnyAsync(t => t.Name.ToLower() == request.Name.ToLower()))
+                return Results.BadRequest(new { message = "Ya existe un tipo con ese nombre." });
+
             var type = new ConsumableType { Id = Guid.NewGuid(), Name = request.Name };
             context.ConsumableTypes.Add(type);
             await context.SaveChangesAsync();
             return Results.Created($"/api/consumable-types/{type.Id}", type);
         }).WithName("CreateConsumableType").WithOpenApi();
+
+        typesGroup.MapPut("/{id:guid}", async (Guid id, CreateConsumableTypeRequest request, GeoServDbContext context) =>
+        {
+            var type = await context.ConsumableTypes.FindAsync(id);
+            if (type == null) return Results.NotFound();
+
+            if (await context.ConsumableTypes.AnyAsync(t => t.Id != id && t.Name.ToLower() == request.Name.ToLower()))
+                return Results.BadRequest(new { message = "Ya existe otro tipo con ese nombre." });
+
+            type.Name = request.Name;
+            await context.SaveChangesAsync();
+            return Results.NoContent();
+        }).WithName("UpdateConsumableType").WithOpenApi();
 
         var classesGroup = app.MapGroup("/api/consumable-classes").RequireAuthorization();
         classesGroup.MapGet("/", async (GeoServDbContext context) =>
@@ -96,11 +112,46 @@ public static class ConsumableEndpoints
 
         classesGroup.MapPost("/", async (CreateConsumableClassRequest request, GeoServDbContext context) =>
         {
+            if (await context.ConsumableClasses.AnyAsync(c => c.Name.ToLower() == request.Name.ToLower() && c.ConsumableTypeId == request.ConsumableTypeId))
+                return Results.BadRequest(new { message = "Ya existe una clase con ese nombre en este tipo de insumo." });
+
             var cClass = new ConsumableClass { Id = Guid.NewGuid(), Name = request.Name, ConsumableTypeId = request.ConsumableTypeId };
             context.ConsumableClasses.Add(cClass);
             await context.SaveChangesAsync();
             return Results.Created($"/api/consumable-classes/{cClass.Id}", cClass);
         }).WithName("CreateConsumableClass").WithOpenApi();
+
+        classesGroup.MapPut("/{id:guid}", async (Guid id, CreateConsumableClassRequest request, GeoServDbContext context) =>
+        {
+            var cClass = await context.ConsumableClasses.FindAsync(id);
+            if (cClass == null) return Results.NotFound();
+
+            if (await context.ConsumableClasses.AnyAsync(c => c.Id != id && c.Name.ToLower() == request.Name.ToLower() && c.ConsumableTypeId == request.ConsumableTypeId))
+                return Results.BadRequest(new { message = "Ya existe otra clase con ese nombre en este tipo de insumo." });
+
+            cClass.Name = request.Name;
+            cClass.ConsumableTypeId = request.ConsumableTypeId;
+            await context.SaveChangesAsync();
+            return Results.NoContent();
+        }).WithName("UpdateConsumableClass").WithOpenApi();
+
+        classesGroup.MapDelete("/{id:guid}", async (Guid id, GeoServDbContext context) =>
+        {
+            var cClass = await context.ConsumableClasses.FindAsync(id);
+            if (cClass == null) return Results.NotFound();
+            context.ConsumableClasses.Remove(cClass);
+            await context.SaveChangesAsync();
+            return Results.NoContent();
+        }).WithName("DeleteConsumableClass").WithOpenApi();
+        
+        typesGroup.MapDelete("/{id:guid}", async (Guid id, GeoServDbContext context) =>
+        {
+            var type = await context.ConsumableTypes.FindAsync(id);
+            if (type == null) return Results.NotFound();
+            context.ConsumableTypes.Remove(type);
+            await context.SaveChangesAsync();
+            return Results.NoContent();
+        }).WithName("DeleteConsumableType").WithOpenApi();
     }
 }
 

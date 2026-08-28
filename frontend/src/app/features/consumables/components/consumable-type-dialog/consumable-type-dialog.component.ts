@@ -32,6 +32,9 @@ export class ConsumableTypeDialogComponent {
     const req = this.data 
       ? this.http.put(`${this.apiUrl}/${this.data.id}`, this.form.value)
       : this.http.post(this.apiUrl, this.form.value);
-    req.subscribe(() => this.dialogRef.close(true));
+    req.subscribe({
+      next: () => this.dialogRef.close(true),
+      error: (err: any) => { alert(err.error?.message || 'Error al guardar'); }
+    });
   }
 }

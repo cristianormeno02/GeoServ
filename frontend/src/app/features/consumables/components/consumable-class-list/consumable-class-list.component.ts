@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -22,14 +22,17 @@ export class ConsumableClassListComponent implements OnInit {
   columnsToDisplay = ['name', 'type', 'actions'];
   private apiUrl = `${environment.apiUrl}/consumable-classes`;
 
-  constructor(private http: HttpClient, private dialog: MatDialog, private snackBar: MatSnackBar) {}
+  constructor(private http: HttpClient, private dialog: MatDialog, private snackBar: MatSnackBar, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.loadItems();
   }
 
   loadItems() {
-    this.http.get<any[]>(this.apiUrl).subscribe(res => this.items = res);
+    this.http.get<any[]>(this.apiUrl).subscribe(res => {
+      this.items = res;
+      this.cdr.detectChanges();
+    });
   }
 
   openDialog(item?: any) {
