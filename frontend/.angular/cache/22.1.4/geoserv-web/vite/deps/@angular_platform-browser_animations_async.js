@@ -33,7 +33,7 @@ var AsyncAnimationRendererFactory = class {
 	loadImpl() {
 		const loadFn = () => {
 			var _this$moduleImpl;
-			return (_this$moduleImpl = this.moduleImpl) !== null && _this$moduleImpl !== void 0 ? _this$moduleImpl : import("./browser-oAi3LMSp.js").then((m) => m);
+			return (_this$moduleImpl = this.moduleImpl) !== null && _this$moduleImpl !== void 0 ? _this$moduleImpl : import("./browser-Do1rbMgS.js").then((m) => m);
 		};
 		let moduleImplPromise;
 		if (this.loadingSchedulerFn) moduleImplPromise = this.loadingSchedulerFn(loadFn);

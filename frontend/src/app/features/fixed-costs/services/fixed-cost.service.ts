@@ -8,8 +8,8 @@ import { environment } from '../../../../environments/environment';
   providedIn: 'root'
 })
 export class FixedCostService {
-  private itemsUrl = `${environment.apiUrl}/api/fixed-cost-items`;
-  private paymentsUrl = `${environment.apiUrl}/api/fixed-cost-payments`;
+  private itemsUrl = `${environment.apiUrl}/fixed-cost-items`;
+  private paymentsUrl = `${environment.apiUrl}/fixed-cost-payments`;
 
   constructor(private http: HttpClient) { }
 

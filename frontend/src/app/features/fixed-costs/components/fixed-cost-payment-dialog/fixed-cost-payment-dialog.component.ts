@@ -59,7 +59,7 @@ export class FixedCostPaymentDialogComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.http.get<any[]>(`${environment.apiUrl}/api/payment-methods`).subscribe(res => this.paymentMethods = res);
+    this.http.get<any[]>(`${environment.apiUrl}/payment-methods`).subscribe(res => this.paymentMethods = res);
   }
 
   save() {

@@ -8,9 +8,9 @@ import { environment } from '../../../../environments/environment';
   providedIn: 'root'
 })
 export class ConsumableService {
-  private apiUrl = `${environment.apiUrl}/api/consumables`;
-  private typesUrl = `${environment.apiUrl}/api/consumable-types`;
-  private classesUrl = `${environment.apiUrl}/api/consumable-classes`;
+  private apiUrl = `${environment.apiUrl}/consumables`;
+  private typesUrl = `${environment.apiUrl}/consumable-types`;
+  private classesUrl = `${environment.apiUrl}/consumable-classes`;
 
   constructor(private http: HttpClient) { }
 

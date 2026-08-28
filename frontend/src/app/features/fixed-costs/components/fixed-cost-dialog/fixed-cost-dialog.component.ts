@@ -45,8 +45,8 @@ export class FixedCostDialogComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.http.get<any[]>(`${environment.apiUrl}/api/fixed-cost-categories`).subscribe(res => this.categories = res);
-    this.http.get<any[]>(`${environment.apiUrl}/api/providers`).subscribe(res => this.providers = res);
+    this.http.get<any[]>(`${environment.apiUrl}/fixed-cost-categories`).subscribe(res => this.categories = res);
+    this.http.get<any[]>(`${environment.apiUrl}/providers`).subscribe(res => this.providers = res);
   }
 
   save() {

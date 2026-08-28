@@ -75,8 +75,8 @@ export class ConsumableDialogComponent implements OnInit {
         this.filteredClasses = res.filter(c => c.consumableTypeId === this.data.consumableClass.consumableTypeId);
       }
     });
-    this.http.get<any[]>(`${environment.apiUrl}/api/providers`).subscribe(res => this.providers = res);
-    this.http.get<any[]>(`${environment.apiUrl}/api/units`).subscribe(res => this.units = res);
+    this.http.get<any[]>(`${environment.apiUrl}/providers`).subscribe(res => this.providers = res);
+    this.http.get<any[]>(`${environment.apiUrl}/units`).subscribe(res => this.units = res);
   }
 
   calculateTotal() {
