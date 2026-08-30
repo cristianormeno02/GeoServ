@@ -12,6 +12,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    options.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
 });
 builder.Services.AddScoped<GeoServ.Api.Infrastructure.Services.ITenantService, GeoServ.Api.Infrastructure.Services.TenantService>();
 builder.Services.AddScoped<GeoServ.Api.Infrastructure.Services.IEmpresaConfiguracionService, GeoServ.Api.Infrastructure.Services.EmpresaConfiguracionService>();
@@ -170,4 +171,5 @@ record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
+
 

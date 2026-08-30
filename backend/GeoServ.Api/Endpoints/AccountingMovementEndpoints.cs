@@ -68,7 +68,9 @@ public static class AccountingMovementEndpoints
                     FinancialAccountName = m.FinancialAccount.Name,
                     PaymentMethodName = m.PaymentMethod != null ? m.PaymentMethod.Name : null,
                     ServiceOrderNumber = m.ServiceOrder != null ? m.ServiceOrder.OrderNumber : null,
-                    m.RegisteredByUserId
+                    m.RegisteredByUserId,
+                    SourceType = m.SourceType.ToString(),
+                    m.SourceId
                 })
                 .ToListAsync();
 
