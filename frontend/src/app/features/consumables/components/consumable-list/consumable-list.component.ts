@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -44,7 +44,7 @@ export class ConsumableListComponent implements OnInit {
     this.dialog.open(InventoryHistoryDialogComponent, {
       width: '600px',
       data: { consumableId: element.id }
-    }).afterClosed().subscribe(() => this.loadData());
+    }).afterClosed().subscribe(() => this.loadItems());
   }
 
   openDialog(item?: Consumable) {
