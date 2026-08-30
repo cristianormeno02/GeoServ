@@ -1,4 +1,4 @@
-using GeoServ.Api.Infrastructure.Data;
+﻿using GeoServ.Api.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -67,7 +67,7 @@ app.MapPost("/api/system/init", async (GeoServDbContext context) =>
 {
     try
     {
-        // 1. Crear tablas / aplicar migraciones pendientes (incluye catálogos de OnModelCreating)
+        // 1. Crear tablas / aplicar migraciones pendientes (incluye catÃ¡logos de OnModelCreating)
         await context.Database.MigrateAsync();
 
         // 2. Crear roles si no existen
@@ -76,8 +76,8 @@ app.MapPost("/api/system/init", async (GeoServDbContext context) =>
         {
             context.Roles.AddRange(
                 new GeoServ.Api.Domain.Entities.Role { Id = adminRoleId, Name = "Administrador", Description = "Acceso total al sistema" },
-                new GeoServ.Api.Domain.Entities.Role { Id = Guid.Parse("22222222-2222-2222-2222-222222222222"), Name = "Operador", Description = "Acceso operativo a órdenes de servicio" },
-                new GeoServ.Api.Domain.Entities.Role { Id = Guid.Parse("33333333-3333-3333-3333-333333333333"), Name = "Cliente", Description = "Acceso de lectura a órdenes propias" }
+                new GeoServ.Api.Domain.Entities.Role { Id = Guid.Parse("22222222-2222-2222-2222-222222222222"), Name = "Operador", Description = "Acceso operativo a Ã³rdenes de servicio" },
+                new GeoServ.Api.Domain.Entities.Role { Id = Guid.Parse("33333333-3333-3333-3333-333333333333"), Name = "Cliente", Description = "Acceso de lectura a Ã³rdenes propias" }
             );
             await context.SaveChangesAsync();
         }
@@ -170,3 +170,4 @@ record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
+

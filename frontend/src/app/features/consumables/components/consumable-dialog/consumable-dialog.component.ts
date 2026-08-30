@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, ChangeDetectorRef } from '@angular/core';
+﻿import { Component, Inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -61,7 +61,7 @@ export class ConsumableDialogComponent implements OnInit {
     this.form.get('quantity')?.valueChanges.subscribe(() => this.calculateTotal());
     this.form.get('unitCost')?.valueChanges.subscribe(() => this.calculateTotal());
 
-    if (data) {
+    if (data) { this.form.get('quantity')?.disable(); 
       setTimeout(() => {
         this.form.patchValue({
           ...data,
@@ -102,16 +102,18 @@ export class ConsumableDialogComponent implements OnInit {
         console.error(err);
         let msg = err.error?.message || err.error?.title || 'Error al guardar';
         if (err.status === 400 && err.error?.errors) {
-          msg = 'Error de validación. Revisa los campos.';
+          msg = 'Error de validaciÃ³n. Revisa los campos.';
         }
         this.snackBar.open(msg, 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] });
       }
     };
 
     if (this.data) {
-      this.consumableService.updateConsumable(this.data.id, this.form.value).subscribe(obs);
+      this.consumableService.updateConsumable(this.data.id, this.form.getRawValue()).subscribe(obs);
     } else {
-      this.consumableService.createConsumable(this.form.value).subscribe(obs);
+      this.consumableService.createConsumable(this.form.getRawValue()).subscribe(obs);
     }
   }
 }
+
+

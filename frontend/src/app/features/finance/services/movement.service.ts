@@ -3,6 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
+export enum MovementSourceType {
+  Manual = 'Manual',
+  DirectCost = 'DirectCost',
+  FixedCostPayment = 'FixedCostPayment',
+  AssetPurchase = 'AssetPurchase',
+  ServiceOrderIncome = 'ServiceOrderIncome'
+}
+
 export interface Movement {
   id?: string;
   isIncome: boolean;
@@ -23,6 +31,8 @@ export interface Movement {
   checkId?: string;
   responsibleId?: string;
   registeredByUserId?: string;
+  sourceType?: MovementSourceType;
+  sourceId?: string | null;
 }
 
 export interface PagedMovementResponse {

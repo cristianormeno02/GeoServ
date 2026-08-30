@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+﻿import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -7,6 +7,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ConsumableService } from '../../services/consumable.service';
 import { Consumable } from '../../models/consumable.model';
 import { ConsumableDialogComponent } from '../consumable-dialog/consumable-dialog.component';
+import { InventoryHistoryDialogComponent } from '../inventory-history-dialog/inventory-history-dialog.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
@@ -36,6 +37,13 @@ export class ConsumableListComponent implements OnInit {
     this.consumableService.getConsumables().subscribe(res => {
       this.items = res;
       this.cdr.detectChanges();
+    });
+  }
+
+  openHistory(element: Consumable) {
+    this.dialog.open(InventoryHistoryDialogComponent, {
+      width: '600px',
+      data: { consumableId: element.id }
     });
   }
 

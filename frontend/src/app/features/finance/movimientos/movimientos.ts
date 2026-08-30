@@ -1,4 +1,4 @@
-import {  Component, OnInit, ChangeDetectorRef, ViewChild  } from '@angular/core';
+﻿import {  Component, OnInit, ChangeDetectorRef, ViewChild  } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
@@ -39,7 +39,7 @@ import { FinancialAccountService } from '../services/financial-account.service';
 })
 export class Movimientos implements OnInit {
   movements: Movement[] = [];
-  displayedColumns: string[] = ['date', 'type', 'category', 'description', 'account', 'amount', 'actions'];
+  displayedColumns: string[] = ['date', 'type', 'category', 'source', 'description', 'account', 'amount', 'actions'];
   
   totalCount = 0;
   pageSize = 10;
@@ -140,11 +140,12 @@ export class Movimientos implements OnInit {
   }
 
   deleteMovement(movement: Movement) {
-    if (confirm(`¿Estás seguro de eliminar este movimiento por $${movement.amount}?`)) {
+    if (confirm(`Â¿EstÃ¡s seguro de eliminar este movimiento por $${movement.amount}?`)) {
       this.movementService.deleteMovement(movement.id!).subscribe({
-        next: () => { this.snackBar.open('Eliminado con éxito', 'Cerrar'); this.loadMovements(); },
+        next: () => { this.snackBar.open('Eliminado con Ã©xito', 'Cerrar'); this.loadMovements(); },
         error: (err) => { console.error(err); this.snackBar.open(err.error?.message || 'Error al eliminar', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] }); }
       });
     }
   }
 }
+

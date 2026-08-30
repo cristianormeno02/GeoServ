@@ -1,3 +1,4 @@
+﻿using System.Security.Claims;
 using GeoServ.Api.Domain.Entities;
 using GeoServ.Api.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -40,8 +41,14 @@ public static class ConsumableEndpoints
             return Results.Ok(items);
         }).WithName("GetConsumables").WithOpenApi();
 
-        group.MapPost("/", async (CreateConsumableRequest request, GeoServDbContext context) =>
+                group.MapPost("/", async (CreateConsumableRequest request, GeoServDbContext context, HttpContext httpContext) =>
         {
+            var userIdStr = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId)) 
+            {
+                userId = await context.Users.Select(u => u.Id).FirstOrDefaultAsync();
+            }
+
             var item = new Consumable
             {
                 Id = Guid.NewGuid(),
@@ -64,7 +71,7 @@ public static class ConsumableEndpoints
                 Cantidad = request.Quantity,
                 MovementType = GeoServ.Api.Domain.Enums.InventoryMovementType.Compra,
                 Fecha = request.PurchaseDate,
-                UserId = Guid.Empty // Ideally should come from HttpContext User
+                UserId = userId
             };
             movement.Validate();
             context.InventoryMovements.Add(movement);
@@ -230,3 +237,5 @@ public class CreateConsumableClassRequest
     public string Name { get; set; } = string.Empty;
     public Guid ConsumableTypeId { get; set; }
 }
+
+

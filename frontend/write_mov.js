@@ -1,3 +1,6 @@
+const fs = require('fs');
+
+const tsMov = 
 import { Component, Inject, OnInit } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
@@ -26,7 +29,7 @@ import { environment } from '../../../../environments/environment';
     MatFormFieldModule, MatInputModule, MatSelectModule, MatDatepickerModule,
     MatNativeDateModule, MatSlideToggleModule, MatIconModule, NgxMaskDirective
   ],
-  template: `
+  template: \\\
     <h2 mat-dialog-title>{{ isEditMode ? 'Editar Movimiento' : 'Nuevo Movimiento' }}</h2>
     <mat-dialog-content>
       <form [formGroup]="movementForm" class="form-container">
@@ -38,7 +41,7 @@ import { environment } from '../../../../environments/environment';
         </div>
 
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>CategorÃ­a</mat-label>
+          <mat-label>Categoría</mat-label>
           <mat-select formControlName="categoryId" required>
             <mat-option *ngFor="let cat of filteredCategories" [value]="cat.value">
               {{ cat.label }}
@@ -58,7 +61,7 @@ import { environment } from '../../../../environments/environment';
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width" *ngIf="sourceTypeCtrl.value !== 'Manual'">
-          <mat-label>Origen EspecÃ­fico</mat-label>
+          <mat-label>Origen Específico</mat-label>
           <mat-select formControlName="sourceId" required>
             <mat-option *ngFor="let opt of sourceOptions" [value]="opt.id">
               {{ opt.name }}
@@ -67,13 +70,13 @@ import { environment } from '../../../../environments/environment';
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>DescripciÃ³n</mat-label>
+          <mat-label>Descripción</mat-label>
           <input matInput formControlName="description" placeholder="Ej: Pago alquiler" required>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Monto</mat-label>
-          <span matTextPrefix>$&nbsp;</span>
+          <span matTextPrefix>\\$&nbsp;</span>
           <input matInput type="text" formControlName="amount" mask="separator.2" thousandSeparator="." decimalMarker="," class="text-right" required>
         </mat-form-field>
 
@@ -100,13 +103,13 @@ import { environment } from '../../../../environments/environment';
         {{ isSubmitting ? 'Guardando...' : 'Guardar' }}
       </button>
     </mat-dialog-actions>
-  `,
-  styles: [`
+  \\\,
+  styles: [\\\
     .form-container { display: flex; flex-direction: column; gap: 15px; min-width: 450px; margin-top: 10px; }
     .full-width { width: 100%; }
     .toggle-container { margin-top: 10px; margin-bottom: 20px; }
     .text-right { text-align: right !important; }
-  `]
+  \\\]
 })
 export class MovimientoFormComponent implements OnInit {
   movementForm: FormGroup;
@@ -210,13 +213,16 @@ export class MovimientoFormComponent implements OnInit {
     if (this.isEditMode) {
       this.movementService.updateMovement(this.data.movement!.id!, payload).subscribe({
         next: () => { this.snackBar.open('Movimiento actualizado', 'Cerrar'); this.dialogRef.close(true); },
-        error: (err) => { this.isSubmitting = false; this.snackBar.open(err.error?.message || 'Error', 'Cerrar'); }
+        error: (err: any) => { this.isSubmitting = false; this.snackBar.open(err.error?.message || 'Error', 'Cerrar'); }
       });
     } else {
       this.movementService.createMovement(payload).subscribe({
         next: () => { this.snackBar.open('Movimiento creado', 'Cerrar'); this.dialogRef.close(true); },
-        error: (err) => { this.isSubmitting = false; this.snackBar.open(err.error?.message || 'Error', 'Cerrar'); }
+        error: (err: any) => { this.isSubmitting = false; this.snackBar.open(err.error?.message || 'Error', 'Cerrar'); }
       });
     }
   }
 }
+;
+
+fs.writeFileSync('src/app/features/finance/movimientos/movimiento-form.component.ts', tsMov);
