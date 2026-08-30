@@ -127,7 +127,7 @@ export class InventoryHistoryDialogComponent implements OnInit {
 
   loadMovements() {
     this.invService.getMovementsByConsumableId(this.data.consumableId).subscribe(res => {
-      this.movements = res;
+      this.movements = [...res];
     });
   }
 
@@ -174,5 +174,6 @@ export class InventoryHistoryDialogComponent implements OnInit {
     this.dialogRef.close();
   }
 }
+
 
 

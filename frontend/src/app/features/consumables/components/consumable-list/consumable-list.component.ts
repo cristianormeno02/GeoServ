@@ -44,7 +44,7 @@ export class ConsumableListComponent implements OnInit {
     this.dialog.open(InventoryHistoryDialogComponent, {
       width: '600px',
       data: { consumableId: element.id }
-    });
+    }).afterClosed().subscribe(() => this.loadData());
   }
 
   openDialog(item?: Consumable) {
@@ -72,3 +72,4 @@ export class ConsumableListComponent implements OnInit {
     });
   }
 }
+
