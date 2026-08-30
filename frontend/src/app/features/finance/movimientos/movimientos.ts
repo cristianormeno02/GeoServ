@@ -58,9 +58,11 @@ export class Movimientos implements OnInit {
     private fb: FormBuilder,
     private snackBar: MatSnackBar
   ) {
-    const today = new Date();
+        const today = new Date();
+    const lastMonth = new Date();
+    lastMonth.setMonth(today.getMonth() - 1);
     this.filterForm = this.fb.group({
-      startDate: [today],
+      startDate: [lastMonth],
       endDate: [today],
       categoryId: [''],
       financialAccountId: [''],
@@ -107,10 +109,12 @@ export class Movimientos implements OnInit {
     this.loadMovements();
   }
 
-  resetFilter() {
+    resetFilter() {
     const today = new Date();
+    const lastMonth = new Date();
+    lastMonth.setMonth(today.getMonth() - 1);
     this.filterForm.reset({
-      startDate: today,
+      startDate: lastMonth,
       endDate: today,
       categoryId: '',
       financialAccountId: '',
@@ -148,4 +152,5 @@ export class Movimientos implements OnInit {
     }
   }
 }
+
 

@@ -22,7 +22,7 @@
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>CategorÃ­a</mat-label>
+          <mat-label>Categoría</mat-label>
           <mat-select formControlName="categoryId">
             <mat-option value="">Todas</mat-option>
             <mat-option *ngFor="let cat of categories" [value]="cat.id">
@@ -78,7 +78,7 @@
         </ng-container>
 
         <ng-container matColumnDef="category">
-          <th mat-header-cell *matHeaderCellDef> CategorÃ­a </th>
+          <th mat-header-cell *matHeaderCellDef> Categoría </th>
           <td mat-cell *matCellDef="let element"> {{element.categoryName}} </td>
         </ng-container>
 
@@ -91,7 +91,7 @@
         </ng-container>
 
         <ng-container matColumnDef="description">
-          <th mat-header-cell *matHeaderCellDef> DescripciÃ³n </th>
+          <th mat-header-cell *matHeaderCellDef> Descripción </th>
           <td mat-cell *matCellDef="let element"> {{element.description}} </td>
         </ng-container>
 
@@ -139,5 +139,6 @@
     </mat-card-content>
   </mat-card>
 </div>
+
 
 
