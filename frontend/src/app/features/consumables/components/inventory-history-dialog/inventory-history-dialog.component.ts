@@ -169,7 +169,6 @@ export class InventoryHistoryDialogComponent implements OnInit {
       }
     });
   }
-  }
 
   close() {
     this.dialogRef.close();
