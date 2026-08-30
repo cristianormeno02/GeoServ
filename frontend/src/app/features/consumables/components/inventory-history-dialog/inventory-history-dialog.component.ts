@@ -1,4 +1,5 @@
 import { Component, Inject, OnInit } from '@angular/core';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatTableModule } from '@angular/material/table';
@@ -14,7 +15,7 @@ import { MatSelectModule } from '@angular/material/select';
 @Component({
   selector: 'app-inventory-history-dialog',
   standalone: true,
-  imports: [CommonModule, MatDialogModule, MatTableModule, MatButtonModule, MatIconModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule  ],
+  imports: [CommonModule, MatDialogModule, MatTableModule, MatButtonModule, MatIconModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatSnackBarModule ],
   template: `
     <h2 mat-dialog-title>Historial de Movimientos</h2>
     <mat-dialog-content>
@@ -96,7 +97,8 @@ export class InventoryHistoryDialogComponent implements OnInit {
     private dialogRef: MatDialogRef<InventoryHistoryDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { consumableId: string },
     private invService: InventoryMovementService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private snackBar: MatSnackBar
   ) {
     this.form = this.fb.group({
       movementType: ['AjusteNegativo', Validators.required],
@@ -129,9 +131,16 @@ export class InventoryHistoryDialogComponent implements OnInit {
     });
   }
 
-  save() {
+    save() {
     if(this.form.invalid) return;
     const val = this.form.value;
+    
+    // Validar motivo para ajustes
+    if ((val.movementType === 'AjustePositivo' || val.movementType === 'AjusteNegativo') && !val.motivo?.trim()) {
+       this.snackBar.open('Debes ingresar un motivo para el ajuste', 'Cerrar', { duration: 3000 });
+       return;
+    }
+
     let qty = val.cantidad;
     if (val.movementType === 'AjusteNegativo' || val.movementType === 'ConsumoInterno') {
       qty = -Math.abs(qty); // Ensure it's negative
@@ -147,14 +156,23 @@ export class InventoryHistoryDialogComponent implements OnInit {
       fecha: new Date().toISOString()
     };
 
-    this.invService.createMovement(payload).subscribe(() => {
-      this.showNewForm = false;
-      this.form.reset({ movementType: 'AjusteNegativo', cantidad: 1, motivo: '' });
-      this.loadMovements();
+    this.invService.createMovement(payload).subscribe({
+      next: () => {
+        this.showNewForm = false;
+        this.form.reset({ movementType: 'AjusteNegativo', cantidad: 1, motivo: '' });
+        this.loadMovements();
+        this.snackBar.open('Movimiento guardado exitosamente', 'Cerrar', { duration: 3000 });
+      },
+      error: (err) => {
+        let msg = err.error?.message || err.error?.detail || err.error?.title || 'Error al guardar el movimiento';
+        this.snackBar.open(msg, 'Cerrar', { duration: 5000 });
+      }
     });
+  }
   }
 
   close() {
     this.dialogRef.close();
   }
 }
+
