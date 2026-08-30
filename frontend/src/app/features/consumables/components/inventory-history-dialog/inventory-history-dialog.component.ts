@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+﻿import { Component, Inject, OnInit } from '@angular/core';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -137,7 +137,7 @@ export class InventoryHistoryDialogComponent implements OnInit {
     
     // Validar motivo para ajustes
     if ((val.movementType === 'AjustePositivo' || val.movementType === 'AjusteNegativo') && !val.motivo?.trim()) {
-       this.snackBar.open('Debes ingresar un motivo para el ajuste', 'Cerrar', { duration: 3000 });
+       this.snackBar.open('Debes ingresar un motivo para el ajuste', 'Cerrar', { duration: 3000, panelClass: ['snackbar-error'] });
        return;
     }
 
@@ -165,7 +165,7 @@ export class InventoryHistoryDialogComponent implements OnInit {
       },
       error: (err) => {
         let msg = err.error?.message || err.error?.detail || err.error?.title || 'Error al guardar el movimiento';
-        this.snackBar.open(msg, 'Cerrar', { duration: 5000 });
+        this.snackBar.open(msg, 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
       }
     });
   }
@@ -174,4 +174,5 @@ export class InventoryHistoryDialogComponent implements OnInit {
     this.dialogRef.close();
   }
 }
+
 

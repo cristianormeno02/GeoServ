@@ -143,6 +143,7 @@ GeoServ.Api.Endpoints.CheckEndpoints.MapCheckEndpoints(app);
 GeoServ.Api.Endpoints.MovementCategoryEndpoints.MapMovementCategoryEndpoints(app);
 GeoServ.Api.Endpoints.AccountingMovementEndpoints.MapAccountingMovementEndpoints(app);
 GeoServ.Api.Endpoints.ConsumableEndpoints.MapConsumableEndpoints(app);
+GeoServ.Api.Endpoints.InventoryMovementEndpoints.MapInventoryMovementEndpoints(app);
 GeoServ.Api.Endpoints.FixedCostItemEndpoints.MapFixedCostItemEndpoints(app);
 GeoServ.Api.Endpoints.FixedCostCategoryEndpoints.MapFixedCostCategoryEndpoints(app);
 var summaries = new[]
@@ -171,5 +172,6 @@ record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
+
 
 
