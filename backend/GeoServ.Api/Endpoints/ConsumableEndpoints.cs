@@ -90,20 +90,9 @@ public static class ConsumableEndpoints
             item.Description = request.Description;
             item.UnitId = request.UnitId;
             item.UnitCost = request.UnitCost;
-            item.TotalCost = request.TotalCost;
+                        item.TotalCost = request.TotalCost;
             item.ProviderId = request.ProviderId;
             item.Observation = request.Observation;
-
-            // Notice: Updating quantity of an existing purchase is complex if there are other movements.
-            // For now, we update the original 'Compra' movement if it exists, or just skip.
-            var firstMovement = await context.InventoryMovements
-                .FirstOrDefaultAsync(m => m.ConsumableId == item.Id && m.MovementType == GeoServ.Api.Domain.Enums.InventoryMovementType.Compra);
-            
-            if (firstMovement != null)
-            {
-                firstMovement.Cantidad = request.Quantity;
-                firstMovement.Validate();
-            }
 
             await context.SaveChangesAsync();
             return Results.NoContent();
@@ -237,5 +226,6 @@ public class CreateConsumableClassRequest
     public string Name { get; set; } = string.Empty;
     public Guid ConsumableTypeId { get; set; }
 }
+
 
 
