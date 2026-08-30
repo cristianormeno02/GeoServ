@@ -1,4 +1,4 @@
-﻿import { Component, Inject, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, Inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -88,7 +88,8 @@ export class ConsumableDialogComponent implements OnInit {
   calculateTotal() {
     const qty = this.form.get('quantity')?.value || 0;
     const cost = this.form.get('unitCost')?.value || 0;
-    this.form.get('totalCost')?.setValue(qty * cost, { emitEvent: false });
+    const total = Math.round((qty * cost) * 100) / 100;
+    this.form.get('totalCost')?.setValue(total, { emitEvent: false });
   }
 
   save() {

@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+﻿import { Component, Inject, OnInit } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -220,3 +220,5 @@ export class MovimientoFormComponent implements OnInit {
     }
   }
 }
+
+
