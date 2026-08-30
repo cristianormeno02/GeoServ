@@ -12,11 +12,12 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
 
 import { NgxMaskDirective } from 'ngx-mask';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-fixed-cost-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatButtonModule, NgxMaskDirective],
+  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatButtonModule, NgxMaskDirective, MatSnackBarModule],
   templateUrl: './fixed-cost-dialog.component.html',
   styleUrls: ['./fixed-cost-dialog.component.css']
 })
@@ -29,6 +30,7 @@ export class FixedCostDialogComponent implements OnInit {
     private fb: FormBuilder,
     private fixedCostService: FixedCostService,
     private http: HttpClient,
+    private snackBar: MatSnackBar,
     public dialogRef: MatDialogRef<FixedCostDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any
   ) {
@@ -53,10 +55,31 @@ export class FixedCostDialogComponent implements OnInit {
 
   save() {
     if (this.form.invalid) return;
+    
+    const formVal = { ...this.form.value };
+    if (typeof formVal.initialAmount === 'string') {
+      formVal.initialAmount = parseFloat(formVal.initialAmount.replace(/\./g, '').replace(',', '.'));
+    }
+    if (formVal.providerId === '') {
+      formVal.providerId = null;
+    }
+
+    const obs = {
+      next: () => this.dialogRef.close(true),
+      error: (err: any) => {
+        console.error(err);
+        let msg = err.error?.message || err.error?.title || 'Error al guardar';
+        if (err.status === 400 && err.error?.errors) {
+          msg = 'Error de validación. Revisa los campos.';
+        }
+        this.snackBar.open(msg, 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] });
+      }
+    };
+
     if (this.data) {
-      this.fixedCostService.updateItem(this.data.id, this.form.value).subscribe(() => this.dialogRef.close(true));
+      this.fixedCostService.updateItem(this.data.id, formVal).subscribe(obs);
     } else {
-      this.fixedCostService.createItem(this.form.value).subscribe(() => this.dialogRef.close(true));
+      this.fixedCostService.createItem(formVal).subscribe(obs);
     }
   }
 }

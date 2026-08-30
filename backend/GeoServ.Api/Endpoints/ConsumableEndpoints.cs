@@ -20,6 +20,22 @@ public static class ConsumableEndpoints
                 .Include(c => c.Provider)
                 .Include(c => c.Unit)
                 .OrderByDescending(c => c.PurchaseDate)
+                .Select(c => new
+                {
+                    c.Id,
+                    c.PurchaseDate,
+                    c.ConsumableClassId,
+                    ConsumableClass = c.ConsumableClass,
+                    c.Description,
+                    Quantity = c.InventoryMovements.Sum(im => im.Cantidad),
+                    c.UnitId,
+                    Unit = c.Unit,
+                    c.UnitCost,
+                    c.TotalCost,
+                    c.ProviderId,
+                    Provider = c.Provider,
+                    c.Observation
+                })
                 .ToListAsync();
             return Results.Ok(items);
         }).WithName("GetConsumables").WithOpenApi();
@@ -32,7 +48,6 @@ public static class ConsumableEndpoints
                 PurchaseDate = request.PurchaseDate,
                 ConsumableClassId = request.ConsumableClassId,
                 Description = request.Description,
-                Quantity = request.Quantity,
                 UnitId = request.UnitId,
                 UnitCost = request.UnitCost,
                 TotalCost = request.TotalCost,
@@ -40,6 +55,20 @@ public static class ConsumableEndpoints
                 Observation = request.Observation
             };
             context.Consumables.Add(item);
+
+            // Create initial InventoryMovement
+            var movement = new InventoryMovement
+            {
+                Id = Guid.NewGuid(),
+                ConsumableId = item.Id,
+                Cantidad = request.Quantity,
+                MovementType = GeoServ.Api.Domain.Enums.InventoryMovementType.Compra,
+                Fecha = request.PurchaseDate,
+                UserId = Guid.Empty // Ideally should come from HttpContext User
+            };
+            movement.Validate();
+            context.InventoryMovements.Add(movement);
+
             await context.SaveChangesAsync();
             return Results.Created($"/api/consumables/{item.Id}", item);
         }).WithName("CreateConsumable").WithOpenApi();
@@ -52,12 +81,22 @@ public static class ConsumableEndpoints
             item.PurchaseDate = request.PurchaseDate;
             item.ConsumableClassId = request.ConsumableClassId;
             item.Description = request.Description;
-            item.Quantity = request.Quantity;
             item.UnitId = request.UnitId;
             item.UnitCost = request.UnitCost;
             item.TotalCost = request.TotalCost;
             item.ProviderId = request.ProviderId;
             item.Observation = request.Observation;
+
+            // Notice: Updating quantity of an existing purchase is complex if there are other movements.
+            // For now, we update the original 'Compra' movement if it exists, or just skip.
+            var firstMovement = await context.InventoryMovements
+                .FirstOrDefaultAsync(m => m.ConsumableId == item.Id && m.MovementType == GeoServ.Api.Domain.Enums.InventoryMovementType.Compra);
+            
+            if (firstMovement != null)
+            {
+                firstMovement.Cantidad = request.Quantity;
+                firstMovement.Validate();
+            }
 
             await context.SaveChangesAsync();
             return Results.NoContent();

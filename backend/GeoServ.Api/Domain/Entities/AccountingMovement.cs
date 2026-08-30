@@ -14,6 +14,9 @@ public class AccountingMovement
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public string Description { get; set; } = string.Empty;
 
+    public MovementSourceType SourceType { get; set; } = MovementSourceType.Manual;
+    public string? SourceId { get; set; }
+
     // --- ¿De dónde sale o a dónde entra la plata? ---
     public Guid FinancialAccountId { get; set; }
     public FinancialAccount FinancialAccount { get; set; } = null!;

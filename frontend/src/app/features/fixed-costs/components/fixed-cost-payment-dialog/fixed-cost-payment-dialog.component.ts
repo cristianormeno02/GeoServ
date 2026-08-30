@@ -15,10 +15,12 @@ import { environment } from '../../../../../environments/environment';
 
 import { NgxMaskDirective } from 'ngx-mask';
 
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+
 @Component({
   selector: 'app-fixed-cost-payment-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatButtonModule, MatDatepickerModule, MatNativeDateModule, NgxMaskDirective],
+  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatButtonModule, MatDatepickerModule, MatNativeDateModule, NgxMaskDirective, MatSnackBarModule],
   templateUrl: './fixed-cost-payment-dialog.component.html',
   styleUrls: ['./fixed-cost-payment-dialog.component.css']
 })
@@ -31,6 +33,7 @@ export class FixedCostPaymentDialogComponent implements OnInit {
     private fb: FormBuilder,
     private fixedCostService: FixedCostService,
     private http: HttpClient,
+    private snackBar: MatSnackBar,
     public dialogRef: MatDialogRef<FixedCostPaymentDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { itemId: string, payment?: any }
   ) {
@@ -66,10 +69,41 @@ export class FixedCostPaymentDialogComponent implements OnInit {
 
   save() {
     if (this.form.invalid) return;
+    
+    const formVal = { ...this.form.value };
+    
+    if (formVal.dueDate && formVal.dueDate instanceof Date) {
+      formVal.dueDate = formVal.dueDate.toISOString();
+    }
+    if (formVal.paymentDate && formVal.paymentDate instanceof Date) {
+      formVal.paymentDate = formVal.paymentDate.toISOString();
+    }
+    
+    // Ensure amount is a number (in case ngx-mask leaves it as a string)
+    if (typeof formVal.amount === 'string') {
+      formVal.amount = parseFloat(formVal.amount.replace(/\./g, '').replace(',', '.'));
+    }
+
+    if (formVal.paymentMethodId === '') {
+      formVal.paymentMethodId = null;
+    }
+
+    const obs = {
+      next: () => this.dialogRef.close(true),
+      error: (err: any) => {
+        console.error(err);
+        let msg = err.error?.message || err.error?.title || 'Error al guardar';
+        if (err.status === 400 && err.error?.errors) {
+          msg = 'Error de validación. Revisa los campos.';
+        }
+        this.snackBar.open(msg, 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] });
+      }
+    };
+
     if (this.data.payment) {
-      this.fixedCostService.updatePayment(this.data.payment.id, this.form.value).subscribe(() => this.dialogRef.close(true));
+      this.fixedCostService.updatePayment(this.data.payment.id, formVal).subscribe(obs);
     } else {
-      this.fixedCostService.createPayment(this.form.value).subscribe(() => this.dialogRef.close(true));
+      this.fixedCostService.createPayment(formVal).subscribe(obs);
     }
   }
 }

@@ -3,17 +3,20 @@ using System;
 using GeoServ.Api.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace GeoServ.Api.Migrations
+namespace GeoServ.Api.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(GeoServDbContext))]
-    partial class GeoServDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260830032354_PolymorphicAccountingMovement")]
+    partial class PolymorphicAccountingMovement
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -107,51 +110,6 @@ namespace GeoServ.Api.Migrations
                     b.HasIndex("SourceType", "SourceId");
 
                     b.ToTable("AccountingMovements");
-                });
-
-            modelBuilder.Entity("GeoServ.Api.Domain.Entities.AccountingMovementDetail", b =>
-                {
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("AssetName")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("DirectCostDescription")
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("FinancialAccountId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("FixedCostPaymentDescription")
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("IsIncome")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("ServiceOrderNumber")
-                        .HasColumnType("text");
-
-                    b.Property<string>("SourceId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("SourceType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.ToTable((string)null);
-
-                    b.ToView("vw_AccountingMovementDetail", (string)null);
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.Asset", b =>
@@ -353,6 +311,10 @@ namespace GeoServ.Api.Migrations
 
                     b.Property<DateTime>("PurchaseDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
 
                     b.Property<decimal>("TotalCost")
                         .HasPrecision(18, 2)
@@ -852,46 +814,6 @@ namespace GeoServ.Api.Migrations
                     b.HasIndex("PaymentMethodId");
 
                     b.ToTable("FixedCostPayments");
-                });
-
-            modelBuilder.Entity("GeoServ.Api.Domain.Entities.InventoryMovement", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("Cantidad")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
-
-                    b.Property<Guid>("ConsumableId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("Fecha")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Motivo")
-                        .HasColumnType("text");
-
-                    b.Property<string>("MovementType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid?>("ServiceOrderId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ConsumableId");
-
-                    b.HasIndex("ServiceOrderId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("InventoryMovements");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.MovementCategory", b =>
@@ -1798,31 +1720,6 @@ namespace GeoServ.Api.Migrations
                     b.Navigation("FixedCostItem");
 
                     b.Navigation("PaymentMethod");
-                });
-
-            modelBuilder.Entity("GeoServ.Api.Domain.Entities.InventoryMovement", b =>
-                {
-                    b.HasOne("GeoServ.Api.Domain.Entities.Consumable", "Consumable")
-                        .WithMany()
-                        .HasForeignKey("ConsumableId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("GeoServ.Api.Domain.Entities.ServiceOrder", "ServiceOrder")
-                        .WithMany()
-                        .HasForeignKey("ServiceOrderId");
-
-                    b.HasOne("GeoServ.Api.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Consumable");
-
-                    b.Navigation("ServiceOrder");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.Responsible", b =>

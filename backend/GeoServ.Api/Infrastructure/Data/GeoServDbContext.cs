@@ -42,8 +42,12 @@ public class GeoServDbContext : DbContext
     public DbSet<ConsumableType> ConsumableTypes { get; set; } = null!;
     public DbSet<ConsumableClass> ConsumableClasses { get; set; } = null!;
     public DbSet<Consumable> Consumables { get; set; } = null!;
+    public DbSet<InventoryMovement> InventoryMovements { get; set; } = null!;
     public DbSet<FixedCostItem> FixedCostItems { get; set; } = null!;
     public DbSet<FixedCostPayment> FixedCostPayments { get; set; } = null!;
+    
+    // Vistas
+    public DbSet<AccountingMovementDetail> AccountingMovementDetails { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -83,14 +87,30 @@ public class GeoServDbContext : DbContext
             .Property(f => f.Amount).HasPrecision(18, 2);
 
         modelBuilder.Entity<Consumable>()
-            .Property(c => c.Quantity).HasPrecision(18, 2);
-        modelBuilder.Entity<Consumable>()
             .Property(c => c.UnitCost).HasPrecision(18, 2);
         modelBuilder.Entity<Consumable>()
             .Property(c => c.TotalCost).HasPrecision(18, 2);
 
+        modelBuilder.Entity<InventoryMovement>()
+            .Property(i => i.Cantidad).HasPrecision(18, 2);
+        
+        modelBuilder.Entity<InventoryMovement>()
+            .Property(i => i.MovementType)
+            .HasConversion<string>();
+
         modelBuilder.Entity<AccountingMovement>()
             .Property(a => a.Amount).HasPrecision(18, 2);
+
+        modelBuilder.Entity<AccountingMovement>()
+            .Property(a => a.SourceType)
+            .HasConversion<string>();
+
+        modelBuilder.Entity<AccountingMovement>()
+            .HasIndex(a => new { a.SourceType, a.SourceId });
+
+        modelBuilder.Entity<AccountingMovementDetail>()
+            .HasNoKey()
+            .ToView("vw_AccountingMovementDetail");
 
         modelBuilder.Entity<Asset>()
             .Property(a => a.PurchasePrice).HasPrecision(18, 2);

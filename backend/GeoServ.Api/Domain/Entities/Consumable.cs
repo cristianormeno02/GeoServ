@@ -9,7 +9,6 @@ public class Consumable
     public ConsumableClass ConsumableClass { get; set; } = null!;
     
     public string Description { get; set; } = string.Empty;
-    public decimal Quantity { get; set; }
     
     public Guid UnitId { get; set; }
     public Unit Unit { get; set; } = null!;
@@ -21,4 +20,6 @@ public class Consumable
     public Provider? Provider { get; set; }
     
     public string? Observation { get; set; }
+
+    public ICollection<InventoryMovement> InventoryMovements { get; set; } = new List<InventoryMovement>();
 }

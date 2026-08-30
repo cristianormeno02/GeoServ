@@ -104,6 +104,13 @@ public static class AccountingMovementEndpoints
                     userId = await context.Users.Select(u => u.Id).FirstOrDefaultAsync();
                 }
 
+                var sourceId = request.ServiceOrderId?.ToString() ?? request.DirectCostId?.ToString() ?? request.FixedCostId?.ToString() ?? request.AssetId?.ToString();
+                var sourceType = MovementSourceType.Manual;
+                if (request.ServiceOrderId.HasValue) sourceType = MovementSourceType.ServiceOrderIncome;
+                else if (request.DirectCostId.HasValue) sourceType = MovementSourceType.DirectCost;
+                else if (request.FixedCostId.HasValue) sourceType = MovementSourceType.FixedCostPayment;
+                else if (request.AssetId.HasValue) sourceType = MovementSourceType.AssetPurchase;
+
                 var movement = new AccountingMovement
                 {
                     Id = Guid.NewGuid(),
@@ -120,7 +127,9 @@ public static class AccountingMovementEndpoints
                     AssetId = request.AssetId,
                     CheckId = request.CheckId,
                     ResponsibleId = request.ResponsibleId,
-                    RegisteredByUserId = userId
+                    RegisteredByUserId = userId,
+                    SourceType = sourceType,
+                    SourceId = sourceId
                 };
 
                 context.AccountingMovements.Add(movement);
@@ -143,6 +152,13 @@ public static class AccountingMovementEndpoints
                 var movement = await context.AccountingMovements.FindAsync(id);
                 if (movement == null) return Results.NotFound();
 
+                var sourceId = request.ServiceOrderId?.ToString() ?? request.DirectCostId?.ToString() ?? request.FixedCostId?.ToString() ?? request.AssetId?.ToString();
+                var sourceType = MovementSourceType.Manual;
+                if (request.ServiceOrderId.HasValue) sourceType = MovementSourceType.ServiceOrderIncome;
+                else if (request.DirectCostId.HasValue) sourceType = MovementSourceType.DirectCost;
+                else if (request.FixedCostId.HasValue) sourceType = MovementSourceType.FixedCostPayment;
+                else if (request.AssetId.HasValue) sourceType = MovementSourceType.AssetPurchase;
+
                 movement.IsIncome = request.IsIncome;
                 movement.CategoryId = request.CategoryId;
                 movement.Amount = request.Amount;
@@ -156,6 +172,8 @@ public static class AccountingMovementEndpoints
                 movement.AssetId = request.AssetId;
                 movement.CheckId = request.CheckId;
                 movement.ResponsibleId = request.ResponsibleId;
+                movement.SourceType = sourceType;
+                movement.SourceId = sourceId;
 
                 await context.SaveChangesAsync();
                 return Results.NoContent();
