@@ -1,4 +1,4 @@
-﻿import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -7,11 +7,13 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { DonutChartComponent, DonutSlice } from '../../shared/components/charts/donut-chart.component';
 import { GeneralDashboardService } from './services/general-dashboard.service';
+import { EmpresaConfigService } from '../../core/services/empresa-config.service';
 import {
   UserProfileResponse,
   GeneralKpisResponse,
@@ -50,6 +52,13 @@ export class DashboardComponent implements OnInit {
   statusSlices: DonutSlice[] = [];
   prioritySlices: DonutSlice[] = [];
 
+  safeLogoSvg = computed<SafeResourceUrl | null>(() => {
+    const svg = this.empresaConfig.empresaActual()?.logoSvg;
+    if (!svg) return null;
+    const base64 = btoa(unescape(encodeURIComponent(svg)));
+    return this.sanitizer.bypassSecurityTrustResourceUrl(`data:image/svg+xml;base64,${base64}`);
+  });
+
   private readonly statusColors: Record<string, string> = {
     'Alta': '#94a3b8',
     'Presupuestada': '#60a5fa',
@@ -66,9 +75,18 @@ export class DashboardComponent implements OnInit {
     'Baja': '#22c55e',
   };
 
-  constructor(private dashboardService: GeneralDashboardService) {}
+  constructor(
+    private dashboardService: GeneralDashboardService,
+    public empresaConfig: EmpresaConfigService,
+    private sanitizer: DomSanitizer
+  ) {}
 
   ngOnInit(): void {
+    if (!this.empresaConfig.empresaActual()) {
+      this.empresaConfig.cargarConfiguracion().subscribe({
+        error: (e) => console.warn('No se pudo cargar config de empresa', e)
+      });
+    }
     this.loadData();
   }
 

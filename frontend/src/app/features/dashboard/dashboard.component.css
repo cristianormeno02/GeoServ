@@ -23,18 +23,53 @@
   gap: 16px;
   padding: 48px 40px;
   background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
   border: 1px solid #e2e8f0;
   text-align: center;
-  max-width: 440px;
+  max-width: 480px;
+}
+
+.empty-company-branding {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 16px;
+  background: #f1f5f9;
+  border-radius: 30px;
+  margin-bottom: 8px;
+}
+
+.empty-logo-img {
+  height: 28px;
+  width: auto;
+  max-width: 80px;
+  object-fit: contain;
+}
+
+.empty-company-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: -0.2px;
+}
+
+.empty-icon-wrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed #cbd5e1;
 }
 
 .empty-icon {
-  font-size: 64px;
-  width: 64px;
-  height: 64px;
-  color: #cbd5e1;
+  font-size: 38px;
+  width: 38px;
+  height: 38px;
+  color: #94a3b8;
 }
 
 .empty-title {
@@ -64,6 +99,27 @@
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+.company-badge-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.company-mini-logo {
+  height: 18px;
+  width: auto;
+  object-fit: contain;
+}
+
+.company-brand-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0284c7;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .avatar-circle {
