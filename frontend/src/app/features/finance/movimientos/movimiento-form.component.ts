@@ -40,7 +40,7 @@ import { environment } from '../../../../environments/environment';
 
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Categoría</mat-label>
-          <mat-select formControlName="categoryId" required>
+          <mat-select formControlName="categoryId" [compareWith]="compareIds" required>
             <mat-option *ngFor="let cat of filteredCategories" [value]="cat.id">
               {{ cat.name }}
             </mat-option>
@@ -60,7 +60,7 @@ import { environment } from '../../../../environments/environment';
 
         <mat-form-field appearance="outline" class="full-width" *ngIf="sourceTypeCtrl.value !== 'Manual'">
           <mat-label>Origen Específico</mat-label>
-          <mat-select formControlName="sourceId" required>
+          <mat-select formControlName="sourceId" [compareWith]="compareIds" required>
             <mat-option *ngFor="let opt of sourceOptions" [value]="opt.id">
               {{ opt.name }}
             </mat-option>
@@ -87,7 +87,7 @@ import { environment } from '../../../../environments/environment';
 
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Cuenta Financiera</mat-label>
-          <mat-select formControlName="financialAccountId" required>
+          <mat-select formControlName="financialAccountId" [compareWith]="compareIds" required>
             <mat-option *ngFor="let acc of accounts" [value]="acc.id">
               {{acc.name}}
             </mat-option>
@@ -141,6 +141,11 @@ export class MovimientoFormComponent implements OnInit {
     });
   }
 
+  compareIds(id1: any, id2: any): boolean {
+    if (!id1 || !id2) return id1 === id2;
+    return id1.toString().toLowerCase() === id2.toString().toLowerCase();
+  }
+
   ngOnInit(): void {
     this.loadAccounts();
     this.loadCategories();
@@ -163,7 +168,29 @@ export class MovimientoFormComponent implements OnInit {
     });
 
     if (this.sourceTypeCtrl.value !== 'Manual') {
-       this.loadSourceOptions(this.sourceTypeCtrl.value);
+      this.loadSourceOptions(this.sourceTypeCtrl.value);
+    }
+
+    if (this.isEditMode && this.data?.movement?.id) {
+      this.movementService.getMovement(this.data.movement.id).subscribe({
+        next: (mov: any) => {
+          this.movementForm.patchValue({
+            isIncome: mov.isIncome,
+            categoryId: mov.categoryId,
+            sourceType: mov.sourceType?.toString() || 'Manual',
+            sourceId: mov.sourceId,
+            description: mov.description,
+            amount: mov.amount,
+            date: mov.date ? new Date(mov.date) : new Date(),
+            financialAccountId: mov.financialAccountId
+          }, { emitEvent: false });
+          if (mov.sourceType && mov.sourceType !== 'Manual') {
+            this.loadSourceOptions(mov.sourceType);
+          }
+          this.cdr.detectChanges();
+        },
+        error: (err) => console.error('Error fetching movement detail', err)
+      });
     }
   }
 
@@ -171,8 +198,19 @@ export class MovimientoFormComponent implements OnInit {
   get sourceTypeCtrl() { return this.movementForm.get('sourceType')!; }
   get filteredCategories() { return this.allCategories.filter(c => c.isIncome === this.isIncomeCtrl.value && c.isActive); }
 
-  loadAccounts() { this.accountService.getAccounts().subscribe(data => { this.accounts = data; this.cdr.detectChanges(); }); }
-  loadCategories() { this.categoryService.getCategories().subscribe(data => { this.allCategories = data; this.cdr.detectChanges(); }); }
+  loadAccounts() { 
+    this.accountService.getAccounts().subscribe(data => { 
+      this.accounts = data; 
+      this.cdr.detectChanges(); 
+    }); 
+  }
+  
+  loadCategories() { 
+    this.categoryService.getCategories().subscribe(data => { 
+      this.allCategories = data; 
+      this.cdr.detectChanges(); 
+    }); 
+  }
 
   loadSourceOptions(type: string) {
     let endpoint = '';
@@ -188,6 +226,7 @@ export class MovimientoFormComponent implements OnInit {
         next: (res: any) => {
            let arr = res.items || res;
            this.sourceOptions = arr.map(mapFn);
+           this.cdr.detectChanges();
         },
         error: () => this.sourceOptions = []
       });
