@@ -1,261 +1,221 @@
 <div class="dashboard-container">
 
-  <!-- Spinner de carga inicial -->
-  <div *ngIf="isLoading && !profile && !kpis" class="loading-state">
-    <mat-icon class="spin-icon loading-spinner">refresh</mat-icon>
-    <span>Cargando datos del dashboard...</span>
+  <!-- Topbar de bienvenida con Empresa y Usuario -->
+  <div class="dashboard-topbar">
+    <div class="welcome-section">
+      <div class="avatar-circle">{{ getInitials(profile?.responsibleName || profile?.userName) }}</div>
+      <div class="welcome-text">
+        <div class="company-badge-row">
+          <img *ngIf="safeLogoSvg()" [src]="safeLogoSvg()" class="company-mini-logo" alt="Logo" />
+          <img *ngIf="!safeLogoSvg()" src="assets/geoserv-logo.svg" class="company-mini-logo" alt="GeoServ" />
+          <span class="company-brand-name">{{ empresaConfig.empresaActual()?.nombre || 'GeoServ' }}</span>
+        </div>
+        <h1 class="welcome-name">Hola, {{ profile?.responsibleName || profile?.userName }}</h1>
+        <p class="welcome-subtitle">
+          <span *ngIf="profile?.title" class="welcome-tag">{{ profile?.title }}</span>
+          <span *ngIf="profile?.position" class="welcome-tag">{{ profile?.position }}</span>
+          <span *ngIf="profile?.specialties" class="welcome-tag specialties">{{ profile?.specialties }}</span>
+        </p>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <span class="last-sync-text">
+        <mat-icon class="sync-icon">schedule</mat-icon>
+        Actualizado: {{ lastUpdated | date:'HH:mm:ss' }}
+      </span>
+      <button mat-flat-button color="primary" class="refresh-btn" (click)="loadData()" [disabled]="isLoading">
+        <mat-icon [class.spin-icon]="isLoading">refresh</mat-icon>
+        <span>Actualizar</span>
+      </button>
+    </div>
   </div>
 
-  <!-- Estado vacío amistoso con Branding de la Empresa -->
-  <ng-container *ngIf="!isLoading && !showDashboard">
-    <div class="empty-state-fullpage">
-      <div class="empty-state-card">
-        
-        <!-- Nombre de la Empresa y Logo Centrado Grande -->
-        <div class="empty-company-section">
-          <h1 class="empty-company-title">{{ empresaConfig.empresaActual()?.nombre || 'GeoServ' }}</h1>
-          <div class="empty-logo-wrapper">
-            <img *ngIf="safeLogoSvg()" [src]="safeLogoSvg()" class="empty-logo-large" alt="Logo de la Empresa" />
-            <img *ngIf="!safeLogoSvg()" src="assets/geoserv-logo.svg" alt="GeoServ Logo" class="empty-logo-large" />
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon-wrap" style="background:#e0f2fe;">
+        <mat-icon style="color:#0284c7;">work</mat-icon>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-label">Órdenes Activas</span>
+        <span class="kpi-value">{{ kpis?.ordenesActivas ?? 0 }}</span>
+      </div>
+      <div class="kpi-badge blue">de {{ kpis?.totalOrdenes ?? 0 }} total</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon-wrap" style="background:#dcfce7;">
+        <mat-icon style="color:#16a34a;">task_alt</mat-icon>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-label">Órdenes Entregadas</span>
+        <span class="kpi-value">{{ kpis?.ordenesEntregadas ?? 0 }}</span>
+      </div>
+      <div class="kpi-badge green">pendientes de cobro</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon-wrap" style="background:#f3e8ff;">
+        <mat-icon style="color:#7c3aed;">verified</mat-icon>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-label">Órdenes Cobradas</span>
+        <span class="kpi-value">{{ kpis?.ordenesCobradas ?? 0 }}</span>
+      </div>
+      <div class="kpi-badge purple">finalizadas</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon-wrap" style="background:#fef9c3;">
+        <mat-icon style="color:#ca8a04;">trending_up</mat-icon>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-label">Progreso Promedio</span>
+        <span class="kpi-value">{{ (kpis?.progresoPromedio || 0) | number:'1.0-1' }}%</span>
+      </div>
+      <div class="kpi-badge amber">en mis órdenes activas</div>
+    </div>
+  </div>
+
+  <!-- Distribuciones (Donuts) -->
+  <div class="donuts-row">
+    <mat-card class="donut-card">
+      <app-donut-chart
+        title="Distribución por Estado"
+        centerSubtitle="órdenes"
+        [slices]="statusSlices"
+      ></app-donut-chart>
+    </mat-card>
+    <mat-card class="donut-card">
+      <app-donut-chart
+        title="Distribución por Prioridad"
+        centerSubtitle="activas"
+        [slices]="prioritySlices"
+      ></app-donut-chart>
+    </mat-card>
+  </div>
+
+  <!-- Mis Órdenes Activas -->
+  <mat-card class="section-card">
+    <div class="section-header">
+      <div class="section-title-row">
+        <mat-icon class="section-icon" style="color:#0284c7;">assignment</mat-icon>
+        <span class="section-title">Mis Órdenes Activas</span>
+      </div>
+      <span class="section-badge">{{ activeOrders.length }} órdenes</span>
+    </div>
+
+    <div *ngIf="activeOrders.length === 0" class="empty-list">
+      <mat-icon>inbox</mat-icon>
+      <span>No tenés órdenes activas en este momento</span>
+    </div>
+
+    <div class="orders-list" *ngIf="activeOrders.length > 0">
+      <div class="order-item" *ngFor="let order of activeOrders">
+        <!-- Indicador de alerta -->
+        <div class="alert-dot" [style.background]="getAlertColor(order.alertLevel)"
+             [matTooltip]="order.alertLevel === 'overdue' ? 'Vencida' : order.alertLevel === 'warning' ? 'Por vencer' : 'En plazo'">
+        </div>
+
+        <!-- Info principal -->
+        <div class="order-main">
+          <div class="order-top-row">
+            <span class="order-number">{{ order.orderNumber }}</span>
+            <span class="order-chip" [style.background]="getStatusColor(order.statusName) + '22'" [style.color]="getStatusColor(order.statusName)">
+              {{ order.statusName }}
+            </span>
+            <span class="priority-chip" [style.background]="getPriorityColor(order.priority) + '22'" [style.color]="getPriorityColor(order.priority)">
+              {{ order.priority }}
+            </span>
+          </div>
+          <div class="order-client">{{ order.clientName }} · {{ order.serviceTypeName }}</div>
+          <div class="order-progress-row">
+            <div class="custom-progress-track">
+              <div class="custom-progress-bar"
+                   [style.width.%]="order.progressPercentage"
+                   [style.background]="order.progressPercentage >= 80 ? '#10b981' : order.progressPercentage >= 40 ? '#0284c7' : '#f59e0b'">
+              </div>
+            </div>
+            <span class="progress-label">{{ order.progressPercentage }}%</span>
           </div>
         </div>
 
-        <!-- Mensaje descriptivo centrado debajo del logo -->
-        <div class="empty-message-section">
-          <div class="empty-icon-wrap">
-            <mat-icon class="empty-icon">badge</mat-icon>
-          </div>
-          <h2 class="empty-title">Sin perfil de responsable vinculado</h2>
-          <p class="empty-desc">
-            Tu usuario no se encuentra asignado a un responsable en <strong>{{ empresaConfig.empresaActual()?.nombre || 'la empresa' }}</strong>.
-            Contactá al administrador del sistema para que configure tu perfil y puedas visualizar tus órdenes asignadas.
-          </p>
+        <!-- Fecha -->
+        <div class="order-date">
+          <span class="date-label">Entrega estimada</span>
+          <span class="date-value" [style.color]="getAlertColor(order.alertLevel)">{{ formatDate(order.estimatedEndDate) }}</span>
         </div>
-
       </div>
     </div>
-  </ng-container>
+  </mat-card>
 
-  <!-- Dashboard completo con Branding y Saludo -->
-  <ng-container *ngIf="showDashboard">
+  <!-- Fila inferior: Actividades + Observaciones -->
+  <div class="bottom-grid">
 
-    <!-- Topbar de bienvenida con Empresa y Usuario -->
-    <div class="dashboard-topbar">
-      <div class="welcome-section">
-        <div class="avatar-circle">{{ getInitials(profile?.responsibleName || profile?.userName) }}</div>
-        <div class="welcome-text">
-          <div class="company-badge-row">
-            <img *ngIf="safeLogoSvg()" [src]="safeLogoSvg()" class="company-mini-logo" alt="Logo" />
-            <img *ngIf="!safeLogoSvg()" src="assets/geoserv-logo.svg" class="company-mini-logo" alt="GeoServ" />
-            <span class="company-brand-name">{{ empresaConfig.empresaActual()?.nombre || 'GeoServ' }}</span>
-          </div>
-          <h1 class="welcome-name">Hola, {{ profile?.responsibleName || profile?.userName }}</h1>
-          <p class="welcome-subtitle">
-            <span *ngIf="profile?.title" class="welcome-tag">{{ profile?.title }}</span>
-            <span *ngIf="profile?.position" class="welcome-tag">{{ profile?.position }}</span>
-            <span *ngIf="profile?.specialties" class="welcome-tag specialties">{{ profile?.specialties }}</span>
-          </p>
-        </div>
-      </div>
-      <div class="topbar-actions">
-        <span class="last-sync-text">
-          <mat-icon class="sync-icon">schedule</mat-icon>
-          Actualizado: {{ lastUpdated | date:'HH:mm:ss' }}
-        </span>
-        <button mat-flat-button color="primary" class="refresh-btn" (click)="loadData()" [disabled]="isLoading">
-          <mat-icon [class.spin-icon]="isLoading">refresh</mat-icon>
-          <span>Actualizar</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- KPI Cards -->
-    <div class="kpi-grid">
-      <div class="kpi-card">
-        <div class="kpi-icon-wrap" style="background:#e0f2fe;">
-          <mat-icon style="color:#0284c7;">work</mat-icon>
-        </div>
-        <div class="kpi-body">
-          <span class="kpi-label">Órdenes Activas</span>
-          <span class="kpi-value">{{ kpis?.ordenesActivas ?? 0 }}</span>
-        </div>
-        <div class="kpi-badge blue">de {{ kpis?.totalOrdenes ?? 0 }} total</div>
-      </div>
-
-      <div class="kpi-card">
-        <div class="kpi-icon-wrap" style="background:#dcfce7;">
-          <mat-icon style="color:#16a34a;">task_alt</mat-icon>
-        </div>
-        <div class="kpi-body">
-          <span class="kpi-label">Órdenes Entregadas</span>
-          <span class="kpi-value">{{ kpis?.ordenesEntregadas ?? 0 }}</span>
-        </div>
-        <div class="kpi-badge green">pendientes de cobro</div>
-      </div>
-
-      <div class="kpi-card">
-        <div class="kpi-icon-wrap" style="background:#f3e8ff;">
-          <mat-icon style="color:#7c3aed;">verified</mat-icon>
-        </div>
-        <div class="kpi-body">
-          <span class="kpi-label">Órdenes Cobradas</span>
-          <span class="kpi-value">{{ kpis?.ordenesCobradas ?? 0 }}</span>
-        </div>
-        <div class="kpi-badge purple">finalizadas</div>
-      </div>
-
-      <div class="kpi-card">
-        <div class="kpi-icon-wrap" style="background:#fef9c3;">
-          <mat-icon style="color:#ca8a04;">trending_up</mat-icon>
-        </div>
-        <div class="kpi-body">
-          <span class="kpi-label">Progreso Promedio</span>
-          <span class="kpi-value">{{ (kpis?.progresoPromedio || 0) | number:'1.0-1' }}%</span>
-        </div>
-        <div class="kpi-badge amber">en mis órdenes activas</div>
-      </div>
-    </div>
-
-    <!-- Distribuciones (Donuts) -->
-    <div class="donuts-row">
-      <mat-card class="donut-card">
-        <app-donut-chart
-          title="Distribución por Estado"
-          centerSubtitle="órdenes"
-          [slices]="statusSlices"
-        ></app-donut-chart>
-      </mat-card>
-      <mat-card class="donut-card">
-        <app-donut-chart
-          title="Distribución por Prioridad"
-          centerSubtitle="activas"
-          [slices]="prioritySlices"
-        ></app-donut-chart>
-      </mat-card>
-    </div>
-
-    <!-- Mis Órdenes Activas -->
+    <!-- Actividades Pendientes -->
     <mat-card class="section-card">
       <div class="section-header">
         <div class="section-title-row">
-          <mat-icon class="section-icon" style="color:#0284c7;">assignment</mat-icon>
-          <span class="section-title">Mis Órdenes Activas</span>
+          <mat-icon class="section-icon" style="color:#f59e0b;">checklist</mat-icon>
+          <span class="section-title">Actividades Pendientes</span>
         </div>
-        <span class="section-badge">{{ activeOrders.length }} órdenes</span>
+        <span class="section-badge amber">{{ pendingActivities.length }}</span>
       </div>
 
-      <div *ngIf="activeOrders.length === 0" class="empty-list">
-        <mat-icon>inbox</mat-icon>
-        <span>No tenés órdenes activas en este momento</span>
+      <div *ngIf="pendingActivities.length === 0" class="empty-list">
+        <mat-icon>done_all</mat-icon>
+        <span>Sin actividades pendientes 🎉</span>
       </div>
 
-      <div class="orders-list" *ngIf="activeOrders.length > 0">
-        <div class="order-item" *ngFor="let order of activeOrders">
-          <!-- Indicador de alerta -->
-          <div class="alert-dot" [style.background]="getAlertColor(order.alertLevel)"
-               [matTooltip]="order.alertLevel === 'overdue' ? 'Vencida' : order.alertLevel === 'warning' ? 'Por vencer' : 'En plazo'">
+      <div class="activities-list" *ngIf="pendingActivities.length > 0">
+        <div class="activity-item" *ngFor="let act of pendingActivities">
+          <div class="activity-state-dot"
+               [style.background]="act.state === 'EnProceso' ? '#f59e0b' : '#94a3b8'"
+               [matTooltip]="act.state === 'EnProceso' ? 'En Proceso' : 'Pendiente'">
           </div>
-
-          <!-- Info principal -->
-          <div class="order-main">
-            <div class="order-top-row">
-              <span class="order-number">{{ order.orderNumber }}</span>
-              <span class="order-chip" [style.background]="getStatusColor(order.statusName) + '22'" [style.color]="getStatusColor(order.statusName)">
-                {{ order.statusName }}
-              </span>
-              <span class="priority-chip" [style.background]="getPriorityColor(order.priority) + '22'" [style.color]="getPriorityColor(order.priority)">
-                {{ order.priority }}
-              </span>
-            </div>
-            <div class="order-client">{{ order.clientName }} · {{ order.serviceTypeName }}</div>
-            <div class="order-progress-row">
-              <div class="custom-progress-track">
-                <div class="custom-progress-bar"
-                     [style.width.%]="order.progressPercentage"
-                     [style.background]="order.progressPercentage >= 80 ? '#10b981' : order.progressPercentage >= 40 ? '#0284c7' : '#f59e0b'">
-                </div>
-              </div>
-              <span class="progress-label">{{ order.progressPercentage }}%</span>
+          <div class="activity-body">
+            <span class="activity-order">{{ act.orderNumber }}</span>
+            <span class="activity-detail">{{ act.shortDetail }}</span>
+            <div class="custom-progress-track small">
+              <div class="custom-progress-bar" [style.width.%]="act.progressPercentage" style="background:#0284c7;"></div>
             </div>
           </div>
+          <span class="activity-pct">{{ act.progressPercentage }}%</span>
+        </div>
+      </div>
+    </mat-card>
 
-          <!-- Fecha -->
-          <div class="order-date">
-            <span class="date-label">Entrega estimada</span>
-            <span class="date-value" [style.color]="getAlertColor(order.alertLevel)">{{ formatDate(order.estimatedEndDate) }}</span>
+    <!-- Observaciones Recientes -->
+    <mat-card class="section-card">
+      <div class="section-header">
+        <div class="section-title-row">
+          <mat-icon class="section-icon" style="color:#8b5cf6;">forum</mat-icon>
+          <span class="section-title">Observaciones Recientes</span>
+        </div>
+        <span class="section-badge">Últimos 7 días</span>
+      </div>
+
+      <div *ngIf="recentObservations.length === 0" class="empty-list">
+        <mat-icon>chat_bubble_outline</mat-icon>
+        <span>Sin observaciones en los últimos 7 días</span>
+      </div>
+
+      <div class="observations-list" *ngIf="recentObservations.length > 0">
+        <div class="obs-item" *ngFor="let obs of recentObservations" [class.own-obs]="obs.isOwnObservation">
+          <div class="obs-avatar">{{ getInitials(obs.authorName) }}</div>
+          <div class="obs-body">
+            <div class="obs-top">
+              <span class="obs-author">{{ obs.authorName }}</span>
+              <span class="obs-order-tag">{{ obs.orderNumber }}</span>
+              <span class="obs-type-tag">{{ obs.observationType }}</span>
+            </div>
+            <p class="obs-text">{{ obs.text }}</p>
+            <span class="obs-date">{{ formatRelativeDate(obs.createdAt) }}</span>
           </div>
         </div>
       </div>
     </mat-card>
 
-    <!-- Fila inferior: Actividades + Observaciones -->
-    <div class="bottom-grid">
-
-      <!-- Actividades Pendientes -->
-      <mat-card class="section-card">
-        <div class="section-header">
-          <div class="section-title-row">
-            <mat-icon class="section-icon" style="color:#f59e0b;">checklist</mat-icon>
-            <span class="section-title">Actividades Pendientes</span>
-          </div>
-          <span class="section-badge amber">{{ pendingActivities.length }}</span>
-        </div>
-
-        <div *ngIf="pendingActivities.length === 0" class="empty-list">
-          <mat-icon>done_all</mat-icon>
-          <span>Sin actividades pendientes 🎉</span>
-        </div>
-
-        <div class="activities-list" *ngIf="pendingActivities.length > 0">
-          <div class="activity-item" *ngFor="let act of pendingActivities">
-            <div class="activity-state-dot"
-                 [style.background]="act.state === 'EnProceso' ? '#f59e0b' : '#94a3b8'"
-                 [matTooltip]="act.state === 'EnProceso' ? 'En Proceso' : 'Pendiente'">
-            </div>
-            <div class="activity-body">
-              <span class="activity-order">{{ act.orderNumber }}</span>
-              <span class="activity-detail">{{ act.shortDetail }}</span>
-              <div class="custom-progress-track small">
-                <div class="custom-progress-bar" [style.width.%]="act.progressPercentage" style="background:#0284c7;"></div>
-              </div>
-            </div>
-            <span class="activity-pct">{{ act.progressPercentage }}%</span>
-          </div>
-        </div>
-      </mat-card>
-
-      <!-- Observaciones Recientes -->
-      <mat-card class="section-card">
-        <div class="section-header">
-          <div class="section-title-row">
-            <mat-icon class="section-icon" style="color:#8b5cf6;">forum</mat-icon>
-            <span class="section-title">Observaciones Recientes</span>
-          </div>
-          <span class="section-badge">Últimos 7 días</span>
-        </div>
-
-        <div *ngIf="recentObservations.length === 0" class="empty-list">
-          <mat-icon>chat_bubble_outline</mat-icon>
-          <span>Sin observaciones en los últimos 7 días</span>
-        </div>
-
-        <div class="observations-list" *ngIf="recentObservations.length > 0">
-          <div class="obs-item" *ngFor="let obs of recentObservations" [class.own-obs]="obs.isOwnObservation">
-            <div class="obs-avatar">{{ getInitials(obs.authorName) }}</div>
-            <div class="obs-body">
-              <div class="obs-top">
-                <span class="obs-author">{{ obs.authorName }}</span>
-                <span class="obs-order-tag">{{ obs.orderNumber }}</span>
-                <span class="obs-type-tag">{{ obs.observationType }}</span>
-              </div>
-              <p class="obs-text">{{ obs.text }}</p>
-              <span class="obs-date">{{ formatRelativeDate(obs.createdAt) }}</span>
-            </div>
-          </div>
-        </div>
-      </mat-card>
-
-    </div>
-  </ng-container>
+  </div>
 
 </div>

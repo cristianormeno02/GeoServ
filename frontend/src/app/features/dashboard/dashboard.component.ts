@@ -82,10 +82,6 @@ export class DashboardComponent implements OnInit {
     'Urgente': '#dc2626'
   };
 
-  get showDashboard(): boolean {
-    return !!(this.profile?.hasResponsible || this.activeOrders.length > 0 || (this.kpis && ((this.kpis.totalOrdenes ?? 0) > 0 || (this.kpis.ordenesActivas ?? 0) > 0)));
-  }
-
   constructor(
     private dashboardService: GeneralDashboardService,
     public empresaConfig: EmpresaConfigService,
@@ -105,58 +101,48 @@ export class DashboardComponent implements OnInit {
     this.isLoading = true;
     this.lastUpdated = new Date();
 
-    forkJoin({
-      profile: this.dashboardService.getProfile().pipe(
-        catchError(err => {
-          console.error('Error cargando perfil', err);
-          return of({ hasResponsible: false, userName: 'Usuario' } as UserProfileResponse);
-        })
-      ),
-      kpis: this.dashboardService.getKpis().pipe(
-        catchError(e => {
-          console.error('Error KPIs', e);
-          return of({ hasResponsible: true } as GeneralKpisResponse);
-        })
-      ),
-      orders: this.dashboardService.getActiveOrders().pipe(
-        catchError(e => {
-          console.error('Error órdenes activas', e);
-          return of([] as ActiveOrderItem[]);
-        })
-      ),
-      activities: this.dashboardService.getPendingActivities().pipe(
-        catchError(e => {
-          console.error('Error actividades', e);
-          return of([] as PendingActivityItem[]);
-        })
-      ),
-      observations: this.dashboardService.getRecentObservations().pipe(
-        catchError(e => {
-          console.error('Error observaciones', e);
-          return of([] as RecentObservationItem[]);
-        })
-      )
-    }).subscribe({
-      next: ({ profile, kpis, orders, activities, observations }) => {
-        this.profile = profile;
+    this.dashboardService.getProfile().subscribe({
+      next: res => this.profile = res,
+      error: err => {
+        console.error('Error fetching profile', err);
+        this.profile = { hasResponsible: true, userName: 'Usuario' };
+      }
+    });
+
+    this.dashboardService.getKpis().subscribe({
+      next: kpis => {
         this.kpis = kpis;
-        this.statusSlices = (kpis.byStatus ?? []).map(s => ({
+        this.statusSlices = (kpis?.byStatus ?? []).map(s => ({
           label: s.statusName,
           value: s.count,
           color: this.statusColors[s.statusName]
         }));
-        this.prioritySlices = (kpis.byPriority ?? []).map(p => ({
+        this.prioritySlices = (kpis?.byPriority ?? []).map(p => ({
           label: p.priority,
           value: p.count,
           color: this.priorityColors[p.priority]
         }));
-        this.activeOrders = orders;
-        this.pendingActivities = activities;
-        this.recentObservations = observations;
+      },
+      error: err => console.error('Error fetching KPIs', err)
+    });
+
+    this.dashboardService.getActiveOrders().subscribe({
+      next: orders => this.activeOrders = orders ?? [],
+      error: err => console.error('Error fetching active orders', err)
+    });
+
+    this.dashboardService.getPendingActivities().subscribe({
+      next: activities => this.pendingActivities = activities ?? [],
+      error: err => console.error('Error fetching pending activities', err)
+    });
+
+    this.dashboardService.getRecentObservations().subscribe({
+      next: observations => {
+        this.recentObservations = observations ?? [];
         this.isLoading = false;
       },
-      error: (err) => {
-        console.error('Error general cargando dashboard', err);
+      error: err => {
+        console.error('Error fetching recent observations', err);
         this.isLoading = false;
       }
     });
