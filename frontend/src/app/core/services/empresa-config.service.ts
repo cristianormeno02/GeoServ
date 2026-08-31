@@ -42,18 +42,45 @@ export class EmpresaConfigService {
   }
 
   /**
-   * Para desarrollo: Helper que extrae el subdominio de la URL actual.
-   * Si es localhost, retorna "geocobre" por defecto para probar.
+   * Extrae el tenant/subdominio de la URL actual.
+   * Maneja localhost, query param ?tenant=..., subdominios de Vercel (ej: geocobre-geoserv.vercel.app)
+   * y subdominios estándar (ej: geocobre.midominio.com).
    */
   obtenerSubdominioActual(): string {
     const hostname = window.location.hostname;
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return 'geocobre'; // Mock para desarrollo local
+
+    // 1. Parámetro explícito en la URL (?tenant=geocobre)
+    if (typeof window !== 'undefined' && window.location.search) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tenantParam = urlParams.get('tenant');
+      if (tenantParam) {
+        return tenantParam.toLowerCase().trim();
+      }
     }
+
+    // 2. Entorno local
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'geocobre';
+    }
+
+    // 3. Extracción de subdominio
     const parts = hostname.split('.');
     if (parts.length >= 3) {
-      return parts[0];
+      let sub = parts[0].toLowerCase();
+
+      // Si el subdominio en Vercel tiene el sufijo de la app (ej: geocobre-geoserv -> geocobre)
+      if (sub.endsWith('-geoserv')) {
+        sub = sub.replace(/-geoserv$/, '');
+      }
+
+      // Si es un subdominio genérico del proyecto
+      if (sub === 'geoserv' || sub === 'geoserv-web' || sub === 'geoserv-api') {
+        return 'geocobre';
+      }
+
+      return sub || 'geocobre';
     }
+
     return 'geocobre'; // Fallback
   }
 }
