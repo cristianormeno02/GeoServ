@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, computed } from '@angular/core';
+import { Component, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -82,6 +82,10 @@ export class DashboardComponent implements OnInit {
     'Urgente': '#dc2626'
   };
 
+  get showDashboard(): boolean {
+    return !!(this.profile?.hasResponsible || this.activeOrders.length > 0 || (this.kpis && ((this.kpis.totalOrdenes ?? 0) > 0 || (this.kpis.ordenesActivas ?? 0) > 0)));
+  }
+
   constructor(
     private dashboardService: GeneralDashboardService,
     public empresaConfig: EmpresaConfigService,
@@ -101,31 +105,40 @@ export class DashboardComponent implements OnInit {
     this.isLoading = true;
     this.lastUpdated = new Date();
 
-    this.dashboardService.getProfile().pipe(
-      catchError(err => {
-        console.error('Error cargando perfil', err);
-        return of({ hasResponsible: false, userName: 'Usuario' });
-      })
-    ).subscribe({
-      next: (profile) => {
-        this.profile = profile;
-        if (!profile.hasResponsible) {
-          this.isLoading = false;
-          return;
-        }
-        this.loadDashboardData();
-      }
-    });
-  }
-
-  private loadDashboardData(): void {
     forkJoin({
-      kpis: this.dashboardService.getKpis().pipe(catchError(e => { console.error('Error KPIs', e); return of({ hasResponsible: true } as GeneralKpisResponse); })),
-      orders: this.dashboardService.getActiveOrders().pipe(catchError(e => { console.error('Error órdenes activas', e); return of([] as ActiveOrderItem[]); })),
-      activities: this.dashboardService.getPendingActivities().pipe(catchError(e => { console.error('Error actividades', e); return of([] as PendingActivityItem[]); })),
-      observations: this.dashboardService.getRecentObservations().pipe(catchError(e => { console.error('Error observaciones', e); return of([] as RecentObservationItem[]); }))
+      profile: this.dashboardService.getProfile().pipe(
+        catchError(err => {
+          console.error('Error cargando perfil', err);
+          return of({ hasResponsible: false, userName: 'Usuario' } as UserProfileResponse);
+        })
+      ),
+      kpis: this.dashboardService.getKpis().pipe(
+        catchError(e => {
+          console.error('Error KPIs', e);
+          return of({ hasResponsible: true } as GeneralKpisResponse);
+        })
+      ),
+      orders: this.dashboardService.getActiveOrders().pipe(
+        catchError(e => {
+          console.error('Error órdenes activas', e);
+          return of([] as ActiveOrderItem[]);
+        })
+      ),
+      activities: this.dashboardService.getPendingActivities().pipe(
+        catchError(e => {
+          console.error('Error actividades', e);
+          return of([] as PendingActivityItem[]);
+        })
+      ),
+      observations: this.dashboardService.getRecentObservations().pipe(
+        catchError(e => {
+          console.error('Error observaciones', e);
+          return of([] as RecentObservationItem[]);
+        })
+      )
     }).subscribe({
-      next: ({ kpis, orders, activities, observations }) => {
+      next: ({ profile, kpis, orders, activities, observations }) => {
+        this.profile = profile;
         this.kpis = kpis;
         this.statusSlices = (kpis.byStatus ?? []).map(s => ({
           label: s.statusName,
@@ -142,7 +155,8 @@ export class DashboardComponent implements OnInit {
         this.recentObservations = observations;
         this.isLoading = false;
       },
-      error: () => {
+      error: (err) => {
+        console.error('Error general cargando dashboard', err);
         this.isLoading = false;
       }
     });

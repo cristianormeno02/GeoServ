@@ -1,10 +1,30 @@
-﻿.dashboard-container {
+.dashboard-container {
   padding: 24px 32px;
   background-color: #f8fafc;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   gap: 24px;
+}
+
+/* ── Spinner de Carga ───────────────────────────────────── */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  gap: 16px;
+  color: #64748b;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.loading-spinner {
+  font-size: 36px;
+  width: 36px;
+  height: 36px;
+  color: #0284c7;
 }
 
 /* ── Estado vacío amistoso con Branding de Empresa ──────── */

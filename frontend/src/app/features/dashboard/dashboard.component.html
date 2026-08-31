@@ -1,7 +1,13 @@
-﻿<div class="dashboard-container">
+<div class="dashboard-container">
+
+  <!-- Spinner de carga inicial -->
+  <div *ngIf="isLoading && !profile && !kpis" class="loading-state">
+    <mat-icon class="spin-icon loading-spinner">refresh</mat-icon>
+    <span>Cargando datos del dashboard...</span>
+  </div>
 
   <!-- Estado vacío amistoso con Branding de la Empresa -->
-  <ng-container *ngIf="profile && !profile.hasResponsible">
+  <ng-container *ngIf="!isLoading && !showDashboard">
     <div class="empty-state-fullpage">
       <div class="empty-state-card">
         
@@ -31,7 +37,7 @@
   </ng-container>
 
   <!-- Dashboard completo con Branding y Saludo -->
-  <ng-container *ngIf="profile?.hasResponsible">
+  <ng-container *ngIf="showDashboard">
 
     <!-- Topbar de bienvenida con Empresa y Usuario -->
     <div class="dashboard-topbar">
