@@ -1,3 +1,4 @@
+﻿using GeoServ.Api.Domain.Entities;
 using GeoServ.Api.Domain.Enums;
 using GeoServ.Api.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -15,11 +16,12 @@ public static class GeneralDashboardEndpoints
         // Helper para extraer UserId de cualquier formato de claim
         static Guid? GetUserId(ClaimsPrincipal user)
         {
-            var claim = user.FindFirst(ClaimTypes.NameIdentifier)
-                ?? user.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")
-                ?? user.FindFirst("sub")
-                ?? user.FindFirst("id")
-                ?? user.FindFirst("nameid");
+            var claim = user.Claims.FirstOrDefault(c =>
+                c.Type == ClaimTypes.NameIdentifier ||
+                c.Type.Equals("sub", StringComparison.OrdinalIgnoreCase) ||
+                c.Type.Equals("id", StringComparison.OrdinalIgnoreCase) ||
+                c.Type.Equals("nameid", StringComparison.OrdinalIgnoreCase) ||
+                c.Type.EndsWith("nameidentifier", StringComparison.OrdinalIgnoreCase));
 
             if (claim != null && Guid.TryParse(claim.Value, out var guid))
             {
@@ -31,49 +33,56 @@ public static class GeneralDashboardEndpoints
         // Helper para extraer Nombre de usuario
         static string GetUserName(ClaimsPrincipal user)
         {
-            return user.FindFirst(ClaimTypes.Name)?.Value
-                ?? user.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name")?.Value
-                ?? user.FindFirst("name")?.Value
-                ?? user.FindFirst(ClaimTypes.Email)?.Value
-                ?? user.FindFirst("email")?.Value
-                ?? string.Empty;
+            return user.Claims.FirstOrDefault(c =>
+                c.Type == ClaimTypes.Name ||
+                c.Type.Equals("name", StringComparison.OrdinalIgnoreCase) ||
+                c.Type.EndsWith("claims/name", StringComparison.OrdinalIgnoreCase))?.Value
+                ?? user.Claims.FirstOrDefault(c =>
+                c.Type == ClaimTypes.Email ||
+                c.Type.Equals("email", StringComparison.OrdinalIgnoreCase) ||
+                c.Type.EndsWith("claims/emailaddress", StringComparison.OrdinalIgnoreCase))?.Value
+                ?? "Usuario";
         }
 
-        // Helper: resuelve el ResponsibleId del usuario autenticado
-        static async Task<Guid?> ResolveResponsibleId(GeoServDbContext context, ClaimsPrincipal user)
+        // Helper: resuelve el Responsible del usuario autenticado con fallback
+        static async Task<Responsible?> ResolveResponsible(GeoServDbContext context, ClaimsPrincipal user)
         {
             var userId = GetUserId(user);
-            if (!userId.HasValue) return null;
+            if (userId.HasValue)
+            {
+                var resp = await context.Responsibles
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(r => r.UserId == userId.Value);
 
-            var responsible = await context.Responsibles
-                .AsNoTracking()
-                .FirstOrDefaultAsync(r => r.UserId == userId.Value);
+                if (resp != null) return resp;
+            }
 
-            return responsible?.Id;
+            // Fallback por Email
+            var email = user.Claims.FirstOrDefault(c =>
+                c.Type == ClaimTypes.Email ||
+                c.Type.Equals("email", StringComparison.OrdinalIgnoreCase) ||
+                c.Type.EndsWith("claims/emailaddress", StringComparison.OrdinalIgnoreCase))?.Value;
+
+            if (!string.IsNullOrEmpty(email))
+            {
+                var userObj = await context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == email);
+                if (userObj != null)
+                {
+                    var resp = await context.Responsibles
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(r => r.UserId == userObj.Id);
+                    if (resp != null) return resp;
+                }
+            }
+
+            return null;
         }
 
         // 1. Perfil / bienvenida del usuario
         group.MapGet("/profile", async (ClaimsPrincipal userPrincipal, GeoServDbContext context) =>
         {
-            var userId = GetUserId(userPrincipal);
             var userName = GetUserName(userPrincipal);
-
-            if (!userId.HasValue)
-            {
-                return Results.Ok(new
-                {
-                    hasResponsible = false,
-                    userName,
-                    responsibleName = (string?)null,
-                    position = (string?)null,
-                    title = (string?)null,
-                    specialties = (string?)null
-                });
-            }
-
-            var responsible = await context.Responsibles
-                .AsNoTracking()
-                .FirstOrDefaultAsync(r => r.UserId == userId.Value);
+            var responsible = await ResolveResponsible(context, userPrincipal);
 
             if (responsible == null)
             {
@@ -93,20 +102,45 @@ public static class GeneralDashboardEndpoints
                 hasResponsible = true,
                 userName,
                 responsibleName = responsible.Name,
-                responsible.Position,
-                responsible.Title,
-                responsible.Specialties
+                position = responsible.Position,
+                title = responsible.Title,
+                specialties = responsible.Specialties
             });
         });
 
         // 2. KPIs personales
         group.MapGet("/kpis", async (ClaimsPrincipal userPrincipal, GeoServDbContext context) =>
         {
-            var responsibleId = await ResolveResponsibleId(context, userPrincipal);
+            var responsible = await ResolveResponsible(context, userPrincipal);
 
-            if (!responsibleId.HasValue)
+            if (responsible == null)
             {
                 return Results.Ok(new { hasResponsible = false });
+            }
+
+            var responsibleId = responsible.Id;
+
+            // Obtener IDs de órdenes donde es responsable
+            var myOrderIds = await context.ServiceOrderResponsibles
+                .AsNoTracking()
+                .Where(sor => sor.ResponsibleId == responsibleId)
+                .Select(sor => sor.ServiceOrderId)
+                .ToListAsync();
+
+            if (myOrderIds.Count == 0)
+            {
+                return Results.Ok(new
+                {
+                    hasResponsible = true,
+                    ordenesActivas = 0,
+                    ordenesEntregadas = 0,
+                    ordenesCobradas = 0,
+                    ordenesCanceladas = 0,
+                    totalOrdenes = 0,
+                    progresoPromedio = 0.0,
+                    byStatus = Array.Empty<object>(),
+                    byPriority = Array.Empty<object>()
+                });
             }
 
             var activeStatusNames = new[] { "Alta", "Presupuestada", "Aprobada", "Iniciada" };
@@ -116,7 +150,7 @@ public static class GeneralDashboardEndpoints
 
             var myOrders = await context.ServiceOrders
                 .AsNoTracking()
-                .Where(o => o.Responsibles.Any(r => r.ResponsibleId == responsibleId.Value))
+                .Where(o => myOrderIds.Contains(o.Id))
                 .Include(o => o.Status)
                 .Include(o => o.Activities)
                 .ToListAsync();
@@ -129,7 +163,7 @@ public static class GeneralDashboardEndpoints
             var totalOrdenes = myOrders.Count(o => o.Status?.Name != canceledStatusName);
 
             // Progreso promedio de las órdenes activas
-            var allActiveActivities = activeOrders.SelectMany(o => o.Activities).ToList();
+            var allActiveActivities = activeOrders.SelectMany(o => o.Activities ?? new List<ServiceOrderActivity>()).ToList();
             var progresoPromedio = allActiveActivities.Count > 0
                 ? Math.Round(allActiveActivities.Average(a => (double)a.ProgressPercentage), 1)
                 : 0.0;
@@ -164,16 +198,25 @@ public static class GeneralDashboardEndpoints
         // 3. Órdenes activas del responsable
         group.MapGet("/active-orders", async (ClaimsPrincipal userPrincipal, GeoServDbContext context) =>
         {
-            var responsibleId = await ResolveResponsibleId(context, userPrincipal);
-            if (!responsibleId.HasValue)
+            var responsible = await ResolveResponsible(context, userPrincipal);
+            if (responsible == null)
                 return Results.Ok(Array.Empty<object>());
 
             var activeStatusNames = new[] { "Alta", "Presupuestada", "Aprobada", "Iniciada", "Entregada" };
             var today = DateTime.UtcNow.Date;
 
+            var myOrderIds = await context.ServiceOrderResponsibles
+                .AsNoTracking()
+                .Where(sor => sor.ResponsibleId == responsible.Id)
+                .Select(sor => sor.ServiceOrderId)
+                .ToListAsync();
+
+            if (myOrderIds.Count == 0)
+                return Results.Ok(Array.Empty<object>());
+
             var orders = await context.ServiceOrders
                 .AsNoTracking()
-                .Where(o => o.Responsibles.Any(r => r.ResponsibleId == responsibleId.Value)
+                .Where(o => myOrderIds.Contains(o.Id)
                          && o.Status != null
                          && activeStatusNames.Contains(o.Status.Name))
                 .Include(o => o.Status)
@@ -184,7 +227,7 @@ public static class GeneralDashboardEndpoints
 
             var result = orders.Select(o =>
             {
-                var activities = o.Activities?.ToList() ?? new List<Domain.Entities.ServiceOrderActivity>();
+                var activities = o.Activities?.ToList() ?? new List<ServiceOrderActivity>();
                 var progressPercentage = activities.Count > 0
                     ? (int)Math.Round(activities.Average(a => (double)a.ProgressPercentage))
                     : 0;
@@ -221,15 +264,15 @@ public static class GeneralDashboardEndpoints
         // 4. Actividades pendientes del responsable
         group.MapGet("/pending-activities", async (ClaimsPrincipal userPrincipal, GeoServDbContext context) =>
         {
-            var responsibleId = await ResolveResponsibleId(context, userPrincipal);
-            if (!responsibleId.HasValue)
+            var responsible = await ResolveResponsible(context, userPrincipal);
+            if (responsible == null)
                 return Results.Ok(Array.Empty<object>());
 
             var activeStatusNames = new[] { "Alta", "Presupuestada", "Aprobada", "Iniciada", "Entregada" };
 
             var myActiveOrderIds = await context.ServiceOrders
                 .AsNoTracking()
-                .Where(o => o.Responsibles.Any(r => r.ResponsibleId == responsibleId.Value)
+                .Where(o => o.Responsibles.Any(r => r.ResponsibleId == responsible.Id)
                          && o.Status != null
                          && activeStatusNames.Contains(o.Status.Name))
                 .Select(o => new { o.Id, o.OrderNumber })
@@ -263,22 +306,28 @@ public static class GeneralDashboardEndpoints
         group.MapGet("/recent-observations", async (ClaimsPrincipal userPrincipal, GeoServDbContext context) =>
         {
             var userId = GetUserId(userPrincipal);
-            var responsibleId = await ResolveResponsibleId(context, userPrincipal);
-            if (!responsibleId.HasValue)
+            var responsible = await ResolveResponsible(context, userPrincipal);
+            if (responsible == null)
                 return Results.Ok(Array.Empty<object>());
 
             var sevenDaysAgo = DateTime.UtcNow.AddDays(-7);
 
-            var myOrderIds = await context.ServiceOrders
+            var myOrderIds = await context.ServiceOrderResponsibles
                 .AsNoTracking()
-                .Where(o => o.Responsibles.Any(r => r.ResponsibleId == responsibleId.Value))
-                .Select(o => new { o.Id, o.OrderNumber })
+                .Where(sor => sor.ResponsibleId == responsible.Id)
+                .Select(sor => sor.ServiceOrderId)
                 .ToListAsync();
 
             if (myOrderIds.Count == 0)
                 return Results.Ok(Array.Empty<object>());
 
-            var orderIdMap = myOrderIds.ToDictionary(o => o.Id, o => o.OrderNumber);
+            var myOrdersInfo = await context.ServiceOrders
+                .AsNoTracking()
+                .Where(o => myOrderIds.Contains(o.Id))
+                .Select(o => new { o.Id, o.OrderNumber })
+                .ToListAsync();
+
+            var orderIdMap = myOrdersInfo.ToDictionary(o => o.Id, o => o.OrderNumber);
             var orderIds = orderIdMap.Keys.ToList();
 
             var observations = await context.ServiceOrderObservations

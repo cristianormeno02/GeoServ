@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
@@ -30,7 +29,6 @@ import {
     MatCardModule,
     MatButtonModule,
     MatIconModule,
-    MatProgressBarModule,
     MatChipsModule,
     MatTooltipModule,
     MatDividerModule,
@@ -53,10 +51,18 @@ export class DashboardComponent implements OnInit {
   prioritySlices: DonutSlice[] = [];
 
   safeLogoSvg = computed<SafeResourceUrl | null>(() => {
-    const svg = this.empresaConfig.empresaActual()?.logoSvg;
-    if (!svg) return null;
-    const base64 = btoa(unescape(encodeURIComponent(svg)));
-    return this.sanitizer.bypassSecurityTrustResourceUrl(`data:image/svg+xml;base64,${base64}`);
+    try {
+      const svg = this.empresaConfig.empresaActual()?.logoSvg;
+      if (!svg) return null;
+      if (svg.startsWith('data:') || svg.startsWith('http') || svg.startsWith('/')) {
+        return this.sanitizer.bypassSecurityTrustResourceUrl(svg);
+      }
+      const base64 = btoa(unescape(encodeURIComponent(svg)));
+      return this.sanitizer.bypassSecurityTrustResourceUrl(`data:image/svg+xml;base64,${base64}`);
+    } catch (e) {
+      console.warn('Error sanitizing logo SVG', e);
+      return null;
+    }
   });
 
   private readonly statusColors: Record<string, string> = {
@@ -73,6 +79,7 @@ export class DashboardComponent implements OnInit {
     'Alta': '#ef4444',
     'Media': '#f59e0b',
     'Baja': '#22c55e',
+    'Urgente': '#dc2626'
   };
 
   constructor(
@@ -161,19 +168,15 @@ export class DashboardComponent implements OnInit {
     return this.priorityColors[priority] ?? '#94a3b8';
   }
 
-  getProgressColor(pct: number): string {
-    if (pct >= 80) return 'accent';
-    if (pct >= 40) return 'primary';
-    return 'warn';
-  }
-
   formatDate(dateStr?: string): string {
     if (!dateStr) return '—';
     return new Date(dateStr).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   }
 
   formatRelativeDate(dateStr: string): string {
+    if (!dateStr) return '—';
     const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+    if (isNaN(diff)) return '—';
     if (diff === 0) return 'hoy';
     if (diff === 1) return 'ayer';
     return `hace ${diff} días`;

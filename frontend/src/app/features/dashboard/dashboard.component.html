@@ -104,7 +104,7 @@
         </div>
         <div class="kpi-body">
           <span class="kpi-label">Progreso Promedio</span>
-          <span class="kpi-value">{{ kpis?.progresoPromedio ?? 0 | number:'1.0-1' }}%</span>
+          <span class="kpi-value">{{ (kpis?.progresoPromedio || 0) | number:'1.0-1' }}%</span>
         </div>
         <div class="kpi-badge amber">en mis órdenes activas</div>
       </div>
@@ -163,12 +163,12 @@
             </div>
             <div class="order-client">{{ order.clientName }} · {{ order.serviceTypeName }}</div>
             <div class="order-progress-row">
-              <mat-progress-bar
-                class="order-progress"
-                [mode]="'determinate'"
-                [value]="order.progressPercentage"
-                [color]="getProgressColor(order.progressPercentage)"
-              ></mat-progress-bar>
+              <div class="custom-progress-track">
+                <div class="custom-progress-bar"
+                     [style.width.%]="order.progressPercentage"
+                     [style.background]="order.progressPercentage >= 80 ? '#10b981' : order.progressPercentage >= 40 ? '#0284c7' : '#f59e0b'">
+                </div>
+              </div>
               <span class="progress-label">{{ order.progressPercentage }}%</span>
             </div>
           </div>
@@ -209,7 +209,9 @@
             <div class="activity-body">
               <span class="activity-order">{{ act.orderNumber }}</span>
               <span class="activity-detail">{{ act.shortDetail }}</span>
-              <mat-progress-bar [mode]="'determinate'" [value]="act.progressPercentage" class="act-progress"></mat-progress-bar>
+              <div class="custom-progress-track small">
+                <div class="custom-progress-bar" [style.width.%]="act.progressPercentage" style="background:#0284c7;"></div>
+              </div>
             </div>
             <span class="activity-pct">{{ act.progressPercentage }}%</span>
           </div>
