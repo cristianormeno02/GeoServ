@@ -57,15 +57,32 @@ export class FixedCostPaymentDialogComponent implements OnInit {
         dueDate: data.payment.dueDate ? new Date(data.payment.dueDate) : null,
         paymentDate: data.payment.paymentDate ? new Date(data.payment.paymentDate) : null
       });
+      // Trigger manually to set validators correctly based on initial value
+      this.updatePaymentValidators(data.payment.isPaid);
     }
 
     this.form.get('isPaid')?.valueChanges.subscribe(paid => {
-      if (paid && !this.form.get('paymentDate')?.value) {
-        this.form.patchValue({ paymentDate: new Date() });
-      }
+      this.updatePaymentValidators(paid);
     });
   }
 
+  private updatePaymentValidators(paid: boolean) {
+    const pDate = this.form.get('paymentDate');
+    const pMethod = this.form.get('paymentMethodId');
+    if (paid) {
+      if (!pDate?.value) {
+        pDate?.setValue(new Date());
+      }
+      pDate?.setValidators([Validators.required]);
+      pMethod?.setValidators([Validators.required]);
+    } else {
+      pDate?.clearValidators();
+      pMethod?.clearValidators();
+    }
+    pDate?.updateValueAndValidity();
+    pMethod?.updateValueAndValidity();
+  }
+  
   ngOnInit(): void {
     this.http.get<any[]>(`${environment.apiUrl}/payment-methods`).subscribe(res => {
       this.paymentMethods = res;
