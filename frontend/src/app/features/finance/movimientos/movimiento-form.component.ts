@@ -198,26 +198,44 @@ export class MovimientoFormComponent implements OnInit {
     if (this.movementForm.invalid) return;
     this.isSubmitting = true;
     const val = this.movementForm.value;
+    
+    let amountNumber = val.amount;
+    if (typeof amountNumber === 'string') {
+      amountNumber = parseFloat(amountNumber.replace(/\./g, '').replace(',', '.'));
+    }
+
     const payload: Movement = {
       isIncome: val.isIncome,
       categoryId: val.categoryId,
-      amount: parseFloat(val.amount),
-      date: val.date.toISOString(),
+      amount: Number(amountNumber) || 0,
+      date: val.date instanceof Date ? val.date.toISOString() : new Date(val.date).toISOString(),
       description: val.description,
       financialAccountId: val.financialAccountId,
       sourceType: val.sourceType,
-      sourceId: val.sourceId
+      sourceId: val.sourceId || null
     };
 
     if (this.isEditMode) {
       this.movementService.updateMovement(this.data.movement!.id!, payload).subscribe({
-        next: () => { this.snackBar.open('Movimiento actualizado', 'Cerrar'); this.dialogRef.close(true); },
-        error: (err) => { this.isSubmitting = false; this.snackBar.open(err.error?.message || 'Error', 'Cerrar'); }
+        next: () => { 
+          this.snackBar.open('Movimiento actualizado con éxito', 'Cerrar', { duration: 3000 }); 
+          this.dialogRef.close(true); 
+        },
+        error: (err) => { 
+          this.isSubmitting = false; 
+          this.snackBar.open(err.error?.message || 'Error al actualizar movimiento', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] }); 
+        }
       });
     } else {
       this.movementService.createMovement(payload).subscribe({
-        next: () => { this.snackBar.open('Movimiento creado', 'Cerrar'); this.dialogRef.close(true); },
-        error: (err) => { this.isSubmitting = false; this.snackBar.open(err.error?.message || 'Error', 'Cerrar'); }
+        next: () => { 
+          this.snackBar.open('Movimiento creado con éxito', 'Cerrar', { duration: 3000 }); 
+          this.dialogRef.close(true); 
+        },
+        error: (err) => { 
+          this.isSubmitting = false; 
+          this.snackBar.open(err.error?.message || 'Error al crear movimiento', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] }); 
+        }
       });
     }
   }

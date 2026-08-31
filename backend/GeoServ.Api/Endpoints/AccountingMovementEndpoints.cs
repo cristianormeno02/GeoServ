@@ -1,4 +1,4 @@
-﻿using GeoServ.Api.Domain.Entities;
+using GeoServ.Api.Domain.Entities;
 using GeoServ.Api.Domain.Enums;
 using GeoServ.Api.Infrastructure.Data;
 using Microsoft.AspNetCore.Http;
@@ -65,9 +65,17 @@ public static class AccountingMovementEndpoints
                     m.Date,
                     m.CreatedAt,
                     m.Description,
+                    m.FinancialAccountId,
                     FinancialAccountName = m.FinancialAccount.Name,
+                    m.PaymentMethodId,
                     PaymentMethodName = m.PaymentMethod != null ? m.PaymentMethod.Name : null,
+                    m.ServiceOrderId,
                     ServiceOrderNumber = m.ServiceOrder != null ? m.ServiceOrder.OrderNumber : null,
+                    m.FixedCostId,
+                    m.DirectCostId,
+                    m.AssetId,
+                    m.CheckId,
+                    m.ResponsibleId,
                     m.RegisteredByUserId,
                     SourceType = m.SourceType.ToString(),
                     m.SourceId
@@ -89,13 +97,16 @@ public static class AccountingMovementEndpoints
         {
             var movement = await context.AccountingMovements
                 .Include(m => m.Category)
+                .Include(m => m.FinancialAccount)
+                .Include(m => m.PaymentMethod)
+                .Include(m => m.ServiceOrder)
                 .FirstOrDefaultAsync(m => m.Id == id);
             return movement is not null ? Results.Ok(movement) : Results.NotFound();
         })
         .WithName("GetMovementById")
         .WithOpenApi();
 
-                group.MapPost("/", async ([FromBody] CreateMovementRequest request, HttpContext httpContext, GeoServDbContext context) =>
+        group.MapPost("/", async ([FromBody] CreateMovementRequest request, HttpContext httpContext, GeoServDbContext context) =>
         {
             try 
             {
@@ -105,6 +116,9 @@ public static class AccountingMovementEndpoints
                     userId = await context.Users.Select(u => u.Id).FirstOrDefaultAsync();
                 }
 
+                var sourceId = request.SourceId;
+                var sourceType = request.SourceType;
+
                 var movement = new AccountingMovement
                 {
                     Id = Guid.NewGuid(),
@@ -112,26 +126,9 @@ public static class AccountingMovementEndpoints
                     CategoryId = request.CategoryId,
                     Amount = request.Amount,
                     Date = request.Date,
-                    Description = request.Description,
-                    FinancialAccountId = request.FinancialAccountId,
-                    PaymentMethodId = request.PaymentMethodId,
-                    SourceType = request.SourceType,
-                    SourceId = request.SourceId,
-                    CheckId = request.CheckId,
-                    ResponsibleId = request.ResponsibleId,
-                    UserId = userId
-                };
-                    IsIncome = request.IsIncome,
-                    CategoryId = request.CategoryId,
-                    Amount = request.Amount,
-                    Date = request.Date,
                     Description = request.Description ?? string.Empty,
                     FinancialAccountId = request.FinancialAccountId,
                     PaymentMethodId = request.PaymentMethodId,
-                    ServiceOrderId = request.ServiceOrderId,
-                    FixedCostId = request.FixedCostId,
-                    DirectCostId = request.DirectCostId,
-                    AssetId = request.AssetId,
                     CheckId = request.CheckId,
                     ResponsibleId = request.ResponsibleId,
                     RegisteredByUserId = userId,
