@@ -1,4 +1,4 @@
-﻿import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -125,7 +125,8 @@ export class MovimientoFormComponent implements OnInit {
     private accountService: FinancialAccountService,
     private categoryService: MovementCategoryService,
     private snackBar: MatSnackBar,
-    private http: HttpClient
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef
   ) {
     this.isEditMode = !!data?.movement;
     this.movementForm = this.fb.group({
