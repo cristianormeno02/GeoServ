@@ -16,6 +16,7 @@ import { Movement, MovementService, MovementSourceType } from '../services/movem
 import { FinancialAccount, FinancialAccountService } from '../services/financial-account.service';
 import { MovementCategoryService } from '../services/movement-category.service';
 import { HttpClient } from '@angular/common/http';
+import { ChangeDetectorRef } from '@angular/core';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -169,8 +170,8 @@ export class MovimientoFormComponent implements OnInit {
   get sourceTypeCtrl() { return this.movementForm.get('sourceType')!; }
   get filteredCategories() { return this.allCategories.filter(c => c.isIncome === this.isIncomeCtrl.value && c.isActive); }
 
-  loadAccounts() { this.accountService.getAccounts().subscribe(data => this.accounts = data); }
-  loadCategories() { this.categoryService.getCategories().subscribe(data => this.allCategories = data); }
+  loadAccounts() { this.accountService.getAccounts().subscribe(data => { this.accounts = data; this.cdr.detectChanges(); }); }
+  loadCategories() { this.categoryService.getCategories().subscribe(data => { this.allCategories = data; this.cdr.detectChanges(); }); }
 
   loadSourceOptions(type: string) {
     let endpoint = '';
@@ -220,6 +221,8 @@ export class MovimientoFormComponent implements OnInit {
     }
   }
 }
+
+
 
 
 
