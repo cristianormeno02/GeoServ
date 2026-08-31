@@ -5,22 +5,27 @@
     <div class="empty-state-fullpage">
       <div class="empty-state-card">
         
-        <!-- Logo y Nombre de la Empresa -->
-        <div class="empty-company-branding">
-          <img *ngIf="safeLogoSvg()" [src]="safeLogoSvg()" class="empty-logo-img" alt="Logo Empresa" />
-          <img *ngIf="!safeLogoSvg()" src="assets/geoserv-logo.svg" alt="GeoServ Logo" class="empty-logo-img" />
-          <span class="empty-company-name">{{ empresaConfig.empresaActual()?.nombre || 'GeoServ' }}</span>
+        <!-- Nombre de la Empresa y Logo Centrado Grande -->
+        <div class="empty-company-section">
+          <h1 class="empty-company-title">{{ empresaConfig.empresaActual()?.nombre || 'GeoServ' }}</h1>
+          <div class="empty-logo-wrapper">
+            <img *ngIf="safeLogoSvg()" [src]="safeLogoSvg()" class="empty-logo-large" alt="Logo de la Empresa" />
+            <img *ngIf="!safeLogoSvg()" src="assets/geoserv-logo.svg" alt="GeoServ Logo" class="empty-logo-large" />
+          </div>
         </div>
 
-        <div class="empty-icon-wrap">
-          <mat-icon class="empty-icon">badge</mat-icon>
+        <!-- Mensaje descriptivo centrado debajo del logo -->
+        <div class="empty-message-section">
+          <div class="empty-icon-wrap">
+            <mat-icon class="empty-icon">badge</mat-icon>
+          </div>
+          <h2 class="empty-title">Sin perfil de responsable vinculado</h2>
+          <p class="empty-desc">
+            Tu usuario no se encuentra asignado a un responsable en <strong>{{ empresaConfig.empresaActual()?.nombre || 'la empresa' }}</strong>.
+            Contactá al administrador del sistema para que configure tu perfil y puedas visualizar tus órdenes asignadas.
+          </p>
         </div>
 
-        <h2 class="empty-title">Sin perfil de responsable vinculado</h2>
-        <p class="empty-desc">
-          Tu usuario no se encuentra asignado a un responsable en <strong>{{ empresaConfig.empresaActual()?.nombre || 'la empresa' }}</strong>.
-          Contactá al administrador del sistema para que configure tu perfil y puedas visualizar tus órdenes asignadas.
-        </p>
       </div>
     </div>
   </ng-container>
