@@ -17,6 +17,8 @@ import { NgxMaskDirective } from 'ngx-mask';
 
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
+import { ChangeDetectorRef } from '@angular/core';
+
 @Component({
   selector: 'app-fixed-cost-payment-dialog',
   standalone: true,
@@ -34,6 +36,7 @@ export class FixedCostPaymentDialogComponent implements OnInit {
     private fixedCostService: FixedCostService,
     private http: HttpClient,
     private snackBar: MatSnackBar,
+    private cdr: ChangeDetectorRef,
     public dialogRef: MatDialogRef<FixedCostPaymentDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { itemId: string, payment?: any }
   ) {
@@ -64,7 +67,10 @@ export class FixedCostPaymentDialogComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.http.get<any[]>(`${environment.apiUrl}/payment-methods`).subscribe(res => this.paymentMethods = res);
+    this.http.get<any[]>(`${environment.apiUrl}/payment-methods`).subscribe(res => {
+      this.paymentMethods = res;
+      this.cdr.detectChanges();
+    });
   }
 
   save() {

@@ -1,4 +1,4 @@
-using GeoServ.Api.Domain.Entities;
+﻿using GeoServ.Api.Domain.Entities;
 using GeoServ.Api.Domain.Enums;
 using GeoServ.Api.Infrastructure.Data;
 using Microsoft.AspNetCore.Http;
@@ -95,27 +95,32 @@ public static class AccountingMovementEndpoints
         .WithName("GetMovementById")
         .WithOpenApi();
 
-        group.MapPost("/", async ([FromBody] CreateMovementRequest request, HttpContext httpContext, GeoServDbContext context) =>
+                group.MapPost("/", async ([FromBody] CreateMovementRequest request, HttpContext httpContext, GeoServDbContext context) =>
         {
             try 
             {
                 var userIdStr = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (!Guid.TryParse(userIdStr, out var userId)) 
                 {
-                    // Fallback para desarrollo si no hay claims (solo MVP)
                     userId = await context.Users.Select(u => u.Id).FirstOrDefaultAsync();
                 }
-
-                var sourceId = request.ServiceOrderId?.ToString() ?? request.DirectCostId?.ToString() ?? request.FixedCostId?.ToString() ?? request.AssetId?.ToString();
-                var sourceType = MovementSourceType.Manual;
-                if (request.ServiceOrderId.HasValue) sourceType = MovementSourceType.ServiceOrderIncome;
-                else if (request.DirectCostId.HasValue) sourceType = MovementSourceType.DirectCost;
-                else if (request.FixedCostId.HasValue) sourceType = MovementSourceType.FixedCostPayment;
-                else if (request.AssetId.HasValue) sourceType = MovementSourceType.AssetPurchase;
 
                 var movement = new AccountingMovement
                 {
                     Id = Guid.NewGuid(),
+                    IsIncome = request.IsIncome,
+                    CategoryId = request.CategoryId,
+                    Amount = request.Amount,
+                    Date = request.Date,
+                    Description = request.Description,
+                    FinancialAccountId = request.FinancialAccountId,
+                    PaymentMethodId = request.PaymentMethodId,
+                    SourceType = request.SourceType,
+                    SourceId = request.SourceId,
+                    CheckId = request.CheckId,
+                    ResponsibleId = request.ResponsibleId,
+                    UserId = userId
+                };
                     IsIncome = request.IsIncome,
                     CategoryId = request.CategoryId,
                     Amount = request.Amount,
@@ -210,10 +215,8 @@ public record CreateMovementRequest(
     string? Description,
     Guid FinancialAccountId,
     Guid? PaymentMethodId,
-    Guid? ServiceOrderId,
-    Guid? FixedCostId,
-    Guid? DirectCostId,
-    Guid? AssetId,
+    GeoServ.Api.Domain.Enums.MovementSourceType SourceType,
+    string? SourceId,
     Guid? CheckId,
     Guid? ResponsibleId
 );
@@ -233,3 +236,4 @@ public record UpdateMovementRequest(
     Guid? CheckId,
     Guid? ResponsibleId
 );
+
