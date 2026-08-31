@@ -9,6 +9,8 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       { path: 'dashboard', loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent) },
+      { path: 'dashboard/operativo', loadComponent: () => import('./features/dashboard-operativo/operational-dashboard.component').then(m => m.OperationalDashboardComponent) },
+      { path: 'dashboard/financiero', loadComponent: () => import('./features/dashboard-financiero/financial-dashboard.component').then(m => m.FinancialDashboardComponent) },
       { path: 'clientes', loadComponent: () => import('./features/clients/components/client-list/client-list.component').then(m => m.ClientListComponent) },
       { path: 'tipos-compania', loadComponent: () => import('./features/company-types/components/company-type-list/company-type-list.component').then(m => m.CompanyTypeListComponent) },
       { path: 'tipos-servicio', loadComponent: () => import('./features/service-types/components/service-type-list/service-type-list.component').then(m => m.ServiceTypeListComponent) },

@@ -1,0 +1,370 @@
+﻿<div class="dashboard-container">
+  <!-- Topbar con selector de período -->
+  <div class="dashboard-topbar">
+    <div class="topbar-title-section">
+      <h1 class="page-title">Dashboard Financiero</h1>
+      <p class="page-subtitle">Salud financiera, sustentabilidad mensual, márgenes de rentabilidad y compromisos de egreso</p>
+    </div>
+
+    <div class="topbar-actions">
+      <div class="period-selector-box">
+        <button
+          mat-stroked-button
+          class="period-btn"
+          [class.active]="selectedPeriod === 3"
+          (click)="onPeriodChange(3)"
+        >3 Meses</button>
+        <button
+          mat-stroked-button
+          class="period-btn"
+          [class.active]="selectedPeriod === 6"
+          (click)="onPeriodChange(6)"
+        >6 Meses</button>
+        <button
+          mat-stroked-button
+          class="period-btn"
+          [class.active]="selectedPeriod === 12"
+          (click)="onPeriodChange(12)"
+        >12 Meses</button>
+      </div>
+
+      <span class="last-sync-text">
+        <mat-icon class="sync-icon">schedule</mat-icon>
+        {{ lastUpdated | date:'HH:mm:ss' }}
+      </span>
+
+      <button mat-flat-button color="primary" class="refresh-btn" (click)="loadAllData()" [disabled]="isLoading">
+        <mat-icon [class.spin-icon]="isLoading">refresh</mat-icon>
+        <span>Actualizar</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Row 1: KPI Cards Financieras -->
+  <div class="kpi-grid">
+    <app-sparkline-card
+      title="Saldo en Cuentas"
+      subtitle="Total disponible consolidado"
+      [value]="formatCurrency(kpis?.totalBalanceAllAccounts ?? 0)"
+      [trend]="kpis?.accounts?.[0]?.trend ?? []"
+      icon="account_balance"
+      iconColor="#0284c7"
+      iconBgColor="#e0f2fe"
+      sparkColor="#0284c7"
+      [badgeText]="(kpis?.accounts?.length ?? 0) + ' cuentas'"
+      semanticState="neutral"
+    ></app-sparkline-card>
+
+    <app-sparkline-card
+      title="Ingresos del Mes"
+      subtitle="Cobros percibidos en el mes"
+      [value]="formatCurrency(kpis?.monthlyIncome?.value ?? 0)"
+      [trend]="kpis?.monthlyIncome?.trend ?? []"
+      icon="trending_up"
+      iconColor="#10b981"
+      iconBgColor="#dcfce7"
+      sparkColor="#10b981"
+      badgeText="Mes corriente"
+      semanticState="positive"
+    ></app-sparkline-card>
+
+    <app-sparkline-card
+      title="Resultado del Mes"
+      subtitle="Ingresos vs Egresos Totales"
+      [value]="formatCurrency(kpis?.monthlyNetResult?.value ?? 0)"
+      icon="account_balance_wallet"
+      [iconColor]="(kpis?.monthlyNetResult?.value ?? 0) >= 0 ? '#10b981' : '#ef4444'"
+      [iconBgColor]="(kpis?.monthlyNetResult?.value ?? 0) >= 0 ? '#dcfce7' : '#fee2e2'"
+      [badgeText]="(kpis?.monthlyNetResult?.variationPercentage ?? 0) + '% vs mes ant.'"
+      [semanticState]="(kpis?.monthlyNetResult?.value ?? 0) >= 0 ? 'positive' : 'negative'"
+    ></app-sparkline-card>
+
+    <app-sparkline-card
+      title="Saldo Acumulado Cobertura"
+      subtitle="Arrastre histórico de déficit/superávit"
+      [value]="formatCurrency(kpis?.accumulatedCoverage?.value ?? 0)"
+      icon="donut_large"
+      [iconColor]="(kpis?.accumulatedCoverage?.semanticStatus === 'Positive') ? '#10b981' : '#ef4444'"
+      [iconBgColor]="(kpis?.accumulatedCoverage?.semanticStatus === 'Positive') ? '#dcfce7' : '#fee2e2'"
+      [badgeText]="(kpis?.accumulatedCoverage?.semanticStatus === 'Positive') ? 'Cubierto' : 'Déficit Pendiente'"
+      [semanticState]="(kpis?.accumulatedCoverage?.semanticStatus === 'Positive') ? 'positive' : 'negative'"
+    ></app-sparkline-card>
+  </div>
+
+  <!-- Row 2: Gauges de Cobertura y Margen -->
+  <div class="gauges-grid">
+    <app-gauge-chart
+      title="Cobertura del Mes Actual"
+      [value]="coverageGauge?.coveragePercentage ?? 0"
+      [subtitle]="formatCurrency(coverageGauge?.ingresos ?? 0) + ' de ' + formatCurrency(coverageGauge?.totalCostos ?? 0)"
+      [statusLabel]="(coverageGauge?.coveragePercentage ?? 0) >= 100 ? 'Cubierto' : 'Déficit'"
+      [semanticStatus]="(coverageGauge?.coveragePercentage ?? 0) >= 100 ? 'normal' : 'danger'"
+      leftLabel="0%"
+      rightLabel="100%+"
+    ></app-gauge-chart>
+
+    <app-gauge-chart
+      title="Margen Promedio por Orden"
+      [value]="averageMargin?.averageMarginPercentage ?? 0"
+      [subtitle]="(averageMargin?.ordersCount ?? 0) + ' órdenes cobradas en últimos 3 meses'"
+      [statusLabel]="(averageMargin?.averageMarginPercentage ?? 0) >= 50 ? 'Rentable' : 'Bajo Margen'"
+      [semanticStatus]="(averageMargin?.averageMarginPercentage ?? 0) >= 50 ? 'normal' : 'warning'"
+      leftLabel="0%"
+      rightLabel="100%"
+    ></app-gauge-chart>
+  </div>
+
+  <!-- Row 3: WIDGET PRINCIPAL - Informe de Cobertura Mensual (Full Width) -->
+  <div class="main-coverage-widget">
+    <app-combo-chart
+      title="Informe de Cobertura Mensual"
+      subtitle="Evolución de Ingresos vs. Costos Totales con Arrastre Acumulado (Único Eje Y en Pesos)"
+      [data]="coverageReportData"
+    ></app-combo-chart>
+  </div>
+
+  <!-- Row 4: Aging de Gastos Fijos, Proyección de Compromisos y Costos por Categoría -->
+  <div class="middle-analytics-grid">
+    <!-- Aging Gastos Fijos -->
+    <app-aging-bar-chart
+      title="Vencimientos de Gastos Fijos"
+      [totalAmountText]="'Total: ' + formatCurrency(fixedCostsAging?.totalPendingAmount ?? 0)"
+      [buckets]="agingBuckets"
+    ></app-aging-bar-chart>
+
+    <!-- Proyección de Egresos Comprometidos -->
+    <mat-card class="projection-card">
+      <div class="proj-header">
+        <span class="proj-title">Proyección de Egresos Comprometidos</span>
+        <span class="proj-badge">Total: {{ formatCurrency(committedExpenses?.totalCommitted ?? 0) }}</span>
+      </div>
+
+      <div class="proj-body">
+        <div class="proj-window">
+          <div class="window-info">
+            <span class="window-name">Próximos 30 Días</span>
+            <span class="window-desc">Vencimientos inmediatos</span>
+          </div>
+          <div class="window-val red">{{ formatCurrency(committedExpenses?.projection30d ?? 0) }}</div>
+        </div>
+
+        <div class="proj-window">
+          <div class="window-info">
+            <span class="window-name">31 a 60 Días</span>
+            <span class="window-desc">Mediano plazo</span>
+          </div>
+          <div class="window-val amber">{{ formatCurrency(committedExpenses?.projection60d ?? 0) }}</div>
+        </div>
+
+        <div class="proj-window">
+          <div class="window-info">
+            <span class="window-name">61 a 90 Días</span>
+            <span class="window-desc">Horizonte 3 meses</span>
+          </div>
+          <div class="window-val blue">{{ formatCurrency(committedExpenses?.projection90d ?? 0) }}</div>
+        </div>
+      </div>
+    </mat-card>
+
+    <!-- Dona de Costos Directos por Categoría -->
+    <app-donut-chart
+      title="Costos Directos por Categoría"
+      centerSubtitle="Costos"
+      [slices]="costCategorySlices"
+    ></app-donut-chart>
+  </div>
+
+  <!-- Row 5: Tablas de Rentabilidad Top 10 y Bottom 10 -->
+  <div class="tables-grid-split">
+    <!-- Top 10 Órdenes Más Rentables -->
+    <mat-card class="table-card">
+      <div class="card-header">
+        <div class="header-left">
+          <mat-icon class="header-icon green">trending_up</mat-icon>
+          <span class="card-title">Top 10 Órdenes Más Rentables</span>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table mat-table [dataSource]="profitability?.topOrders ?? []" class="mat-elevation-z0">
+          <ng-container matColumnDef="orderNumber">
+            <th mat-header-cell *matHeaderCellDef>Nº Orden</th>
+            <td mat-cell *matCellDef="let row" class="fw-bold">{{ row.orderNumber }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="clientName">
+            <th mat-header-cell *matHeaderCellDef>Cliente</th>
+            <td mat-cell *matCellDef="let row">{{ row.clientName }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="income">
+            <th mat-header-cell *matHeaderCellDef>Ingreso</th>
+            <td mat-cell *matCellDef="let row">{{ formatCurrency(row.income) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="directCosts">
+            <th mat-header-cell *matHeaderCellDef>Costos</th>
+            <td mat-cell *matCellDef="let row">{{ formatCurrency(row.directCosts) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="profit">
+            <th mat-header-cell *matHeaderCellDef>Margen $</th>
+            <td mat-cell *matCellDef="let row" class="fw-bold green-text">{{ formatCurrency(row.profit) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="marginPercentage">
+            <th mat-header-cell *matHeaderCellDef>Margen %</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="tag-badge green">{{ row.marginPercentage }}%</span>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="topOrdersColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: topOrdersColumns;"></tr>
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell empty-table" [attr.colspan]="topOrdersColumns.length">
+              No hay órdenes con margen positivo registrado
+            </td>
+          </tr>
+        </table>
+      </div>
+    </mat-card>
+
+    <!-- Bottom 10 Órdenes Menos Rentables -->
+    <mat-card class="table-card">
+      <div class="card-header">
+        <div class="header-left">
+          <mat-icon class="header-icon red">trending_down</mat-icon>
+          <span class="card-title">Top 10 Órdenes Menos Rentables</span>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table mat-table [dataSource]="profitability?.bottomOrders ?? []" class="mat-elevation-z0">
+          <ng-container matColumnDef="orderNumber">
+            <th mat-header-cell *matHeaderCellDef>Nº Orden</th>
+            <td mat-cell *matCellDef="let row" class="fw-bold">{{ row.orderNumber }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="clientName">
+            <th mat-header-cell *matHeaderCellDef>Cliente</th>
+            <td mat-cell *matCellDef="let row">{{ row.clientName }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="income">
+            <th mat-header-cell *matHeaderCellDef>Ingreso</th>
+            <td mat-cell *matCellDef="let row">{{ formatCurrency(row.income) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="directCosts">
+            <th mat-header-cell *matHeaderCellDef>Costos</th>
+            <td mat-cell *matCellDef="let row">{{ formatCurrency(row.directCosts) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="profit">
+            <th mat-header-cell *matHeaderCellDef>Margen $</th>
+            <td mat-cell *matCellDef="let row" class="fw-bold red-text">{{ formatCurrency(row.profit) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="marginPercentage">
+            <th mat-header-cell *matHeaderCellDef>Margen %</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="tag-badge red">{{ row.marginPercentage }}%</span>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="bottomOrdersColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: bottomOrdersColumns;"></tr>
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell empty-table" [attr.colspan]="bottomOrdersColumns.length">
+              No hay órdenes registradas para evaluar
+            </td>
+          </tr>
+        </table>
+      </div>
+    </mat-card>
+  </div>
+
+  <!-- Row 6: Distribución de Ingresos y Activos -->
+  <div class="tables-grid-split">
+    <!-- Distribución de Ingresos y Honorarios -->
+    <mat-card class="table-card">
+      <div class="card-header">
+        <div class="header-left">
+          <mat-icon class="header-icon blue">pie_chart</mat-icon>
+          <span class="card-title">Distribución de Ingresos (Esperado vs Real)</span>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table mat-table [dataSource]="distribution?.byConcept ?? []" class="mat-elevation-z0">
+          <ng-container matColumnDef="conceptName">
+            <th mat-header-cell *matHeaderCellDef>Concepto</th>
+            <td mat-cell *matCellDef="let row" class="fw-bold">{{ row.conceptName }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="expectedAmount">
+            <th mat-header-cell *matHeaderCellDef>Monto Esperado</th>
+            <td mat-cell *matCellDef="let row">{{ formatCurrency(row.expectedAmount) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="actualAmount">
+            <th mat-header-cell *matHeaderCellDef>Monto Real</th>
+            <td mat-cell *matCellDef="let row" class="fw-bold green-text">{{ formatCurrency(row.actualAmount) }}</td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="distributionColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: distributionColumns;"></tr>
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell empty-table" [attr.colspan]="distributionColumns.length">
+              No hay distribuciones liquidadas en el período
+            </td>
+          </tr>
+        </table>
+      </div>
+    </mat-card>
+
+    <!-- Compras y Valor de Activos -->
+    <mat-card class="table-card">
+      <div class="card-header">
+        <div class="header-left">
+          <mat-icon class="header-icon purple">precision_manufacturing</mat-icon>
+          <span class="card-title">Patrimonio en Activos</span>
+        </div>
+        <span class="badge purple">Total: {{ formatCurrency(assetsValuation?.historicalAssetsTotal ?? 0) }}</span>
+      </div>
+
+      <div class="table-responsive">
+        <table mat-table [dataSource]="assetsValuation?.recentAssets ?? []" class="mat-elevation-z0">
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Activo</th>
+            <td mat-cell *matCellDef="let row" class="fw-bold">{{ row.name }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="purchaseDate">
+            <th mat-header-cell *matHeaderCellDef>Fecha Compra</th>
+            <td mat-cell *matCellDef="let row">{{ formatDate(row.purchaseDate) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="purchasePrice">
+            <th mat-header-cell *matHeaderCellDef>Valor Compra</th>
+            <td mat-cell *matCellDef="let row" class="fw-bold">{{ formatCurrency(row.purchasePrice) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef>Detalle</th>
+            <td mat-cell *matCellDef="let row">{{ row.description }}</td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="assetsColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: assetsColumns;"></tr>
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell empty-table" [attr.colspan]="assetsColumns.length">
+              No hay activos registrados en la empresa
+            </td>
+          </tr>
+        </table>
+      </div>
+    </mat-card>
+  </div>
+</div>

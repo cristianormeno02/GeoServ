@@ -48,6 +48,7 @@ public class GeoServDbContext : DbContext
     
     // Vistas
     public DbSet<AccountingMovementDetail> AccountingMovementDetails { get; set; } = null!;
+    public DbSet<MonthlyCoverageReport> MonthlyCoverageReports { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -90,6 +91,8 @@ public class GeoServDbContext : DbContext
             .Property(c => c.UnitCost).HasPrecision(18, 2);
         modelBuilder.Entity<Consumable>()
             .Property(c => c.TotalCost).HasPrecision(18, 2);
+        modelBuilder.Entity<Consumable>()
+            .Property(c => c.MinimumStock).HasPrecision(18, 2);
 
         modelBuilder.Entity<InventoryMovement>()
             .Property(i => i.Cantidad).HasPrecision(18, 2);
@@ -123,6 +126,15 @@ public class GeoServDbContext : DbContext
             .WithMany()
             .HasForeignKey(am => am.ServiceOrderId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Vistas SQL
+        modelBuilder.Entity<AccountingMovementDetail>()
+            .HasNoKey()
+            .ToView("vw_AccountingMovementDetail");
+
+        modelBuilder.Entity<MonthlyCoverageReport>()
+            .HasNoKey()
+            .ToView("vw_MonthlyCoverageReport");
 
         // Índices únicos
         modelBuilder.Entity<EmpresaConfiguracion>()

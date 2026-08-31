@@ -15,6 +15,7 @@ public class Consumable
     
     public decimal UnitCost { get; set; }
     public decimal TotalCost { get; set; }
+    public decimal MinimumStock { get; set; } = 0;
     
     public Guid? ProviderId { get; set; }
     public Provider? Provider { get; set; }

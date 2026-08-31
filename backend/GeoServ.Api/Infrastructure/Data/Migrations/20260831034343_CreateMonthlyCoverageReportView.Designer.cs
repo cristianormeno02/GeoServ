@@ -3,17 +3,20 @@ using System;
 using GeoServ.Api.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace GeoServ.Api.Migrations
+namespace GeoServ.Api.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(GeoServDbContext))]
-    partial class GeoServDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260831034343_CreateMonthlyCoverageReportView")]
+    partial class CreateMonthlyCoverageReportView
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

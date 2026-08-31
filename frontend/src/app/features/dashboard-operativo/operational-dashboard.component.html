@@ -1,0 +1,290 @@
+﻿<div class="dashboard-container">
+  <!-- Top Bar -->
+  <div class="dashboard-topbar">
+    <div class="topbar-title-section">
+      <h1 class="page-title">Dashboard Operativo</h1>
+      <p class="page-subtitle">Supervisión diaria de carga de trabajo, alertas de plazos, inventario y cobranzas</p>
+    </div>
+    <div class="topbar-actions">
+      <span class="last-sync-text">
+        <mat-icon class="sync-icon">schedule</mat-icon>
+        Actualizado: {{ lastUpdated | date:'HH:mm:ss' }}
+      </span>
+      <button mat-flat-button color="primary" class="refresh-btn" (click)="loadAllData()" [disabled]="isLoading">
+        <mat-icon [class.spin-icon]="isLoading">refresh</mat-icon>
+        <span>Actualizar</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Row 1: KPI Cards con Sparkline -->
+  <div class="kpi-grid">
+    <app-sparkline-card
+      title="Órdenes Activas"
+      subtitle="En progreso o presupuesto"
+      [value]="kpis?.activeOrders?.value ?? 0"
+      unit="OS"
+      [trend]="kpis?.activeOrders?.trend ?? []"
+      icon="assignment"
+      iconColor="#0284c7"
+      iconBgColor="#e0f2fe"
+      sparkColor="#0284c7"
+      badgeText="En curso"
+      semanticState="neutral"
+    ></app-sparkline-card>
+
+    <app-sparkline-card
+      title="Órdenes Estancadas"
+      subtitle="> 7 días en mismo estado"
+      [value]="kpis?.stagnantOrders?.value ?? 0"
+      unit="OS"
+      [trend]="kpis?.stagnantOrders?.trend ?? []"
+      icon="warning"
+      iconColor="#ef4444"
+      iconBgColor="#fee2e2"
+      sparkColor="#ef4444"
+      [badgeText]="(kpis?.stagnantOrders?.value ?? 0) > 0 ? 'Riesgo demoras' : 'Al día'"
+      [semanticState]="(kpis?.stagnantOrders?.value ?? 0) > 0 ? 'negative' : 'positive'"
+    ></app-sparkline-card>
+
+    <app-sparkline-card
+      title="Entregadas sin Cobrar"
+      subtitle="Facturación / saldo pendiente"
+      [value]="kpis?.uncollectedOrders?.value ?? 0"
+      unit="OS"
+      [trend]="kpis?.uncollectedOrders?.trend ?? []"
+      icon="payments"
+      iconColor="#f59e0b"
+      iconBgColor="#fef3c7"
+      sparkColor="#f59e0b"
+      badgeText="Cobranza"
+      semanticState="warning"
+    ></app-sparkline-card>
+
+    <app-sparkline-card
+      title="Insumos Críticos"
+      subtitle="Bajo stock mínimo"
+      [value]="kpis?.lowStockItems?.value ?? 0"
+      unit="ítems"
+      [trend]="kpis?.lowStockItems?.trend ?? []"
+      icon="inventory_2"
+      iconColor="#8b5cf6"
+      iconBgColor="#f3e8ff"
+      sparkColor="#8b5cf6"
+      [badgeText]="(kpis?.lowStockItems?.value ?? 0) > 0 ? 'Reponer' : 'Stock OK'"
+      [semanticState]="(kpis?.lowStockItems?.value ?? 0) > 0 ? 'negative' : 'positive'"
+    ></app-sparkline-card>
+  </div>
+
+  <!-- Row 2: Gauges & Dona -->
+  <div class="middle-charts-grid">
+    <app-gauge-chart
+      title="Capacidad del Equipo"
+      [value]="teamCapacity?.capacityPercentage ?? 0"
+      [subtitle]="(teamCapacity?.activeOrders ?? 0) + ' de ' + (teamCapacity?.maxCapacity ?? 50) + ' órdenes'"
+      [statusLabel]="teamCapacity?.semanticStatus"
+      [semanticStatus]="teamCapacity?.semanticStatus"
+      leftLabel="0 OS"
+      [rightLabel]="(teamCapacity?.maxCapacity ?? 50) + ' OS'"
+    ></app-gauge-chart>
+
+    <app-gauge-chart
+      title="Cumplimiento de Plazos"
+      [value]="deadlineCompliance?.compliancePercentage ?? 100"
+      [subtitle]="(deadlineCompliance?.onTimeCount ?? 0) + ' a tiempo / ' + (deadlineCompliance?.delayedCount ?? 0) + ' retrasadas'"
+      [statusLabel]="(deadlineCompliance?.compliancePercentage ?? 100) >= 80 ? 'Óptimo' : 'Alerta'"
+      [semanticStatus]="(deadlineCompliance?.compliancePercentage ?? 100) >= 80 ? 'normal' : 'warning'"
+      leftLabel="0%"
+      rightLabel="100%"
+    ></app-gauge-chart>
+
+    <app-donut-chart
+      title="Órdenes por Tipo de Servicio"
+      centerSubtitle="Activas"
+      [slices]="serviceTypeSlices"
+    ></app-donut-chart>
+  </div>
+
+  <!-- Row 3: Aging & Carga de Trabajo -->
+  <div class="bottom-charts-grid">
+    <app-aging-bar-chart
+      title="Antigüedad de Cobranza (Entregadas sin cobrar)"
+      [totalAmountText]="totalUncollectedAmountText"
+      [buckets]="agingBuckets"
+    ></app-aging-bar-chart>
+
+    <app-horizontal-bar-chart
+      title="Carga de Trabajo por Responsable"
+      [items]="workloadItems"
+    ></app-horizontal-bar-chart>
+  </div>
+
+  <!-- Row 4: Tablas de Monitoreo -->
+  <div class="tables-grid">
+    <!-- Tabla de Órdenes Estancadas -->
+    <mat-card class="table-card">
+      <div class="card-header">
+        <div class="header-left">
+          <mat-icon class="header-icon warn">hourglass_top</mat-icon>
+          <span class="card-title">Órdenes con Mayor Permanencia</span>
+        </div>
+        <span class="badge red">{{ stagnantOrdersData?.totalCount ?? 0 }} estancadas</span>
+      </div>
+
+      <div class="table-responsive">
+        <table mat-table [dataSource]="stagnantOrdersData?.items ?? []" class="mat-elevation-z0">
+          <ng-container matColumnDef="orderNumber">
+            <th mat-header-cell *matHeaderCellDef>Nº Orden</th>
+            <td mat-cell *matCellDef="let row" class="fw-bold">{{ row.orderNumber }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="clientName">
+            <th mat-header-cell *matHeaderCellDef>Cliente</th>
+            <td mat-cell *matCellDef="let row">{{ row.clientName }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="serviceTypeName">
+            <th mat-header-cell *matHeaderCellDef>Tipo</th>
+            <td mat-cell *matCellDef="let row">{{ row.serviceTypeName }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="daysInStatus">
+            <th mat-header-cell *matHeaderCellDef>Días en Estado</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="tag-days red">{{ row.daysInStatus }} días</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let row">
+              <a [routerLink]="['/service-orders', row.id]" mat-icon-button color="primary" matTooltip="Ver detalle">
+                <mat-icon>visibility</mat-icon>
+              </a>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="stagnantColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: stagnantColumns;"></tr>
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell empty-table" [attr.colspan]="stagnantColumns.length">
+              No hay órdenes estancadas actualmente
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <mat-paginator
+        [length]="stagnantOrdersData?.totalCount ?? 0"
+        [pageSize]="stagnantPageSize"
+        [pageSizeOptions]="[5, 10]"
+        (page)="onStagnantPageChange($event)"
+        class="custom-paginator"
+      ></mat-paginator>
+    </mat-card>
+
+    <!-- Tabla de Insumos Críticos -->
+    <mat-card class="table-card">
+      <div class="card-header">
+        <div class="header-left">
+          <mat-icon class="header-icon purple">inventory_2</mat-icon>
+          <span class="card-title">Insumos Bajo Stock Mínimo</span>
+        </div>
+        <span class="badge purple">{{ inventoryAlerts?.criticalConsumables?.length ?? 0 }} críticos</span>
+      </div>
+
+      <div class="table-responsive">
+        <table mat-table [dataSource]="inventoryAlerts?.criticalConsumables ?? []" class="mat-elevation-z0">
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef>Insumo</th>
+            <td mat-cell *matCellDef="let row" class="fw-bold">{{ row.description }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="unitName">
+            <th mat-header-cell *matHeaderCellDef>Unidad</th>
+            <td mat-cell *matCellDef="let row">{{ row.unitName }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="currentStock">
+            <th mat-header-cell *matHeaderCellDef>Stock Actual</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="tag-stock current">{{ row.currentStock }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="minimumStock">
+            <th mat-header-cell *matHeaderCellDef>Mínimo</th>
+            <td mat-cell *matCellDef="let row">{{ row.minimumStock }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="deficit">
+            <th mat-header-cell *matHeaderCellDef>Déficit</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="tag-stock deficit">-{{ row.deficit }}</span>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="inventoryColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: inventoryColumns;"></tr>
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell empty-table" [attr.colspan]="inventoryColumns.length">
+              Todos los insumos tienen stock por encima del mínimo
+            </td>
+          </tr>
+        </table>
+      </div>
+    </mat-card>
+
+    <!-- Tabla de Costos Fijos Próximos a Vencer -->
+    <mat-card class="table-card">
+      <div class="card-header">
+        <div class="header-left">
+          <mat-icon class="header-icon blue">receipt_long</mat-icon>
+          <span class="card-title">Costos Fijos Próximos a Vencer (15 días)</span>
+        </div>
+        <span class="badge blue">{{ upcomingCosts.length }} pendientes</span>
+      </div>
+
+      <div class="table-responsive">
+        <table mat-table [dataSource]="upcomingCosts" class="mat-elevation-z0">
+          <ng-container matColumnDef="itemName">
+            <th mat-header-cell *matHeaderCellDef>Concepto</th>
+            <td mat-cell *matCellDef="let row" class="fw-bold">{{ row.itemName }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="categoryName">
+            <th mat-header-cell *matHeaderCellDef>Categoría</th>
+            <td mat-cell *matCellDef="let row">{{ row.categoryName }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="dueDate">
+            <th mat-header-cell *matHeaderCellDef>Vencimiento</th>
+            <td mat-cell *matCellDef="let row">{{ formatDate(row.dueDate) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="amount">
+            <th mat-header-cell *matHeaderCellDef>Monto</th>
+            <td mat-cell *matCellDef="let row" class="fw-bold">{{ formatCurrency(row.amount) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="daysRemaining">
+            <th mat-header-cell *matHeaderCellDef>Restan</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="tag-days" [ngClass]="row.daysRemaining <= 3 ? 'red' : 'amber'">
+                {{ row.daysRemaining }} d
+              </span>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="upcomingCostsColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: upcomingCostsColumns;"></tr>
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell empty-table" [attr.colspan]="upcomingCostsColumns.length">
+              No hay costos fijos con vencimiento en los próximos 15 días
+            </td>
+          </tr>
+        </table>
+      </div>
+    </mat-card>
+  </div>
+</div>

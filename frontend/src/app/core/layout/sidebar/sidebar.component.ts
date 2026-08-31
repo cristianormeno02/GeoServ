@@ -19,7 +19,9 @@ export class SidebarComponent implements OnInit {
   menuGroups = [
     {
       name: 'Inicio', icon: 'home', children: [
-        { name: 'Dashboard', path: '/dashboard', icon: 'dashboard' }
+        { name: 'Dashboard General', path: '/dashboard', icon: 'dashboard' },
+        { name: 'Dashboard Operativo', path: '/dashboard/operativo', icon: 'insights' },
+        { name: 'Dashboard Financiero', path: '/dashboard/financiero', icon: 'query_stats' }
       ]
     },
     {

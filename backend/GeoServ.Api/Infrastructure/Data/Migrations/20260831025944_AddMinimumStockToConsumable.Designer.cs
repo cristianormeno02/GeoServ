@@ -3,17 +3,20 @@ using System;
 using GeoServ.Api.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace GeoServ.Api.Migrations
+namespace GeoServ.Api.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(GeoServDbContext))]
-    partial class GeoServDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260831025944_AddMinimumStockToConsumable")]
+    partial class AddMinimumStockToConsumable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -896,35 +899,6 @@ namespace GeoServ.Api.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("InventoryMovements");
-                });
-
-            modelBuilder.Entity("GeoServ.Api.Domain.Entities.MonthlyCoverageReport", b =>
-                {
-                    b.Property<decimal>("GastosDirectos")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("GastosFijos")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("Honorarios")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("Ingresos")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("Periodo")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("ResultadoMes")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("SaldoAcumulado")
-                        .HasColumnType("numeric");
-
-                    b.ToTable((string)null);
-
-                    b.ToView("vw_MonthlyCoverageReport", (string)null);
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.MovementCategory", b =>

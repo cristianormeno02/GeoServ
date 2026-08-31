@@ -1,4 +1,4 @@
-﻿using GeoServ.Api.Infrastructure.Data;
+using GeoServ.Api.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -68,7 +68,7 @@ app.MapPost("/api/system/init", async (GeoServDbContext context) =>
 {
     try
     {
-        // 1. Crear tablas / aplicar migraciones pendientes (incluye catÃ¡logos de OnModelCreating)
+        // 1. Crear tablas / aplicar migraciones pendientes (incluye catálogos de OnModelCreating)
         await context.Database.MigrateAsync();
 
         // 2. Crear roles si no existen
@@ -77,8 +77,8 @@ app.MapPost("/api/system/init", async (GeoServDbContext context) =>
         {
             context.Roles.AddRange(
                 new GeoServ.Api.Domain.Entities.Role { Id = adminRoleId, Name = "Administrador", Description = "Acceso total al sistema" },
-                new GeoServ.Api.Domain.Entities.Role { Id = Guid.Parse("22222222-2222-2222-2222-222222222222"), Name = "Operador", Description = "Acceso operativo a Ã³rdenes de servicio" },
-                new GeoServ.Api.Domain.Entities.Role { Id = Guid.Parse("33333333-3333-3333-3333-333333333333"), Name = "Cliente", Description = "Acceso de lectura a Ã³rdenes propias" }
+                new GeoServ.Api.Domain.Entities.Role { Id = Guid.Parse("22222222-2222-2222-2222-222222222222"), Name = "Operador", Description = "Acceso operativo a órdenes de servicio" },
+                new GeoServ.Api.Domain.Entities.Role { Id = Guid.Parse("33333333-3333-3333-3333-333333333333"), Name = "Cliente", Description = "Acceso de lectura a órdenes propias" }
             );
             await context.SaveChangesAsync();
         }
@@ -146,32 +146,8 @@ GeoServ.Api.Endpoints.ConsumableEndpoints.MapConsumableEndpoints(app);
 GeoServ.Api.Endpoints.InventoryMovementEndpoints.MapInventoryMovementEndpoints(app);
 GeoServ.Api.Endpoints.FixedCostItemEndpoints.MapFixedCostItemEndpoints(app);
 GeoServ.Api.Endpoints.FixedCostCategoryEndpoints.MapFixedCostCategoryEndpoints(app);
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
+GeoServ.Api.Endpoints.OperationalDashboardEndpoints.MapOperationalDashboardEndpoints(app);
+GeoServ.Api.Endpoints.FinancialDashboardEndpoints.MapFinancialDashboardEndpoints(app);
+GeoServ.Api.Endpoints.GeneralDashboardEndpoints.MapGeneralDashboardEndpoints(app);
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
-
-
-
