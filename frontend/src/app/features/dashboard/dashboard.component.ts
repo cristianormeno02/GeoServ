@@ -1,4 +1,4 @@
-import { Component, OnInit, computed } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -7,8 +7,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { computed } from '@angular/core';
 
 import { DonutChartComponent, DonutSlice } from '../../shared/components/charts/donut-chart.component';
 import { GeneralDashboardService } from './services/general-dashboard.service';
@@ -83,16 +82,28 @@ export class DashboardComponent implements OnInit {
     'Urgente': '#dc2626'
   };
 
+  // Nombre a mostrar: prioriza profile del backend, fallback a AuthService (token JWT)
   get displayName(): string {
-    const fromProfile = this.profile?.responsibleName || this.profile?.userName;
-    if (fromProfile && fromProfile.trim().length > 0 && fromProfile !== 'Usuario') {
-      return fromProfile;
+    // 1. Intentar desde el profile del backend
+    if (this.profile) {
+      const name = this.profile.responsibleName || this.profile.userName;
+      if (name && name.trim().length > 0 && name !== 'Usuario') {
+        return name;
+      }
     }
-    const fromAuth = this.authService.getUserName();
-    if (fromAuth && fromAuth.trim().length > 0) {
-      return fromAuth;
+
+    // 2. Fallback: nombre almacenado en AuthService (del login o del token JWT)
+    const authName = this.authService.getUserName();
+    if (authName && authName.trim().length > 0 && authName !== 'Usuario') {
+      return authName;
     }
-    return fromProfile || 'Usuario';
+
+    // 3. Último fallback
+    if (this.profile?.userName && this.profile.userName.trim().length > 0) {
+      return this.profile.userName;
+    }
+
+    return 'Usuario';
   }
 
   constructor(
@@ -115,16 +126,22 @@ export class DashboardComponent implements OnInit {
     this.isLoading = true;
     this.lastUpdated = new Date();
 
+    // Cargar profile
     this.dashboardService.getProfile().subscribe({
-      next: res => this.profile = res,
-      error: err => {
-        console.error('Error fetching profile', err);
-        this.profile = { hasResponsible: true, userName: 'Usuario' };
+      next: (res) => {
+        console.log('[Dashboard] Profile response:', res);
+        this.profile = res;
+      },
+      error: (err) => {
+        console.error('[Dashboard] Error fetching profile:', err);
+        this.profile = { hasResponsible: true, userName: this.authService.getUserName() };
       }
     });
 
+    // Cargar KPIs
     this.dashboardService.getKpis().subscribe({
-      next: kpis => {
+      next: (kpis) => {
+        console.log('[Dashboard] KPIs response:', kpis);
         this.kpis = kpis;
         this.statusSlices = (kpis?.byStatus ?? []).map(s => ({
           label: s.statusName,
@@ -137,26 +154,36 @@ export class DashboardComponent implements OnInit {
           color: this.priorityColors[p.priority]
         }));
       },
-      error: err => console.error('Error fetching KPIs', err)
+      error: (err) => console.error('[Dashboard] Error fetching KPIs:', err)
     });
 
+    // Cargar órdenes activas
     this.dashboardService.getActiveOrders().subscribe({
-      next: orders => this.activeOrders = orders ?? [],
-      error: err => console.error('Error fetching active orders', err)
+      next: (orders) => {
+        console.log('[Dashboard] Active orders response:', orders);
+        this.activeOrders = orders ?? [];
+      },
+      error: (err) => console.error('[Dashboard] Error fetching active orders:', err)
     });
 
+    // Cargar actividades pendientes
     this.dashboardService.getPendingActivities().subscribe({
-      next: activities => this.pendingActivities = activities ?? [],
-      error: err => console.error('Error fetching pending activities', err)
+      next: (activities) => {
+        console.log('[Dashboard] Pending activities response:', activities);
+        this.pendingActivities = activities ?? [];
+      },
+      error: (err) => console.error('[Dashboard] Error fetching pending activities:', err)
     });
 
+    // Cargar observaciones recientes
     this.dashboardService.getRecentObservations().subscribe({
-      next: observations => {
+      next: (observations) => {
+        console.log('[Dashboard] Recent observations response:', observations);
         this.recentObservations = observations ?? [];
         this.isLoading = false;
       },
-      error: err => {
-        console.error('Error fetching recent observations', err);
+      error: (err) => {
+        console.error('[Dashboard] Error fetching recent observations:', err);
         this.isLoading = false;
       }
     });
