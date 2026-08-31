@@ -13,46 +13,60 @@ public static class GeneralDashboardEndpoints
     {
         var group = app.MapGroup("/api/dashboard/general").RequireAuthorization();
 
-        // Helper para extraer UserId de cualquier formato de claim
+        // =====================================================================
+        // HELPERS
+        // =====================================================================
+
+        // Extrae el UserId del token JWT
         static Guid? GetUserId(ClaimsPrincipal user)
         {
-            var claim = user.Claims.FirstOrDefault(c =>
-                c.Type == ClaimTypes.NameIdentifier ||
-                c.Type.Equals("sub", StringComparison.OrdinalIgnoreCase) ||
-                c.Type.Equals("id", StringComparison.OrdinalIgnoreCase) ||
-                c.Type.Equals("nameid", StringComparison.OrdinalIgnoreCase) ||
-                c.Type.EndsWith("nameidentifier", StringComparison.OrdinalIgnoreCase));
-
-            if (claim != null && Guid.TryParse(claim.Value, out var guid))
+            foreach (var claim in user.Claims)
             {
-                return guid;
+                if (claim.Type == ClaimTypes.NameIdentifier ||
+                    claim.Type == "sub" ||
+                    claim.Type == "id" ||
+                    claim.Type == "nameid" ||
+                    claim.Type.EndsWith("nameidentifier", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (Guid.TryParse(claim.Value, out var guid))
+                        return guid;
+                }
             }
             return null;
         }
 
-        // Helper para extraer Nombre de usuario
+        // Extrae el nombre del token JWT
         static string GetUserName(ClaimsPrincipal user)
         {
-            var nameClaim = user.Claims.FirstOrDefault(c =>
-                c.Type == ClaimTypes.Name ||
-                c.Type.Equals("name", StringComparison.OrdinalIgnoreCase) ||
-                c.Type.Equals("unique_name", StringComparison.OrdinalIgnoreCase) ||
-                c.Type.EndsWith("claims/name", StringComparison.OrdinalIgnoreCase))?.Value;
+            foreach (var claim in user.Claims)
+            {
+                if (claim.Type == ClaimTypes.Name ||
+                    claim.Type == "name" ||
+                    claim.Type == "unique_name" ||
+                    claim.Type.EndsWith("claims/name", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (!string.IsNullOrWhiteSpace(claim.Value))
+                        return claim.Value;
+                }
+            }
 
-            if (!string.IsNullOrWhiteSpace(nameClaim)) return nameClaim;
-
-            var emailClaim = user.Claims.FirstOrDefault(c =>
-                c.Type == ClaimTypes.Email ||
-                c.Type.Equals("email", StringComparison.OrdinalIgnoreCase) ||
-                c.Type.EndsWith("claims/emailaddress", StringComparison.OrdinalIgnoreCase))?.Value;
-
-            if (!string.IsNullOrWhiteSpace(emailClaim)) return emailClaim;
+            foreach (var claim in user.Claims)
+            {
+                if (claim.Type == ClaimTypes.Email ||
+                    claim.Type == "email" ||
+                    claim.Type.EndsWith("claims/emailaddress", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (!string.IsNullOrWhiteSpace(claim.Value))
+                        return claim.Value;
+                }
+            }
 
             return "Usuario";
         }
 
-        // Helper para resolver el contexto del usuario actual
-        static async Task<(Guid? userId, User? userObj, bool isAdmin)> GetUserContext(GeoServDbContext context, ClaimsPrincipal userPrincipal)
+        // Resuelve el usuario de la BD
+        static async Task<(Guid? userId, User? userObj, bool isAdmin)> GetUserContext(
+            GeoServDbContext context, ClaimsPrincipal userPrincipal)
         {
             var userId = GetUserId(userPrincipal);
             User? userObj = null;
@@ -67,17 +81,22 @@ public static class GeneralDashboardEndpoints
 
             if (userObj == null)
             {
-                var email = userPrincipal.Claims.FirstOrDefault(c =>
-                    c.Type == ClaimTypes.Email ||
-                    c.Type.Equals("email", StringComparison.OrdinalIgnoreCase) ||
-                    c.Type.EndsWith("claims/emailaddress", StringComparison.OrdinalIgnoreCase))?.Value;
-
-                if (!string.IsNullOrEmpty(email))
+                // Fallback: buscar por email del claim
+                foreach (var claim in userPrincipal.Claims)
                 {
-                    userObj = await context.Users
-                        .Include(u => u.Role)
-                        .AsNoTracking()
-                        .FirstOrDefaultAsync(u => u.Email == email);
+                    if (claim.Type == ClaimTypes.Email ||
+                        claim.Type == "email" ||
+                        claim.Type.EndsWith("claims/emailaddress", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (!string.IsNullOrEmpty(claim.Value))
+                        {
+                            userObj = await context.Users
+                                .Include(u => u.Role)
+                                .AsNoTracking()
+                                .FirstOrDefaultAsync(u => u.Email == claim.Value);
+                            if (userObj != null) break;
+                        }
+                    }
                 }
             }
 
@@ -85,135 +104,111 @@ public static class GeneralDashboardEndpoints
             return (userId ?? userObj?.Id, userObj, isAdmin);
         }
 
-        // Helper: resuelve el Responsible del usuario autenticado con fallback multi-candidato robusto
-        static async Task<Responsible?> ResolveResponsible(GeoServDbContext context, ClaimsPrincipal userPrincipal, User? userObj)
+        // Obtiene TODOS los Responsible IDs que corresponden al usuario actual.
+        // Estrategia simplificada:
+        //   1. Match directo por UserId en Responsibles.UserId
+        //   2. Match exacto por nombre (case-insensitive)
+        //   3. Match parcial: algún token del nombre del usuario contiene o está contenido en el nombre del responsable
+        static async Task<List<Guid>> GetMatchedResponsibleIds(
+            GeoServDbContext context, Guid? userId, User? userObj, ClaimsPrincipal userPrincipal)
         {
-            var userId = GetUserId(userPrincipal) ?? userObj?.Id;
+            var allResponsibles = await context.Responsibles.AsNoTracking().ToListAsync();
+            var matched = new HashSet<Guid>();
+
+            // 1. Match por UserId
             if (userId.HasValue)
             {
-                var resp = await context.Responsibles
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(r => r.UserId == userId.Value);
-
-                if (resp != null) return resp;
-            }
-
-            var allResponsibles = await context.Responsibles.AsNoTracking().ToListAsync();
-            if (allResponsibles.Count == 0) return null;
-
-            // Recolectar candidatos de nombres / identificadores
-            var candidates = new List<string>();
-            if (!string.IsNullOrWhiteSpace(userObj?.Name)) candidates.Add(userObj.Name.Trim());
-
-            var claimName = GetUserName(userPrincipal);
-            if (!string.IsNullOrWhiteSpace(claimName) && !claimName.Equals("Usuario", StringComparison.OrdinalIgnoreCase))
-            {
-                candidates.Add(claimName.Trim());
-            }
-
-            var email = userObj?.Email ?? userPrincipal.Claims.FirstOrDefault(c =>
-                c.Type == ClaimTypes.Email ||
-                c.Type.Equals("email", StringComparison.OrdinalIgnoreCase) ||
-                c.Type.EndsWith("claims/emailaddress", StringComparison.OrdinalIgnoreCase))?.Value;
-
-            if (!string.IsNullOrWhiteSpace(email))
-            {
-                var emailPrefix = email.Split('@')[0].Replace(".", " ").Replace("_", " ").Trim();
-                if (!string.IsNullOrWhiteSpace(emailPrefix)) candidates.Add(emailPrefix);
-            }
-
-            // 1. Coincidencia exacta por nombre (case-insensitive)
-            foreach (var cand in candidates)
-            {
-                var exact = allResponsibles.FirstOrDefault(r => r.Name.Trim().Equals(cand, StringComparison.OrdinalIgnoreCase));
-                if (exact != null) return exact;
-            }
-
-            // 2. Coincidencia parcial (nombre contiene parte del usuario o viceversa)
-            foreach (var cand in candidates)
-            {
-                var parts = cand.Split(new[] { ' ', ',', '-' }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (var part in parts)
+                foreach (var r in allResponsibles)
                 {
-                    if (part.Length >= 3)
-                    {
-                        var partial = allResponsibles.FirstOrDefault(r => 
-                            r.Name.Contains(part, StringComparison.OrdinalIgnoreCase) || 
-                            cand.Contains(r.Name, StringComparison.OrdinalIgnoreCase));
-                        if (partial != null) return partial;
-                    }
+                    if (r.UserId.HasValue && r.UserId.Value == userId.Value)
+                        matched.Add(r.Id);
                 }
             }
 
-            // 3. Fallback: si hay un solo responsable registrado y no es Cliente
-            if (userObj?.Role?.Name != "Cliente" && allResponsibles.Count == 1)
-            {
-                return allResponsibles[0];
-            }
+            // Si ya encontramos por UserId, retornamos inmediatamente (es el match más fiable)
+            if (matched.Count > 0)
+                return matched.ToList();
 
-            return null;
-        }
-
-        // Helper: obtiene la lista de IDs de órdenes correspondientes al usuario o admin
-        static async Task<List<Guid>> GetTargetOrderIds(GeoServDbContext context, ClaimsPrincipal userPrincipal, User? userObj, bool isAdmin)
-        {
-            var userId = GetUserId(userPrincipal) ?? userObj?.Id;
+            // 2. Recolectar candidatos de nombres para matching textual
             var candidates = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            if (!string.IsNullOrWhiteSpace(userObj?.Name)) candidates.Add(userObj.Name.Trim());
+            if (!string.IsNullOrWhiteSpace(userObj?.Name))
+                candidates.Add(userObj.Name.Trim());
 
             var claimName = GetUserName(userPrincipal);
-            if (!string.IsNullOrWhiteSpace(claimName) && !claimName.Equals("Usuario", StringComparison.OrdinalIgnoreCase))
-            {
+            if (!string.IsNullOrWhiteSpace(claimName) && claimName != "Usuario")
                 candidates.Add(claimName.Trim());
-            }
 
-            var email = userObj?.Email ?? userPrincipal.Claims.FirstOrDefault(c =>
-                c.Type == ClaimTypes.Email ||
-                c.Type.Equals("email", StringComparison.OrdinalIgnoreCase) ||
-                c.Type.EndsWith("claims/emailaddress", StringComparison.OrdinalIgnoreCase))?.Value;
-
-            if (!string.IsNullOrWhiteSpace(email))
+            if (!string.IsNullOrWhiteSpace(userObj?.Email))
             {
-                var emailPrefix = email.Split('@')[0].Replace(".", " ").Replace("_", " ").Trim();
-                if (!string.IsNullOrWhiteSpace(emailPrefix)) candidates.Add(emailPrefix);
+                var prefix = userObj.Email.Split('@')[0].Replace(".", " ").Replace("_", " ").Trim();
+                if (!string.IsNullOrWhiteSpace(prefix))
+                    candidates.Add(prefix);
             }
 
-            // 1. Obtener todos los IDs de Responsibles que coinciden con el usuario
-            var allResponsibles = await context.Responsibles.AsNoTracking().ToListAsync();
-            var matchedRespIds = new HashSet<Guid>();
+            if (candidates.Count == 0)
+                return new List<Guid>();
 
+            // 2a. Match exacto por nombre
             foreach (var r in allResponsibles)
             {
-                if (userId.HasValue && r.UserId.HasValue && r.UserId.Value == userId.Value)
-                {
-                    matchedRespIds.Add(r.Id);
-                    continue;
-                }
-
                 var rName = r.Name?.Trim() ?? "";
                 if (string.IsNullOrEmpty(rName)) continue;
 
                 foreach (var cand in candidates)
                 {
-                    if (rName.Equals(cand, StringComparison.OrdinalIgnoreCase) ||
-                        rName.Contains(cand, StringComparison.OrdinalIgnoreCase) ||
-                        cand.Contains(rName, StringComparison.OrdinalIgnoreCase))
+                    if (rName.Equals(cand, StringComparison.OrdinalIgnoreCase))
                     {
-                        matchedRespIds.Add(r.Id);
-                        break;
-                    }
-
-                    var parts = cand.Split(new[] { ' ', ',', '-' }, StringSplitOptions.RemoveEmptyEntries);
-                    if (parts.Any(p => p.Length >= 3 && (rName.Contains(p, StringComparison.OrdinalIgnoreCase) || p.Contains(rName, StringComparison.OrdinalIgnoreCase))))
-                    {
-                        matchedRespIds.Add(r.Id);
+                        matched.Add(r.Id);
                         break;
                     }
                 }
             }
 
-            // 2. Si se encontraron responsables coincidentes, buscar órdenes asignadas a cualquiera de ellos
+            if (matched.Count > 0)
+                return matched.ToList();
+
+            // 2b. Match parcial: nombre contiene candidato o viceversa
+            foreach (var r in allResponsibles)
+            {
+                var rName = r.Name?.Trim() ?? "";
+                if (string.IsNullOrEmpty(rName)) continue;
+
+                foreach (var cand in candidates)
+                {
+                    // Nombre completo contiene al otro
+                    if (rName.Contains(cand, StringComparison.OrdinalIgnoreCase) ||
+                        cand.Contains(rName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        matched.Add(r.Id);
+                        break;
+                    }
+
+                    // Tokens individuales (partes del nombre) >= 3 chars
+                    var parts = cand.Split(new[] { ' ', ',', '-' }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var part in parts)
+                    {
+                        if (part.Length >= 3 && rName.Contains(part, StringComparison.OrdinalIgnoreCase))
+                        {
+                            matched.Add(r.Id);
+                            break;
+                        }
+                    }
+                    if (matched.Contains(r.Id)) break;
+                }
+            }
+
+            return matched.ToList();
+        }
+
+        // Obtiene los IDs de las órdenes asignadas al usuario (o todas si es admin)
+        static async Task<List<Guid>> GetTargetOrderIds(
+            GeoServDbContext context, ClaimsPrincipal userPrincipal, User? userObj, bool isAdmin)
+        {
+            var userId = GetUserId(userPrincipal) ?? userObj?.Id;
+
+            var matchedRespIds = await GetMatchedResponsibleIds(context, userId, userObj, userPrincipal);
+
             if (matchedRespIds.Count > 0)
             {
                 var orderIds = await context.ServiceOrderResponsibles
@@ -226,7 +221,7 @@ public static class GeneralDashboardEndpoints
                 if (orderIds.Count > 0) return orderIds;
             }
 
-            // 3. Fallback: Si es Administrador o si hay un solo responsable en el sistema
+            // Fallback: si es admin, mostrar todas
             if (isAdmin)
             {
                 return await context.ServiceOrders
@@ -235,26 +230,84 @@ public static class GeneralDashboardEndpoints
                     .ToListAsync();
             }
 
-            if (allResponsibles.Count == 1 && userObj?.Role?.Name != "Cliente")
-            {
-                var singleRespId = allResponsibles[0].Id;
-                return await context.ServiceOrderResponsibles
-                    .AsNoTracking()
-                    .Where(sor => sor.ResponsibleId == singleRespId)
-                    .Select(sor => sor.ServiceOrderId)
-                    .Distinct()
-                    .ToListAsync();
-            }
-
             return new List<Guid>();
         }
 
-        // 1. Perfil / bienvenida del usuario
+        // =====================================================================
+        // ENDPOINTS
+        // =====================================================================
+
+        // 0. DEBUG — Endpoint de diagnóstico (temporal, para investigar)
+        group.MapGet("/debug", async (ClaimsPrincipal userPrincipal, GeoServDbContext context) =>
+        {
+            var (userId, userObj, isAdmin) = await GetUserContext(context, userPrincipal);
+            var claimName = GetUserName(userPrincipal);
+
+            // Listar todos los claims del token
+            var allClaims = userPrincipal.Claims.Select(c => new { type = c.Type, value = c.Value }).ToList();
+
+            // Responsables del sistema
+            var allResponsibles = await context.Responsibles.AsNoTracking()
+                .Select(r => new { r.Id, r.Name, r.UserId }).ToListAsync();
+
+            // Resolver matching
+            var matchedRespIds = await GetMatchedResponsibleIds(context, userId, userObj, userPrincipal);
+
+            // Órdenes encontradas
+            var targetOrderIds = await GetTargetOrderIds(context, userPrincipal, userObj, isAdmin);
+
+            // Total de órdenes en la BD
+            var totalOrdersInDb = await context.ServiceOrders.CountAsync();
+
+            // Total de registros en ServiceOrderResponsibles
+            var totalSORs = await context.ServiceOrderResponsibles.CountAsync();
+
+            // Si se encontraron matchedRespIds, mostrar los SOR que matchean
+            object matchedSORs;
+            if (matchedRespIds.Count > 0)
+            {
+                matchedSORs = await context.ServiceOrderResponsibles.AsNoTracking()
+                    .Where(sor => matchedRespIds.Contains(sor.ResponsibleId))
+                    .Select(sor => new { sor.ServiceOrderId, sor.ResponsibleId })
+                    .ToListAsync();
+            }
+            else
+            {
+                matchedSORs = Array.Empty<object>();
+            }
+
+            return Results.Ok(new
+            {
+                resolvedUserId = userId,
+                resolvedUserName = userObj?.Name,
+                resolvedUserEmail = userObj?.Email,
+                resolvedUserRole = userObj?.Role?.Name,
+                isAdmin,
+                claimName,
+                allClaims,
+                allResponsibles,
+                matchedResponsibleIds = matchedRespIds,
+                matchedServiceOrderResponsibles = matchedSORs,
+                targetOrderCount = targetOrderIds.Count,
+                totalOrdersInDb,
+                totalServiceOrderResponsibles = totalSORs
+            });
+        });
+
+        // 1. Perfil / bienvenida
         group.MapGet("/profile", async (ClaimsPrincipal userPrincipal, GeoServDbContext context) =>
         {
             var (userId, userObj, isAdmin) = await GetUserContext(context, userPrincipal);
             var userName = userObj?.Name ?? GetUserName(userPrincipal);
-            var responsible = await ResolveResponsible(context, userPrincipal, userObj);
+
+            // Buscar el responsable vinculado
+            Responsible? responsible = null;
+            var matchedRespIds = await GetMatchedResponsibleIds(context, userId, userObj, userPrincipal);
+            if (matchedRespIds.Count > 0)
+            {
+                responsible = await context.Responsibles.AsNoTracking()
+                    .FirstOrDefaultAsync(r => r.Id == matchedRespIds[0]);
+            }
 
             return Results.Ok(new
             {
@@ -267,7 +320,7 @@ public static class GeneralDashboardEndpoints
             });
         });
 
-        // 2. KPIs personales / de órdenes
+        // 2. KPIs
         group.MapGet("/kpis", async (ClaimsPrincipal userPrincipal, GeoServDbContext context) =>
         {
             var (userId, userObj, isAdmin) = await GetUserContext(context, userPrincipal);
@@ -308,20 +361,17 @@ public static class GeneralDashboardEndpoints
             var ordenesActivas = activeOrders.Count;
             var totalOrdenes = myOrders.Count(o => o.Status?.Name != canceledStatusName);
 
-            // Progreso promedio de las órdenes activas
             var allActiveActivities = activeOrders.SelectMany(o => o.Activities ?? new List<ServiceOrderActivity>()).ToList();
             var progresoPromedio = allActiveActivities.Count > 0
                 ? Math.Round(allActiveActivities.Average(a => (double)a.ProgressPercentage), 1)
                 : 0.0;
 
-            // Distribución por estado (excluyendo Canceladas)
             var byStatus = myOrders
                 .Where(o => o.Status != null && o.Status.Name != canceledStatusName)
                 .GroupBy(o => o.Status!.Name)
                 .Select(g => new { statusName = g.Key, count = g.Count() })
                 .ToList();
 
-            // Distribución por prioridad (órdenes activas)
             var byPriority = activeOrders
                 .GroupBy(o => o.Priority.ToString())
                 .Select(g => new { priority = g.Key, count = g.Count() })
