@@ -3,14 +3,14 @@
   <!-- Topbar de bienvenida con Empresa y Usuario -->
   <div class="dashboard-topbar">
     <div class="welcome-section">
-      <div class="avatar-circle">{{ getInitials(profile?.responsibleName || profile?.userName) }}</div>
+      <div class="avatar-circle">{{ getInitials(displayName) }}</div>
       <div class="welcome-text">
         <div class="company-badge-row">
           <img *ngIf="safeLogoSvg()" [src]="safeLogoSvg()" class="company-mini-logo" alt="Logo" />
           <img *ngIf="!safeLogoSvg()" src="assets/geoserv-logo.svg" class="company-mini-logo" alt="GeoServ" />
           <span class="company-brand-name">{{ empresaConfig.empresaActual()?.nombre || 'GeoServ' }}</span>
         </div>
-        <h1 class="welcome-name">Hola, {{ profile?.responsibleName || profile?.userName }}</h1>
+        <h1 class="welcome-name">Hola, {{ displayName }}</h1>
         <p class="welcome-subtitle">
           <span *ngIf="profile?.title" class="welcome-tag">{{ profile?.title }}</span>
           <span *ngIf="profile?.position" class="welcome-tag">{{ profile?.position }}</span>

@@ -33,15 +33,22 @@ public static class GeneralDashboardEndpoints
         // Helper para extraer Nombre de usuario
         static string GetUserName(ClaimsPrincipal user)
         {
-            return user.Claims.FirstOrDefault(c =>
+            var nameClaim = user.Claims.FirstOrDefault(c =>
                 c.Type == ClaimTypes.Name ||
                 c.Type.Equals("name", StringComparison.OrdinalIgnoreCase) ||
-                c.Type.EndsWith("claims/name", StringComparison.OrdinalIgnoreCase))?.Value
-                ?? user.Claims.FirstOrDefault(c =>
+                c.Type.Equals("unique_name", StringComparison.OrdinalIgnoreCase) ||
+                c.Type.EndsWith("claims/name", StringComparison.OrdinalIgnoreCase))?.Value;
+
+            if (!string.IsNullOrWhiteSpace(nameClaim)) return nameClaim;
+
+            var emailClaim = user.Claims.FirstOrDefault(c =>
                 c.Type == ClaimTypes.Email ||
                 c.Type.Equals("email", StringComparison.OrdinalIgnoreCase) ||
-                c.Type.EndsWith("claims/emailaddress", StringComparison.OrdinalIgnoreCase))?.Value
-                ?? "Usuario";
+                c.Type.EndsWith("claims/emailaddress", StringComparison.OrdinalIgnoreCase))?.Value;
+
+            if (!string.IsNullOrWhiteSpace(emailClaim)) return emailClaim;
+
+            return "Usuario";
         }
 
         // Helper para resolver el contexto del usuario actual
@@ -78,7 +85,7 @@ public static class GeneralDashboardEndpoints
             return (userId ?? userObj?.Id, userObj, isAdmin);
         }
 
-        // Helper: resuelve el Responsible del usuario autenticado con fallback robusto
+        // Helper: resuelve el Responsible del usuario autenticado con fallback multi-candidato robusto
         static async Task<Responsible?> ResolveResponsible(GeoServDbContext context, ClaimsPrincipal userPrincipal, User? userObj)
         {
             var userId = GetUserId(userPrincipal) ?? userObj?.Id;
@@ -91,26 +98,57 @@ public static class GeneralDashboardEndpoints
                 if (resp != null) return resp;
             }
 
-            // Fallback por Nombre (exacto o ignorando mayúsculas/minúsculas)
-            var targetName = userObj?.Name ?? GetUserName(userPrincipal);
-            if (!string.IsNullOrWhiteSpace(targetName) && !targetName.Equals("Usuario", StringComparison.OrdinalIgnoreCase))
-            {
-                var trimmed = targetName.Trim();
-                var respByName = await context.Responsibles
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(r => r.Name.ToLower() == trimmed.ToLower());
+            var allResponsibles = await context.Responsibles.AsNoTracking().ToListAsync();
+            if (allResponsibles.Count == 0) return null;
 
-                if (respByName != null) return respByName;
+            // Recolectar candidatos de nombres / identificadores
+            var candidates = new List<string>();
+            if (!string.IsNullOrWhiteSpace(userObj?.Name)) candidates.Add(userObj.Name.Trim());
+
+            var claimName = GetUserName(userPrincipal);
+            if (!string.IsNullOrWhiteSpace(claimName) && !claimName.Equals("Usuario", StringComparison.OrdinalIgnoreCase))
+            {
+                candidates.Add(claimName.Trim());
             }
 
-            // Fallback si hay un único responsable registrado en la empresa y el usuario no es cliente
-            if (userObj?.Role?.Name != "Cliente")
+            var email = userObj?.Email ?? userPrincipal.Claims.FirstOrDefault(c =>
+                c.Type == ClaimTypes.Email ||
+                c.Type.Equals("email", StringComparison.OrdinalIgnoreCase) ||
+                c.Type.EndsWith("claims/emailaddress", StringComparison.OrdinalIgnoreCase))?.Value;
+
+            if (!string.IsNullOrWhiteSpace(email))
             {
-                var responsibles = await context.Responsibles.AsNoTracking().Take(2).ToListAsync();
-                if (responsibles.Count == 1)
+                var emailPrefix = email.Split('@')[0].Replace(".", " ").Replace("_", " ").Trim();
+                if (!string.IsNullOrWhiteSpace(emailPrefix)) candidates.Add(emailPrefix);
+            }
+
+            // 1. Coincidencia exacta por nombre (case-insensitive)
+            foreach (var cand in candidates)
+            {
+                var exact = allResponsibles.FirstOrDefault(r => r.Name.Trim().Equals(cand, StringComparison.OrdinalIgnoreCase));
+                if (exact != null) return exact;
+            }
+
+            // 2. Coincidencia parcial (nombre contiene parte del usuario o viceversa)
+            foreach (var cand in candidates)
+            {
+                var parts = cand.Split(new[] { ' ', ',', '-' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var part in parts)
                 {
-                    return responsibles[0];
+                    if (part.Length >= 3)
+                    {
+                        var partial = allResponsibles.FirstOrDefault(r => 
+                            r.Name.Contains(part, StringComparison.OrdinalIgnoreCase) || 
+                            cand.Contains(r.Name, StringComparison.OrdinalIgnoreCase));
+                        if (partial != null) return partial;
+                    }
                 }
+            }
+
+            // 3. Fallback: si hay un solo responsable registrado y no es Cliente
+            if (userObj?.Role?.Name != "Cliente" && allResponsibles.Count == 1)
+            {
+                return allResponsibles[0];
             }
 
             return null;

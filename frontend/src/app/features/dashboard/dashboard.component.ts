@@ -13,6 +13,7 @@ import { catchError } from 'rxjs/operators';
 import { DonutChartComponent, DonutSlice } from '../../shared/components/charts/donut-chart.component';
 import { GeneralDashboardService } from './services/general-dashboard.service';
 import { EmpresaConfigService } from '../../core/services/empresa-config.service';
+import { AuthService } from '../../core/services/auth.service';
 import {
   UserProfileResponse,
   GeneralKpisResponse,
@@ -82,9 +83,22 @@ export class DashboardComponent implements OnInit {
     'Urgente': '#dc2626'
   };
 
+  get displayName(): string {
+    const fromProfile = this.profile?.responsibleName || this.profile?.userName;
+    if (fromProfile && fromProfile.trim().length > 0 && fromProfile !== 'Usuario') {
+      return fromProfile;
+    }
+    const fromAuth = this.authService.getUserName();
+    if (fromAuth && fromAuth.trim().length > 0) {
+      return fromAuth;
+    }
+    return fromProfile || 'Usuario';
+  }
+
   constructor(
     private dashboardService: GeneralDashboardService,
     public empresaConfig: EmpresaConfigService,
+    public authService: AuthService,
     private sanitizer: DomSanitizer
   ) {}
 
