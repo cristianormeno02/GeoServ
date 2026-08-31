@@ -40,8 +40,8 @@ import { environment } from '../../../../environments/environment';
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Categoría</mat-label>
           <mat-select formControlName="categoryId" required>
-            <mat-option *ngFor="let cat of filteredCategories" [value]="cat.value">
-              {{ cat.label }}
+            <mat-option *ngFor="let cat of filteredCategories" [value]="cat.id">
+              {{ cat.name }}
             </mat-option>
           </mat-select>
         </mat-form-field>
@@ -220,5 +220,6 @@ export class MovimientoFormComponent implements OnInit {
     }
   }
 }
+
 
 
