@@ -155,22 +155,94 @@ public static class GeneralDashboardEndpoints
         }
 
         // Helper: obtiene la lista de IDs de órdenes correspondientes al usuario o admin
-        static async Task<List<Guid>> GetTargetOrderIds(GeoServDbContext context, Responsible? responsible, bool isAdmin)
+        static async Task<List<Guid>> GetTargetOrderIds(GeoServDbContext context, ClaimsPrincipal userPrincipal, User? userObj, bool isAdmin)
         {
-            if (responsible != null)
+            var userId = GetUserId(userPrincipal) ?? userObj?.Id;
+            var candidates = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            if (!string.IsNullOrWhiteSpace(userObj?.Name)) candidates.Add(userObj.Name.Trim());
+
+            var claimName = GetUserName(userPrincipal);
+            if (!string.IsNullOrWhiteSpace(claimName) && !claimName.Equals("Usuario", StringComparison.OrdinalIgnoreCase))
             {
-                return await context.ServiceOrderResponsibles
-                    .AsNoTracking()
-                    .Where(sor => sor.ResponsibleId == responsible.Id)
-                    .Select(sor => sor.ServiceOrderId)
-                    .ToListAsync();
+                candidates.Add(claimName.Trim());
             }
 
+            var email = userObj?.Email ?? userPrincipal.Claims.FirstOrDefault(c =>
+                c.Type == ClaimTypes.Email ||
+                c.Type.Equals("email", StringComparison.OrdinalIgnoreCase) ||
+                c.Type.EndsWith("claims/emailaddress", StringComparison.OrdinalIgnoreCase))?.Value;
+
+            if (!string.IsNullOrWhiteSpace(email))
+            {
+                var emailPrefix = email.Split('@')[0].Replace(".", " ").Replace("_", " ").Trim();
+                if (!string.IsNullOrWhiteSpace(emailPrefix)) candidates.Add(emailPrefix);
+            }
+
+            // 1. Obtener todos los IDs de Responsibles que coinciden con el usuario
+            var allResponsibles = await context.Responsibles.AsNoTracking().ToListAsync();
+            var matchedRespIds = new HashSet<Guid>();
+
+            foreach (var r in allResponsibles)
+            {
+                if (userId.HasValue && r.UserId.HasValue && r.UserId.Value == userId.Value)
+                {
+                    matchedRespIds.Add(r.Id);
+                    continue;
+                }
+
+                var rName = r.Name?.Trim() ?? "";
+                if (string.IsNullOrEmpty(rName)) continue;
+
+                foreach (var cand in candidates)
+                {
+                    if (rName.Equals(cand, StringComparison.OrdinalIgnoreCase) ||
+                        rName.Contains(cand, StringComparison.OrdinalIgnoreCase) ||
+                        cand.Contains(rName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        matchedRespIds.Add(r.Id);
+                        break;
+                    }
+
+                    var parts = cand.Split(new[] { ' ', ',', '-' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Any(p => p.Length >= 3 && (rName.Contains(p, StringComparison.OrdinalIgnoreCase) || p.Contains(rName, StringComparison.OrdinalIgnoreCase))))
+                    {
+                        matchedRespIds.Add(r.Id);
+                        break;
+                    }
+                }
+            }
+
+            // 2. Si se encontraron responsables coincidentes, buscar órdenes asignadas a cualquiera de ellos
+            if (matchedRespIds.Count > 0)
+            {
+                var orderIds = await context.ServiceOrderResponsibles
+                    .AsNoTracking()
+                    .Where(sor => matchedRespIds.Contains(sor.ResponsibleId))
+                    .Select(sor => sor.ServiceOrderId)
+                    .Distinct()
+                    .ToListAsync();
+
+                if (orderIds.Count > 0) return orderIds;
+            }
+
+            // 3. Fallback: Si es Administrador o si hay un solo responsable en el sistema
             if (isAdmin)
             {
                 return await context.ServiceOrders
                     .AsNoTracking()
                     .Select(o => o.Id)
+                    .ToListAsync();
+            }
+
+            if (allResponsibles.Count == 1 && userObj?.Role?.Name != "Cliente")
+            {
+                var singleRespId = allResponsibles[0].Id;
+                return await context.ServiceOrderResponsibles
+                    .AsNoTracking()
+                    .Where(sor => sor.ResponsibleId == singleRespId)
+                    .Select(sor => sor.ServiceOrderId)
+                    .Distinct()
                     .ToListAsync();
             }
 
@@ -184,40 +256,14 @@ public static class GeneralDashboardEndpoints
             var userName = userObj?.Name ?? GetUserName(userPrincipal);
             var responsible = await ResolveResponsible(context, userPrincipal, userObj);
 
-            if (responsible == null)
-            {
-                if (isAdmin)
-                {
-                    return Results.Ok(new
-                    {
-                        hasResponsible = true,
-                        userName,
-                        responsibleName = userName,
-                        position = "Administrador del Sistema",
-                        title = "Administración",
-                        specialties = "Gestión Integral"
-                    });
-                }
-
-                return Results.Ok(new
-                {
-                    hasResponsible = false,
-                    userName,
-                    responsibleName = (string?)null,
-                    position = (string?)null,
-                    title = (string?)null,
-                    specialties = (string?)null
-                });
-            }
-
             return Results.Ok(new
             {
                 hasResponsible = true,
-                userName,
-                responsibleName = responsible.Name,
-                position = responsible.Position,
-                title = responsible.Title,
-                specialties = responsible.Specialties
+                userName = !string.IsNullOrWhiteSpace(userName) ? userName : (responsible?.Name ?? "Usuario"),
+                responsibleName = responsible?.Name ?? userName,
+                position = responsible?.Position ?? (isAdmin ? "Administrador del Sistema" : "Responsable"),
+                title = responsible?.Title ?? "",
+                specialties = responsible?.Specialties ?? ""
             });
         });
 
@@ -225,14 +271,7 @@ public static class GeneralDashboardEndpoints
         group.MapGet("/kpis", async (ClaimsPrincipal userPrincipal, GeoServDbContext context) =>
         {
             var (userId, userObj, isAdmin) = await GetUserContext(context, userPrincipal);
-            var responsible = await ResolveResponsible(context, userPrincipal, userObj);
-
-            if (responsible == null && !isAdmin)
-            {
-                return Results.Ok(new { hasResponsible = false });
-            }
-
-            var myOrderIds = await GetTargetOrderIds(context, responsible, isAdmin);
+            var myOrderIds = await GetTargetOrderIds(context, userPrincipal, userObj, isAdmin);
 
             if (myOrderIds.Count == 0)
             {
@@ -306,15 +345,10 @@ public static class GeneralDashboardEndpoints
         group.MapGet("/active-orders", async (ClaimsPrincipal userPrincipal, GeoServDbContext context) =>
         {
             var (userId, userObj, isAdmin) = await GetUserContext(context, userPrincipal);
-            var responsible = await ResolveResponsible(context, userPrincipal, userObj);
-
-            if (responsible == null && !isAdmin)
-                return Results.Ok(Array.Empty<object>());
-
             var activeStatusNames = new[] { "Alta", "Presupuestada", "Aprobada", "Iniciada", "Entregada" };
             var today = DateTime.UtcNow.Date;
 
-            var myOrderIds = await GetTargetOrderIds(context, responsible, isAdmin);
+            var myOrderIds = await GetTargetOrderIds(context, userPrincipal, userObj, isAdmin);
 
             if (myOrderIds.Count == 0)
                 return Results.Ok(Array.Empty<object>());
@@ -370,14 +404,9 @@ public static class GeneralDashboardEndpoints
         group.MapGet("/pending-activities", async (ClaimsPrincipal userPrincipal, GeoServDbContext context) =>
         {
             var (userId, userObj, isAdmin) = await GetUserContext(context, userPrincipal);
-            var responsible = await ResolveResponsible(context, userPrincipal, userObj);
-
-            if (responsible == null && !isAdmin)
-                return Results.Ok(Array.Empty<object>());
-
             var activeStatusNames = new[] { "Alta", "Presupuestada", "Aprobada", "Iniciada", "Entregada" };
 
-            var myOrderIds = await GetTargetOrderIds(context, responsible, isAdmin);
+            var myOrderIds = await GetTargetOrderIds(context, userPrincipal, userObj, isAdmin);
 
             if (myOrderIds.Count == 0)
                 return Results.Ok(Array.Empty<object>());
@@ -418,14 +447,9 @@ public static class GeneralDashboardEndpoints
         group.MapGet("/recent-observations", async (ClaimsPrincipal userPrincipal, GeoServDbContext context) =>
         {
             var (userId, userObj, isAdmin) = await GetUserContext(context, userPrincipal);
-            var responsible = await ResolveResponsible(context, userPrincipal, userObj);
-
-            if (responsible == null && !isAdmin)
-                return Results.Ok(Array.Empty<object>());
-
             var sevenDaysAgo = DateTime.UtcNow.AddDays(-7);
 
-            var myOrderIds = await GetTargetOrderIds(context, responsible, isAdmin);
+            var myOrderIds = await GetTargetOrderIds(context, userPrincipal, userObj, isAdmin);
 
             if (myOrderIds.Count == 0)
                 return Results.Ok(Array.Empty<object>());
