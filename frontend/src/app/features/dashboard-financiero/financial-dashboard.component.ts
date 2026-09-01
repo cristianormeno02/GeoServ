@@ -1,4 +1,4 @@
-﻿import { Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -30,6 +30,7 @@ import {
   FixedCostEvolutionItem,
   AssetsValuationResponse
 } from './models/financial-dashboard.model';
+import { ChangeDetectorRef } from '@angular/core';
 
 @Component({
   selector: 'app-financial-dashboard',
@@ -98,7 +99,10 @@ export class FinancialDashboardComponent implements OnInit {
   providerCostsColumns: string[] = ['providerName', 'count', 'totalAmount'];
   assetsColumns: string[] = ['name', 'purchaseDate', 'purchasePrice', 'description'];
 
-  constructor(private dashboardService: FinancialDashboardService) {}
+  constructor(
+    private dashboardService: FinancialDashboardService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.loadAllData();
@@ -110,19 +114,19 @@ export class FinancialDashboardComponent implements OnInit {
 
     // 1. KPIs
     this.dashboardService.getKpis().subscribe({
-      next: res => (this.kpis = res),
-      error: err => console.error('Error fetching financial KPIs', err)
+      next: res => { this.kpis = res; this.cdr.detectChanges(); },
+      error: err => { console.error('Error fetching financial KPIs', err); this.cdr.detectChanges(); }
     });
 
     // 2. Gauges
     this.dashboardService.getMonthlyCoverageGauge().subscribe({
-      next: res => (this.coverageGauge = res),
-      error: err => console.error('Error fetching coverage gauge', err)
+      next: res => { this.coverageGauge = res; this.cdr.detectChanges(); },
+      error: err => { console.error('Error fetching coverage gauge', err); this.cdr.detectChanges(); }
     });
 
     this.dashboardService.getAverageOrderMargin(3).subscribe({
-      next: res => (this.averageMargin = res),
-      error: err => console.error('Error fetching average order margin', err)
+      next: res => { this.averageMargin = res; this.cdr.detectChanges(); },
+      error: err => { console.error('Error fetching average order margin', err); this.cdr.detectChanges(); }
     });
 
     // 3. Informe de Cobertura Mensual
@@ -138,25 +142,26 @@ export class FinancialDashboardComponent implements OnInit {
           totalPendingAmount: b.totalAmount,
           color: b.color
         }));
+        this.cdr.detectChanges();
       },
-      error: err => console.error('Error fetching fixed costs aging', err)
+      error: err => { console.error('Error fetching fixed costs aging', err); this.cdr.detectChanges(); }
     });
 
     this.dashboardService.getCommittedExpensesProjection().subscribe({
-      next: res => (this.committedExpenses = res),
-      error: err => console.error('Error fetching committed expenses', err)
+      next: res => { this.committedExpenses = res; this.cdr.detectChanges(); },
+      error: err => { console.error('Error fetching committed expenses', err); this.cdr.detectChanges(); }
     });
 
     // 5. Rentabilidad
     this.dashboardService.getProfitability().subscribe({
-      next: res => (this.profitability = res),
-      error: err => console.error('Error fetching profitability', err)
+      next: res => { this.profitability = res; this.cdr.detectChanges(); },
+      error: err => { console.error('Error fetching profitability', err); this.cdr.detectChanges(); }
     });
 
     // 6. Distribución de Ingresos
     this.dashboardService.getDistributionSummary().subscribe({
-      next: res => (this.distribution = res),
-      error: err => console.error('Error fetching distribution summary', err)
+      next: res => { this.distribution = res; this.cdr.detectChanges(); },
+      error: err => { console.error('Error fetching distribution summary', err); this.cdr.detectChanges(); }
     });
 
     // 7. Costos directos
@@ -167,8 +172,9 @@ export class FinancialDashboardComponent implements OnInit {
           label: c.categoryName,
           value: c.totalAmount
         }));
+        this.cdr.detectChanges();
       },
-      error: err => console.error('Error fetching direct costs breakdown', err)
+      error: err => { console.error('Error fetching direct costs breakdown', err); this.cdr.detectChanges(); }
     });
 
     // 8. Activos y evolución
@@ -176,23 +182,25 @@ export class FinancialDashboardComponent implements OnInit {
       next: res => {
         this.assetsValuation = res;
         this.isLoading = false;
+        this.cdr.detectChanges();
       },
       error: err => {
         console.error('Error fetching assets valuation', err);
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
 
     this.dashboardService.getFixedCostsEvolution(this.selectedPeriod).subscribe({
-      next: res => (this.fixedCostsEvolution = res),
-      error: err => console.error('Error fetching fixed costs evolution', err)
+      next: res => { this.fixedCostsEvolution = res; this.cdr.detectChanges(); },
+      error: err => { console.error('Error fetching fixed costs evolution', err); this.cdr.detectChanges(); }
     });
   }
 
   loadCoverageReport(): void {
     this.dashboardService.getMonthlyCoverageReport(this.selectedPeriod).subscribe({
-      next: res => (this.coverageReportData = res),
-      error: err => console.error('Error fetching monthly coverage report', err)
+      next: res => { this.coverageReportData = res; this.cdr.detectChanges(); },
+      error: err => { console.error('Error fetching monthly coverage report', err); this.cdr.detectChanges(); }
     });
   }
 
@@ -200,8 +208,8 @@ export class FinancialDashboardComponent implements OnInit {
     this.selectedPeriod = months;
     this.loadCoverageReport();
     this.dashboardService.getFixedCostsEvolution(months).subscribe({
-      next: res => (this.fixedCostsEvolution = res),
-      error: err => console.error('Error fetching fixed costs evolution', err)
+      next: res => { this.fixedCostsEvolution = res; this.cdr.detectChanges(); },
+      error: err => { console.error('Error fetching fixed costs evolution', err); this.cdr.detectChanges(); }
     });
   }
 
