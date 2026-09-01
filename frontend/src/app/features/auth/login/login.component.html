@@ -25,7 +25,7 @@
           <img src="/assets/geoserv-logo.svg" alt="Logo GeoServ" class="form-logo">
         </div>
         <h2>Iniciar Sesión</h2>
-        <p>Ingresa a tu cuenta de GeoServ</p>
+        <p>Ingresa a tu cuenta de <span class="capitalize">{{ empresaConfig.obtenerSubdominioActual() || 'GeoServ' }}</span></p>
       </div>
 
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
@@ -55,14 +55,22 @@
           </div>
         </div>
 
-        <div class="error-message" *ngIf="errorMessage">
+        <div class="error-message" *ngIf="errorMessage" [ngClass]="{'error': isError, 'success': !isError}">
           {{ errorMessage }}
         </div>
 
         <div class="form-actions">
-          <button mat-flat-button class="full-width login-button" type="submit" [disabled]="loginForm.invalid || isLoading">
+          <button mat-flat-button class="full-width login-button" type="submit" [disabled]="isLoading">
             {{ isLoading ? 'Ingresando...' : 'Ingresar' }}
           </button>
+        </div>
+
+        <div class="divider">
+          <span>o</span>
+        </div>
+
+        <div class="google-btn-wrapper">
+          <div id="google-btn-container"></div>
         </div>
       </form>
     </div>

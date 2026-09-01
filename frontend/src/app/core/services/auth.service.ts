@@ -49,6 +49,29 @@ export class AuthService {
       })
     );
   }
+
+  loginWithGoogle(credential: string, tenantId: string): Observable<LoginResponse> {
+    const headers = new HttpHeaders({
+      'X-Tenant-Id': tenantId
+    });
+
+    return this.http.post<LoginResponse>(`${environment.apiUrl}/auth/google`, { credential }, { headers }).pipe(
+      tap(response => {
+        if (response && response.token) {
+          // Asumimos rememberMe por defecto al usar SSO
+          const rememberMe = true;
+          localStorage.setItem(this.REMEMBER_ME_KEY, 'true');
+          this.setToken(response.token, rememberMe);
+          if (response.refreshToken) {
+            this.setRefreshToken(response.refreshToken, rememberMe);
+          }
+          if (response.user && response.user.name) {
+             this.setUserName(response.user.name, rememberMe);
+          }
+        }
+      })
+    );
+  }
   
   refreshTokenApi(token: string, refreshToken: string): Observable<RefreshTokenResponse> {
     return this.http.post<RefreshTokenResponse>(`${environment.apiUrl}/refresh-token`, { token, refreshToken });

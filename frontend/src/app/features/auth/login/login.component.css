@@ -226,3 +226,44 @@
     max-width: 50vw; /* Asegura que no tome más de la mitad */
   }
 }
+/* Utilidades para error message */
+.error-message {
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+}
+.error-message.error {
+  background-color: #FEE2E2;
+  color: #DC2626;
+  border: 1px solid #F87171;
+}
+.error-message.success {
+  background-color: #D1FAE5;
+  color: #059669;
+  border: 1px solid #34D399;
+}
+.capitalize {
+  text-transform: capitalize;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 16px 0;
+  color: #94a3b8;
+}
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #cbd5e1;
+}
+.divider span {
+  padding: 0 10px;
+}
+.google-btn-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
