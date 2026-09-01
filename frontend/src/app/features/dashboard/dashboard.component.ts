@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -110,7 +110,8 @@ export class DashboardComponent implements OnInit {
     private dashboardService: GeneralDashboardService,
     public empresaConfig: EmpresaConfigService,
     public authService: AuthService,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -131,10 +132,12 @@ export class DashboardComponent implements OnInit {
       next: (res) => {
         console.log('[Dashboard] Profile response:', res);
         this.profile = res;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('[Dashboard] Error fetching profile:', err);
         this.profile = { hasResponsible: true, userName: this.authService.getUserName() };
+        this.cdr.detectChanges();
       }
     });
 
@@ -153,6 +156,7 @@ export class DashboardComponent implements OnInit {
           value: p.count,
           color: this.priorityColors[p.priority]
         }));
+        this.cdr.detectChanges();
       },
       error: (err) => console.error('[Dashboard] Error fetching KPIs:', err)
     });
@@ -162,6 +166,7 @@ export class DashboardComponent implements OnInit {
       next: (orders) => {
         console.log('[Dashboard] Active orders response:', orders);
         this.activeOrders = orders ?? [];
+        this.cdr.detectChanges();
       },
       error: (err) => console.error('[Dashboard] Error fetching active orders:', err)
     });
@@ -171,6 +176,7 @@ export class DashboardComponent implements OnInit {
       next: (activities) => {
         console.log('[Dashboard] Pending activities response:', activities);
         this.pendingActivities = activities ?? [];
+        this.cdr.detectChanges();
       },
       error: (err) => console.error('[Dashboard] Error fetching pending activities:', err)
     });
@@ -181,10 +187,12 @@ export class DashboardComponent implements OnInit {
         console.log('[Dashboard] Recent observations response:', observations);
         this.recentObservations = observations ?? [];
         this.isLoading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('[Dashboard] Error fetching recent observations:', err);
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
