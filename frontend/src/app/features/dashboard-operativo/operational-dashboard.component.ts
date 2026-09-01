@@ -1,4 +1,4 @@
-﻿import { Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -25,6 +25,7 @@ import {
   InventoryAlertsResponse,
   UpcomingFixedCost
 } from './models/operational-dashboard.model';
+import { ChangeDetectorRef } from '@angular/core';
 
 @Component({
   selector: 'app-operational-dashboard',
@@ -82,7 +83,10 @@ export class OperationalDashboardComponent implements OnInit {
   inventoryColumns: string[] = ['description', 'unitName', 'currentStock', 'minimumStock', 'deficit'];
   upcomingCostsColumns: string[] = ['itemName', 'categoryName', 'dueDate', 'amount', 'daysRemaining'];
 
-  constructor(private dashboardService: OperationalDashboardService) {}
+  constructor(
+    private dashboardService: OperationalDashboardService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.loadAllData();
@@ -93,18 +97,18 @@ export class OperationalDashboardComponent implements OnInit {
     this.lastUpdated = new Date();
 
     this.dashboardService.getKpis().subscribe({
-      next: res => (this.kpis = res),
-      error: err => console.error('Error fetching KPIs', err)
+      next: res => { this.kpis = res; this.cdr.detectChanges(); },
+      error: err => { console.error('Error fetching KPIs', err); this.cdr.detectChanges(); }
     });
 
     this.dashboardService.getTeamCapacity().subscribe({
-      next: res => (this.teamCapacity = res),
-      error: err => console.error('Error fetching Team Capacity', err)
+      next: res => { this.teamCapacity = res; this.cdr.detectChanges(); },
+      error: err => { console.error('Error fetching Team Capacity', err); this.cdr.detectChanges(); }
     });
 
     this.dashboardService.getDeadlineCompliance().subscribe({
-      next: res => (this.deadlineCompliance = res),
-      error: err => console.error('Error fetching Deadline Compliance', err)
+      next: res => { this.deadlineCompliance = res; this.cdr.detectChanges(); },
+      error: err => { console.error('Error fetching Deadline Compliance', err); this.cdr.detectChanges(); }
     });
 
     this.dashboardService.getOrdersByServiceType().subscribe({
@@ -113,8 +117,9 @@ export class OperationalDashboardComponent implements OnInit {
           label: item.serviceTypeName,
           value: item.count
         }));
+        this.cdr.detectChanges();
       },
-      error: err => console.error('Error fetching orders by service type', err)
+      error: err => { console.error('Error fetching orders by service type', err); this.cdr.detectChanges(); }
     });
 
     this.dashboardService.getWorkloadByResponsible().subscribe({
@@ -123,34 +128,37 @@ export class OperationalDashboardComponent implements OnInit {
           label: item.responsibleName,
           value: item.activeOrdersCount
         }));
+        this.cdr.detectChanges();
       },
-      error: err => console.error('Error fetching workload by responsible', err)
+      error: err => { console.error('Error fetching workload by responsible', err); this.cdr.detectChanges(); }
     });
 
     this.loadAgingAndUncollected();
     this.loadStagnantOrders();
 
     this.dashboardService.getInventoryAlerts().subscribe({
-      next: res => (this.inventoryAlerts = res),
-      error: err => console.error('Error fetching inventory alerts', err)
+      next: res => { this.inventoryAlerts = res; this.cdr.detectChanges(); },
+      error: err => { console.error('Error fetching inventory alerts', err); this.cdr.detectChanges(); }
     });
 
     this.dashboardService.getUpcomingFixedCosts().subscribe({
       next: res => {
         this.upcomingCosts = res;
         this.isLoading = false;
+        this.cdr.detectChanges();
       },
       error: err => {
         console.error('Error fetching upcoming fixed costs', err);
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
 
   loadStagnantOrders(): void {
     this.dashboardService.getStagnantOrders(this.stagnantPage, this.stagnantPageSize).subscribe({
-      next: res => (this.stagnantOrdersData = res),
-      error: err => console.error('Error fetching stagnant orders', err)
+      next: res => { this.stagnantOrdersData = res; this.cdr.detectChanges(); },
+      error: err => { console.error('Error fetching stagnant orders', err); this.cdr.detectChanges(); }
     });
   }
 
@@ -170,8 +178,9 @@ export class OperationalDashboardComponent implements OnInit {
           totalPendingAmount: b.totalPendingAmount
         }));
         this.totalUncollectedAmountText = 'Total: $ ' + res.totalPendingAmount.toLocaleString('es-AR');
+        this.cdr.detectChanges();
       },
-      error: err => console.error('Error fetching aging uncollected orders', err)
+      error: err => { console.error('Error fetching aging uncollected orders', err); this.cdr.detectChanges(); }
     });
   }
 

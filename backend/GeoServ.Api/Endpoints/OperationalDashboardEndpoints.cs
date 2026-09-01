@@ -15,6 +15,36 @@ public static class OperationalDashboardEndpoints
     {
         var group = app.MapGroup("/api/dashboard/operational").RequireAuthorization();
 
+        app.MapGet("/api/dashboard/operational/test-kpis", async (GeoServDbContext context) =>
+        {
+            var now = DateTime.UtcNow;
+            var lowStockItemsCount = await context.Consumables
+                .AsNoTracking()
+                .Where(c => c.MinimumStock > 0)
+                .CountAsync(c => (c.InventoryMovements.Sum(m => (decimal?)m.Cantidad) ?? 0) < c.MinimumStock);
+            return Results.Ok(lowStockItemsCount);
+        });
+        
+        app.MapGet("/api/dashboard/operational/test-alerts", async (GeoServDbContext context) =>
+        {
+            var now = DateTime.UtcNow;
+            var consumablesWithStock = await context.Consumables
+                .AsNoTracking()
+                .Include(c => c.Unit)
+                .Where(c => c.MinimumStock > 0)
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Description,
+                    unitName = c.Unit.Name,
+                    minimumStock = c.MinimumStock,
+                    currentStock = c.InventoryMovements.Sum(m => (decimal?)m.Cantidad) ?? 0
+                })
+                .Where(c => c.currentStock < c.minimumStock)
+                .ToListAsync();
+            return Results.Ok(consumablesWithStock);
+        });
+
         // 1. KPI Cards con Sparkline
         group.MapGet("/kpis", async (int? periods, GeoServDbContext context) =>
         {
