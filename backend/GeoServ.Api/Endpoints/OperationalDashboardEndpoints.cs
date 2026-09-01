@@ -41,7 +41,7 @@ public static class OperationalDashboardEndpoints
             var lowStockItemsCount = await context.Consumables
                 .AsNoTracking()
                 .Where(c => c.MinimumStock > 0)
-                .CountAsync(c => c.InventoryMovements.Sum(m => (decimal?)m.Cantidad ?? 0) < c.MinimumStock);
+                .CountAsync(c => (c.InventoryMovements.Sum(m => (decimal?)m.Cantidad) ?? 0) < c.MinimumStock);
 
             // Generar series de tendencia para los últimos N períodos (semanas)
             var activeTrend = new List<decimal>();
@@ -319,7 +319,7 @@ public static class OperationalDashboardEndpoints
                     c.Description,
                     unitName = c.Unit.Name,
                     minimumStock = c.MinimumStock,
-                    currentStock = c.InventoryMovements.Sum(m => (decimal?)m.Cantidad ?? 0)
+                    currentStock = c.InventoryMovements.Sum(m => (decimal?)m.Cantidad) ?? 0
                 })
                 .Where(c => c.currentStock < c.minimumStock)
                 .ToListAsync();
