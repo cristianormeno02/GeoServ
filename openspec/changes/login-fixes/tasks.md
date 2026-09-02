@@ -15,7 +15,7 @@
 
 ## 3. Flujo de Recuperación de Contraseña (password-recovery)
 
-- [ ] 3.1 Añadir un enlace "Olvidé contraseña" en el componente de Login y verificar que navegue o abra el componente de recuperación.
-- [ ] 3.2 Crear el componente de vista para solicitar la recuperación, con un input para el correo y botón de envío, comprobando la validación del correo.
-- [ ] 3.3 Implementar el servicio/petición de solicitud de restablecimiento hacia el backend y mostrar un mensaje de éxito, verificando en red que la petición se complete.
-- [ ] 3.4 (Opcional según backend actual) Crear la vista para ingresar la nueva contraseña usando un token recibido, y verificar que permita actualizar la contraseña.
+- [x] 3.1 Añadir un enlace "Olvidé contraseña" en el componente de Login y verificar que navegue o abra el componente de recuperación.
+- [x] 3.2 Crear el componente de vista para solicitar la recuperación, con un input para el correo y botón de envío, comprobando la validación del correo.
+- [x] 3.3 Implementar el servicio/petición de solicitud de restablecimiento hacia el backend y mostrar un mensaje de éxito, verificando en red que la petición se complete.
+- [x] 3.4 (Opcional según backend actual) Crear la vista para ingresar la nueva contraseña usando un token recibido, y verificar que permita actualizar la contraseña.
