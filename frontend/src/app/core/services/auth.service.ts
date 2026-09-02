@@ -73,6 +73,17 @@ export class AuthService {
     );
   }
   
+  recoverPassword(email: string, tenantId: string): Observable<any> {
+    const headers = new HttpHeaders({
+      'X-Tenant-Id': tenantId
+    });
+    return this.http.post(`${environment.apiUrl}/auth/recover-password`, { email }, { headers });
+  }
+
+  resetPassword(token: string, newPassword: string): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/auth/reset-password`, { token, newPassword });
+  }
+
   refreshTokenApi(token: string, refreshToken: string): Observable<RefreshTokenResponse> {
     return this.http.post<RefreshTokenResponse>(`${environment.apiUrl}/refresh-token`, { token, refreshToken });
   }
