@@ -137,3 +137,6 @@ E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\bin\Debug\net9.0\Google.Apis.Co
 E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\bin\Debug\net9.0\Newtonsoft.Json.dll
 E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\bin\Debug\net9.0\System.Management.dll
 E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\bin\Debug\net9.0\runtimes\win\lib\net7.0\System.Management.dll
+E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\bin\Debug\net9.0\BouncyCastle.Cryptography.dll
+E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\bin\Debug\net9.0\MailKit.dll
+E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\bin\Debug\net9.0\MimeKit.dll

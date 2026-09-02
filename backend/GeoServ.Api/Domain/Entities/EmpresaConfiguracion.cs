@@ -8,6 +8,7 @@ public class EmpresaConfiguracion
     public string Value { get; set; } = string.Empty;
     public string ValueType { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public string Group { get; set; } = "General";
 
     public virtual Empresa? Empresa { get; set; }
 }

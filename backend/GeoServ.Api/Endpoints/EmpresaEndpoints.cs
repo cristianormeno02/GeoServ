@@ -41,7 +41,7 @@ public static class EmpresaEndpoints
             var empresa = await context.Empresas.Include(e => e.Configuraciones).FirstOrDefaultAsync();
             if (empresa == null) return Results.NotFound();
 
-            var settings = empresa.Configuraciones.ToDictionary(c => c.Key, c => new { c.Value, c.ValueType, c.Description });
+            var settings = empresa.Configuraciones.ToDictionary(c => c.Key, c => new { c.Value, c.ValueType, c.Description, c.Group });
             return Results.Ok(settings);
         })
         .RequireAuthorization()
@@ -68,7 +68,7 @@ public static class EmpresaEndpoints
 
                 foreach (var setting in request.Settings)
                 {
-                    await configService.SetValueAsync(setting.Key, setting.Value.Value, setting.Value.ValueType, setting.Value.Description);
+                    await configService.SetValueAsync(setting.Key, setting.Value.Value, setting.Value.ValueType, setting.Value.Description, setting.Value.Group ?? "General");
                 }
 
                 return Results.Ok();
@@ -154,5 +154,4 @@ public class EmpresaInitFormRequest
 }
 
 public record UpdateSettingsRequest(Dictionary<string, SettingValueDto> Settings);
-public record SettingValueDto(string Value, string ValueType = "string", string? Description = null);
-
+public record SettingValueDto(string Value, string ValueType = "string", string? Description = null, string? Group = "General");

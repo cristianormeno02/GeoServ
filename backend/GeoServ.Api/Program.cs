@@ -16,6 +16,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 });
 builder.Services.AddScoped<GeoServ.Api.Infrastructure.Services.ITenantService, GeoServ.Api.Infrastructure.Services.TenantService>();
 builder.Services.AddScoped<GeoServ.Api.Infrastructure.Services.IEmpresaConfiguracionService, GeoServ.Api.Infrastructure.Services.EmpresaConfiguracionService>();
+builder.Services.AddScoped<GeoServ.Api.Infrastructure.Services.IMailerService, GeoServ.Api.Infrastructure.Services.MailerService>();
 
 builder.Services.AddDbContext<GeoServDbContext>((serviceProvider, options) =>
 {

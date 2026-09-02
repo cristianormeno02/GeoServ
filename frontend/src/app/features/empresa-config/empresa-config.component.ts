@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+﻿import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -14,6 +14,7 @@ import { EmpresaConfigService, EmpresaConfigData } from './empresa-config.servic
 
 import { forkJoin } from 'rxjs';
 import { MatSelectModule } from '@angular/material/select';
+import { MatTabsModule } from '@angular/material/tabs';
 
 @Component({
   selector: 'app-empresa-config',
@@ -27,7 +28,8 @@ import { MatSelectModule } from '@angular/material/select';
     MatIconModule,
     MatCardModule,
     MatSnackBarModule,
-    MatSelectModule
+    MatSelectModule,
+    MatTabsModule
   ],
   templateUrl: './empresa-config.component.html',
   styleUrls: ['./empresa-config.component.css']
@@ -41,6 +43,7 @@ export class EmpresaConfigComponent implements OnInit {
 
   configForm: FormGroup;
   settingsForm: FormGroup;
+  smtpForm: FormGroup;
   selectedFile: File | null = null;
   currentLogoSvg: SafeHtml | null = null;
   isLoading = false;
@@ -58,6 +61,14 @@ export class EmpresaConfigComponent implements OnInit {
     this.settingsForm = this.fb.group({
       os_number_format: ['manual']
     });
+
+    this.smtpForm = this.fb.group({
+      smtp_host: [''],
+      smtp_port: [''],
+      smtp_user: [''],
+      smtp_password: [''],
+      smtp_from: ['']
+    });
   }
 
   ngOnInit(): void {
@@ -73,6 +84,11 @@ export class EmpresaConfigComponent implements OnInit {
             os_number_format: settings['os_number_format'].value
           });
         }
+        if (settings['smtp_host']) this.smtpForm.patchValue({ smtp_host: settings['smtp_host'].value });
+        if (settings['smtp_port']) this.smtpForm.patchValue({ smtp_port: settings['smtp_port'].value });
+        if (settings['smtp_user']) this.smtpForm.patchValue({ smtp_user: settings['smtp_user'].value });
+        if (settings['smtp_password']) this.smtpForm.patchValue({ smtp_password: settings['smtp_password'].value });
+        if (settings['smtp_from']) this.smtpForm.patchValue({ smtp_from: settings['smtp_from'].value });
       },
       error: (err) => console.error(err)
     });
@@ -80,7 +96,7 @@ export class EmpresaConfigComponent implements OnInit {
 
   private prepareSvgUrl(svg: string): SafeHtml {
     const base64 = btoa(unescape(encodeURIComponent(svg)));
-    return this.sanitizer.bypassSecurityTrustResourceUrl(`data:image/svg+xml;base64,${base64}`);
+    return this.sanitizer.bypassSecurityTrustResourceUrl(\data:image/svg+xml;base64,\\);
   }
 
   loadConfig() {
@@ -132,7 +148,7 @@ export class EmpresaConfigComponent implements OnInit {
   }
 
   saveAll() {
-    if (this.configForm.invalid || this.settingsForm.invalid) {
+    if (this.configForm.invalid || this.settingsForm.invalid || this.smtpForm.invalid) {
       return;
     }
 
@@ -157,8 +173,14 @@ export class EmpresaConfigComponent implements OnInit {
       os_number_format: {
         value: this.settingsForm.value.os_number_format,
         valueType: 'string',
-        description: 'Formato de numeración de órdenes de servicio'
-      }
+        description: 'Formato de numeración de órdenes de servicio',
+        group: 'Ordenes de Servicio'
+      },
+      smtp_host: { value: this.smtpForm.value.smtp_host, valueType: 'string', description: 'Servidor SMTP', group: 'Correo Avisos' },
+      smtp_port: { value: this.smtpForm.value.smtp_port, valueType: 'string', description: 'Puerto SMTP', group: 'Correo Avisos' },
+      smtp_user: { value: this.smtpForm.value.smtp_user, valueType: 'string', description: 'Usuario SMTP', group: 'Correo Avisos' },
+      smtp_password: { value: this.smtpForm.value.smtp_password, valueType: 'string', description: 'Contraseña SMTP', group: 'Correo Avisos' },
+      smtp_from: { value: this.smtpForm.value.smtp_from, valueType: 'string', description: 'Remitente', group: 'Correo Avisos' }
     };
 
     // 3. Ejecutar ambas peticiones en paralelo

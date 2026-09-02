@@ -182,7 +182,7 @@ public static class AuthEndpoints
         .WithName("RefreshToken")
         .WithOpenApi();
 
-        app.MapPost("/api/auth/recover-password", async (RecoverPasswordRequest request, GeoServDbContext context) =>
+        app.MapPost("/api/auth/recover-password", async (RecoverPasswordRequest request, GeoServDbContext context, GeoServ.Api.Infrastructure.Services.IMailerService mailer) =>
         {
             var user = await context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
             if (user == null)
@@ -191,9 +191,19 @@ public static class AuthEndpoints
                 return Results.Ok(new { message = "Si el correo existe, se enviarán las instrucciones." });
             }
 
-            // Aquí se debería generar un token temporal, guardarlo y enviar un correo.
-            // Para simplificar (al no tener SMTP real conectado ahora), devolveremos Ok
-            // TODO: Implementar lógica de envío de correo
+            // Aquí se debería generar un token temporal, guardarlo
+            var token = Guid.NewGuid().ToString();
+            
+            try 
+            {
+                await mailer.SendPasswordRecoveryEmailAsync(user.Email, token);
+            } 
+            catch (Exception ex)
+            {
+                // Para no revelar que falló el email o evitar romper el flujo
+                Console.WriteLine("Error enviando email: " + ex.Message);
+            }
+
             return Results.Ok(new { message = "Instrucciones enviadas." });
         })
         .WithName("RecoverPassword")
