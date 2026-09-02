@@ -59,6 +59,73 @@ public static class AuthEndpoints
         .WithName("Login")
         .WithOpenApi();
 
+        app.MapPost("/api/auth/google", async (GoogleLoginRequest request, GeoServDbContext context, IConfiguration configuration) =>
+        {
+            var googleClientId = configuration["Google:ClientId"];
+            if (string.IsNullOrEmpty(googleClientId))
+            {
+                return Results.Problem("La configuración de Google SSO no está establecida.", statusCode: 500);
+            }
+
+            Google.Apis.Auth.GoogleJsonWebSignature.Payload payload;
+            try
+            {
+                payload = await Google.Apis.Auth.GoogleJsonWebSignature.ValidateAsync(request.Credential, new Google.Apis.Auth.GoogleJsonWebSignature.ValidationSettings
+                {
+                    Audience = new[] { googleClientId }
+                });
+            }
+            catch (Exception ex)
+            {
+                return Results.Unauthorized();
+            }
+
+            // payload.Email contiene el correo del usuario validado
+            var user = await context.Users.FirstOrDefaultAsync(u => u.Email == payload.Email);
+            if (user == null)
+            {
+                // Si quieres crear el usuario automáticamente, podrías hacerlo aquí
+                return Results.Unauthorized(); // Por ahora devolvemos Unauthorized si no existe en el sistema
+            }
+
+            var jwtSettings = configuration.GetSection("Jwt");
+            var key = Encoding.ASCII.GetBytes(jwtSettings["Key"] ?? throw new InvalidOperationException("Jwt Key is missing"));
+            
+            var tenantId = request.TenantId; 
+            
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim(ClaimTypes.Name, user.Name ?? ""),
+                    new Claim("TenantId", tenantId)
+                }),
+                Expires = DateTime.UtcNow.AddHours(8),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
+                Issuer = jwtSettings["Issuer"],
+                Audience = jwtSettings["Audience"]
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+
+            var refreshToken = GenerateRefreshToken();
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+            await context.SaveChangesAsync();
+
+            return Results.Ok(new
+            {
+                Token = tokenHandler.WriteToken(token),
+                RefreshToken = refreshToken,
+                User = new { user.Id, user.Name, user.Email }
+            });
+        })
+        .WithName("GoogleLogin")
+        .WithOpenApi();
+
         app.MapPost("/api/refresh-token", async (RefreshTokenRequest request, GeoServDbContext context) =>
         {
             var principal = GetPrincipalFromExpiredToken(request.Token, configuration);
@@ -170,4 +237,9 @@ public class RefreshTokenRequest
 {
     public string Token { get; set; } = string.Empty;
     public string RefreshToken { get; set; } = string.Empty;
+}
+public class GoogleLoginRequest
+{
+    public string Credential { get; set; } = string.Empty;
+    public string TenantId { get; set; } = string.Empty;
 }
