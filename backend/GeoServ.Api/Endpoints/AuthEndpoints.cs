@@ -200,8 +200,8 @@ public static class AuthEndpoints
             } 
             catch (Exception ex)
             {
-                // Para no revelar que falló el email o evitar romper el flujo
                 Console.WriteLine("Error enviando email: " + ex.Message);
+                return Results.Problem(detail: "No se pudo enviar el correo de recuperación. Verifique la configuración del servidor de correo.", statusCode: 500);
             }
 
             return Results.Ok(new { message = "Instrucciones enviadas." });

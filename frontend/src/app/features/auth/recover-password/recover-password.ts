@@ -70,7 +70,7 @@ export class RecoverPassword {
         console.error('Error al recuperar contraseña:', err);
         this.isLoading = false;
         this.isError = true;
-        this.errorMessage = 'No se pudo enviar el correo de recuperación. Intenta nuevamente.';
+        this.errorMessage = err.error?.detail || err.error?.title || 'No se pudo enviar el correo de recuperación. Intenta nuevamente.';
       }
     });
   }
