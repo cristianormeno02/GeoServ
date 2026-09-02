@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -96,7 +96,7 @@ export class EmpresaConfigComponent implements OnInit {
 
   private prepareSvgUrl(svg: string): SafeHtml {
     const base64 = btoa(unescape(encodeURIComponent(svg)));
-    return this.sanitizer.bypassSecurityTrustResourceUrl(\data:image/svg+xml;base64,\\);
+    return this.sanitizer.bypassSecurityTrustResourceUrl(`data:image/svg+xml;base64,${base64}`);
   }
 
   loadConfig() {
