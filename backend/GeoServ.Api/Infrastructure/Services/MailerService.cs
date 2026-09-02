@@ -1,4 +1,4 @@
-﻿using MailKit.Net.Smtp;
+using MailKit.Net.Smtp;
 using MimeKit;
 using GeoServ.Api.Infrastructure.Services;
 
@@ -46,10 +46,14 @@ public class MailerService : IMailerService
         };
 
         using var client = new SmtpClient();
-        await client.ConnectAsync(host, port, MailKit.Security.SecureSocketOptions.StartTls);
-        await client.AuthenticateAsync(user, password);
-        await client.SendAsync(message);
-        await client.DisconnectAsync(true);
+        client.Timeout = 10000; // 10 segundos de timeout para no bloquear la app
+        
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        
+        await client.ConnectAsync(host, port, MailKit.Security.SecureSocketOptions.Auto, cts.Token);
+        await client.AuthenticateAsync(user, password, cts.Token);
+        await client.SendAsync(message, cts.Token);
+        await client.DisconnectAsync(true, cts.Token);
     }
 }
 
