@@ -1,4 +1,16 @@
-/* You can add global styles to this file, and also import other style files */
+
+/* Tooltip Personalizado para Dashboard */
+.custom-help-tooltip {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+  font-size: 13px !important;
+  padding: 10px 14px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  line-height: 1.4 !important;
+  max-width: 280px !important;
+  text-align: center;
+}
 
 :root {
   /* Identidad */

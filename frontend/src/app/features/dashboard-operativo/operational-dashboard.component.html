@@ -1,9 +1,15 @@
-﻿<div class="dashboard-container">
+<div class="dashboard-container">
   <!-- Top Bar -->
   <div class="dashboard-topbar">
-    <div class="topbar-title-section">
-      <h1 class="page-title">Dashboard Operativo</h1>
-      <p class="page-subtitle">Supervisión diaria de carga de trabajo, alertas de plazos, inventario y cobranzas</p>
+    <div class="topbar-title-section" style="display: flex; align-items: center; gap: 16px;">
+      <div class="logo-circle">
+        <img *ngIf="safeLogoSvg()" [src]="safeLogoSvg()" alt="Logo Empresa">
+        <img *ngIf="!safeLogoSvg()" src="assets/geoserv-logo.svg" alt="GeoServ Logo" onerror="this.style.display='none'; this.parentElement.innerHTML='<mat-icon style=\\'font-size: 40px; width: 40px; height: 40px; color: #0284c7;\\'>business</mat-icon>';">
+      </div>
+      <div>
+        <h1 class="page-title">Dashboard Operativo</h1>
+        <p class="page-subtitle">Supervisión diaria de carga de trabajo, alertas de plazos, inventario y cobranzas</p>
+      </div>
     </div>
     <div class="topbar-actions">
       <span class="last-sync-text">
@@ -17,20 +23,19 @@
     </div>
   </div>
 
-  <!-- Row 1: KPI Cards con Sparkline -->
+  <!-- Row 1: KPI Cards -->
   <div class="kpi-grid">
     <app-sparkline-card
       title="Órdenes Activas"
       subtitle="En progreso o presupuesto"
       [value]="kpis?.activeOrders?.value ?? 0"
       unit="OS"
-      [trend]="kpis?.activeOrders?.trend ?? []"
       icon="assignment"
       iconColor="#0284c7"
       iconBgColor="#e0f2fe"
-      sparkColor="#0284c7"
       badgeText="En curso"
       semanticState="neutral"
+      helpText="Cantidad total de órdenes de servicio que se encuentran actualmente en progreso o en fase de presupuesto."
     ></app-sparkline-card>
 
     <app-sparkline-card
@@ -38,13 +43,12 @@
       subtitle="> 7 días en mismo estado"
       [value]="kpis?.stagnantOrders?.value ?? 0"
       unit="OS"
-      [trend]="kpis?.stagnantOrders?.trend ?? []"
       icon="warning"
       iconColor="#ef4444"
       iconBgColor="#fee2e2"
-      sparkColor="#ef4444"
       [badgeText]="(kpis?.stagnantOrders?.value ?? 0) > 0 ? 'Riesgo demoras' : 'Al día'"
       [semanticState]="(kpis?.stagnantOrders?.value ?? 0) > 0 ? 'negative' : 'positive'"
+      helpText="Órdenes que no han cambiado de estado en los últimos 7 días. Valores altos indican cuellos de botella en la operación."
     ></app-sparkline-card>
 
     <app-sparkline-card
@@ -52,13 +56,12 @@
       subtitle="Facturación / saldo pendiente"
       [value]="kpis?.uncollectedOrders?.value ?? 0"
       unit="OS"
-      [trend]="kpis?.uncollectedOrders?.trend ?? []"
       icon="payments"
       iconColor="#f59e0b"
       iconBgColor="#fef3c7"
-      sparkColor="#f59e0b"
       badgeText="Cobranza"
       semanticState="warning"
+      helpText="Órdenes que ya fueron entregadas al cliente pero aún tienen un saldo monetario pendiente de cobro."
     ></app-sparkline-card>
 
     <app-sparkline-card
@@ -66,63 +69,90 @@
       subtitle="Bajo stock mínimo"
       [value]="kpis?.lowStockItems?.value ?? 0"
       unit="ítems"
-      [trend]="kpis?.lowStockItems?.trend ?? []"
       icon="inventory_2"
       iconColor="#8b5cf6"
       iconBgColor="#f3e8ff"
-      sparkColor="#8b5cf6"
       [badgeText]="(kpis?.lowStockItems?.value ?? 0) > 0 ? 'Reponer' : 'Stock OK'"
       [semanticState]="(kpis?.lowStockItems?.value ?? 0) > 0 ? 'negative' : 'positive'"
+      helpText="Cantidad de insumos cuyo stock actual se encuentra por debajo del límite mínimo de seguridad configurado (o por debajo de 0 si no se configuró)."
     ></app-sparkline-card>
   </div>
 
   <!-- Row 2: Gauges & Dona -->
   <div class="middle-charts-grid">
-    <app-gauge-chart
-      title="Capacidad del Equipo"
-      [value]="teamCapacity?.capacityPercentage ?? 0"
-      [subtitle]="(teamCapacity?.activeOrders ?? 0) + ' de ' + (teamCapacity?.maxCapacity ?? 50) + ' órdenes'"
-      [statusLabel]="teamCapacity?.semanticStatus"
-      [semanticStatus]="teamCapacity?.semanticStatus"
-      leftLabel="0 OS"
-      [rightLabel]="(teamCapacity?.maxCapacity ?? 50) + ' OS'"
-    ></app-gauge-chart>
+    <div style="position: relative;">
+      <app-gauge-chart
+        title="Capacidad del Equipo"
+        [value]="teamCapacity?.capacityPercentage ?? 0"
+        [subtitle]="(teamCapacity?.activeOrders ?? 0) + ' de ' + (teamCapacity?.maxCapacity ?? 10) + ' órdenes'"
+        [statusLabel]="teamCapacity?.semanticStatus"
+        [semanticStatus]="teamCapacity?.semanticStatus"
+        leftLabel="0 OS"
+        [rightLabel]="(teamCapacity?.maxCapacity ?? 10) + ' OS'"
+      ></app-gauge-chart>
+      <button mat-icon-button class="widget-help-btn" matTooltip="Porcentaje de la capacidad máxima de trabajo que está siendo utilizada actualmente." matTooltipPosition="above" matTooltipClass="custom-help-tooltip">
+        <mat-icon>help_outline</mat-icon>
+      </button>
+    </div>
 
-    <app-gauge-chart
-      title="Cumplimiento de Plazos"
-      [value]="deadlineCompliance?.compliancePercentage ?? 100"
-      [subtitle]="(deadlineCompliance?.onTimeCount ?? 0) + ' a tiempo / ' + (deadlineCompliance?.delayedCount ?? 0) + ' retrasadas'"
-      [statusLabel]="(deadlineCompliance?.compliancePercentage ?? 100) >= 80 ? 'Óptimo' : 'Alerta'"
-      [semanticStatus]="(deadlineCompliance?.compliancePercentage ?? 100) >= 80 ? 'normal' : 'warning'"
-      leftLabel="0%"
-      rightLabel="100%"
-    ></app-gauge-chart>
+    <div style="position: relative;">
+      <app-gauge-chart
+        title="Cumplimiento de Plazos"
+        [value]="deadlineCompliance?.compliancePercentage ?? 100"
+        [subtitle]="(deadlineCompliance?.onTimeCount ?? 0) + ' a tiempo / ' + (deadlineCompliance?.delayedCount ?? 0) + ' retrasadas'"
+        [statusLabel]="(deadlineCompliance?.compliancePercentage ?? 100) >= 80 ? 'Óptimo' : 'Alerta'"
+        [semanticStatus]="(deadlineCompliance?.compliancePercentage ?? 100) >= 80 ? 'normal' : 'warning'"
+        leftLabel="0%"
+        rightLabel="100%"
+      ></app-gauge-chart>
+      <button mat-icon-button class="widget-help-btn" matTooltip="Proporción de órdenes de servicio que se encuentran dentro del plazo máximo tolerable de permanencia en su estado actual." matTooltipPosition="above" matTooltipClass="custom-help-tooltip">
+        <mat-icon>help_outline</mat-icon>
+      </button>
+    </div>
 
-    <app-donut-chart
-      title="Órdenes por Tipo de Servicio"
-      centerSubtitle="Activas"
-      [slices]="serviceTypeSlices"
-    ></app-donut-chart>
+    <div style="position: relative;">
+      <app-donut-chart
+        title="Órdenes por Tipo de Servicio"
+        centerSubtitle="Activas"
+        [slices]="serviceTypeSlices"
+      ></app-donut-chart>
+      <button mat-icon-button class="widget-help-btn" matTooltip="Distribución porcentual y cantidad de órdenes de servicio activas, agrupadas según el tipo de servicio." matTooltipPosition="above" matTooltipClass="custom-help-tooltip">
+        <mat-icon>help_outline</mat-icon>
+      </button>
+    </div>
   </div>
 
   <!-- Row 3: Aging & Carga de Trabajo -->
   <div class="bottom-charts-grid">
-    <app-aging-bar-chart
-      title="Antigüedad de Cobranza (Entregadas sin cobrar)"
-      [totalAmountText]="totalUncollectedAmountText"
-      [buckets]="agingBuckets"
-    ></app-aging-bar-chart>
+    <div style="position: relative;">
+      <app-aging-bar-chart
+        title="Antigüedad de Cobranza (Entregadas sin cobrar)"
+        [totalAmountText]="totalUncollectedAmountText"
+        [buckets]="agingBuckets"
+      ></app-aging-bar-chart>
+      <button mat-icon-button class="widget-help-btn" matTooltip="Clasificación de órdenes entregadas con saldo pendiente según su antigüedad, mostrando la deuda por rangos de días." matTooltipPosition="above" matTooltipClass="custom-help-tooltip">
+        <mat-icon>help_outline</mat-icon>
+      </button>
+    </div>
 
-    <app-horizontal-bar-chart
-      title="Carga de Trabajo por Responsable"
-      [items]="workloadItems"
-    ></app-horizontal-bar-chart>
+    <div style="position: relative;">
+      <app-horizontal-bar-chart
+        title="Carga de Trabajo por Responsable"
+        [items]="workloadItems"
+      ></app-horizontal-bar-chart>
+      <button mat-icon-button class="widget-help-btn" matTooltip="Cantidad de órdenes de servicio activas asignadas actualmente a cada responsable." matTooltipPosition="above" matTooltipClass="custom-help-tooltip">
+        <mat-icon>help_outline</mat-icon>
+      </button>
+    </div>
   </div>
 
   <!-- Row 4: Tablas de Monitoreo -->
   <div class="tables-grid">
     <!-- Tabla de Órdenes Estancadas -->
-    <mat-card class="table-card">
+    <mat-card class="table-card" style="position: relative;">
+      <button mat-icon-button class="widget-help-btn" matTooltip="Listado detallado de las órdenes de servicio que superaron el tiempo máximo de permanencia en su estado actual, indicando los días de demora." matTooltipPosition="above" matTooltipClass="custom-help-tooltip">
+        <mat-icon>help_outline</mat-icon>
+      </button>
       <div class="card-header">
         <div class="header-left">
           <mat-icon class="header-icon warn">hourglass_top</mat-icon>
@@ -184,7 +214,10 @@
     </mat-card>
 
     <!-- Tabla de Insumos Críticos -->
-    <mat-card class="table-card">
+    <mat-card class="table-card" style="position: relative;">
+      <button mat-icon-button class="widget-help-btn" matTooltip="Listado de insumos que se encuentran por debajo del stock mínimo requerido, incluyendo el déficit calculado." matTooltipPosition="above" matTooltipClass="custom-help-tooltip">
+        <mat-icon>help_outline</mat-icon>
+      </button>
       <div class="card-header">
         <div class="header-left">
           <mat-icon class="header-icon purple">inventory_2</mat-icon>
@@ -236,7 +269,10 @@
     </mat-card>
 
     <!-- Tabla de Costos Fijos Próximos a Vencer -->
-    <mat-card class="table-card">
+    <mat-card class="table-card" style="position: relative;">
+      <button mat-icon-button class="widget-help-btn" matTooltip="Lista de los costos fijos (servicios, alquileres, etc.) cuyo vencimiento ocurre en los próximos 15 días." matTooltipPosition="above" matTooltipClass="custom-help-tooltip">
+        <mat-icon>help_outline</mat-icon>
+      </button>
       <div class="card-header">
         <div class="header-left">
           <mat-icon class="header-icon blue">receipt_long</mat-icon>

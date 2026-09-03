@@ -20,7 +20,6 @@ public static class OperationalDashboardEndpoints
             var now = DateTime.UtcNow;
             var lowStockItemsCount = await context.Consumables
                 .AsNoTracking()
-                .Where(c => c.MinimumStock > 0)
                 .CountAsync(c => (c.InventoryMovements.Sum(m => (decimal?)m.Cantidad) ?? 0) < c.MinimumStock);
             return Results.Ok(lowStockItemsCount);
         });
@@ -31,7 +30,6 @@ public static class OperationalDashboardEndpoints
             var consumablesWithStock = await context.Consumables
                 .AsNoTracking()
                 .Include(c => c.Unit)
-                .Where(c => c.MinimumStock > 0)
                 .Select(c => new
                 {
                     c.Id,
@@ -45,10 +43,9 @@ public static class OperationalDashboardEndpoints
             return Results.Ok(consumablesWithStock);
         });
 
-        // 1. KPI Cards con Sparkline
-        group.MapGet("/kpis", async (int? periods, GeoServDbContext context) =>
+        // 1. KPI Cards sin Sparkline
+        group.MapGet("/kpis", async (GeoServDbContext context) =>
         {
-            var numPeriods = periods.HasValue && periods.Value > 0 ? periods.Value : 6;
             var now = DateTime.UtcNow;
 
             // Órdenes activas
@@ -67,43 +64,16 @@ public static class OperationalDashboardEndpoints
                 .AsNoTracking()
                 .CountAsync(o => o.Status.Name != "Cancelada" && o.TotalAmount > o.CollectedAmount && (o.Status.Name == "Entregada" || o.ActualEndDate != null));
 
-            // Insumos bajo stock mínimo
             var lowStockItemsCount = await context.Consumables
                 .AsNoTracking()
-                .Where(c => c.MinimumStock > 0)
                 .CountAsync(c => (c.InventoryMovements.Sum(m => (decimal?)m.Cantidad) ?? 0) < c.MinimumStock);
-
-            // Generar series de tendencia para los últimos N períodos (semanas)
-            var activeTrend = new List<decimal>();
-            var stagnantTrend = new List<decimal>();
-            var uncollectedTrend = new List<decimal>();
-            var lowStockTrend = new List<decimal>();
-
-            for (int i = numPeriods - 1; i >= 0; i--)
-            {
-                var periodEnd = now.AddDays(-i * 7);
-                var periodStart = periodEnd.AddDays(-7);
-
-                var activeInPeriod = await context.ServiceOrders
-                    .AsNoTracking()
-                    .CountAsync(o => o.CreatedAt <= periodEnd && (o.ActualEndDate == null || o.ActualEndDate >= periodStart));
-
-                var uncollectedInPeriod = await context.ServiceOrders
-                    .AsNoTracking()
-                    .CountAsync(o => o.CreatedAt <= periodEnd && (o.CollectionDate == null || o.CollectionDate >= periodStart) && o.Status.Name != "Cancelada");
-
-                activeTrend.Add(activeInPeriod);
-                stagnantTrend.Add(Math.Max(0, (int)(activeInPeriod * 0.2m))); // Estimación proporcional para tendencia
-                uncollectedTrend.Add(uncollectedInPeriod);
-                lowStockTrend.Add(lowStockItemsCount);
-            }
 
             return Results.Ok(new
             {
-                activeOrders = new { value = activeOrdersCount, trend = activeTrend },
-                stagnantOrders = new { value = stagnantOrdersCount, trend = stagnantTrend },
-                uncollectedOrders = new { value = uncollectedOrdersCount, trend = uncollectedTrend },
-                lowStockItems = new { value = lowStockItemsCount, trend = lowStockTrend }
+                activeOrders = new { value = activeOrdersCount },
+                stagnantOrders = new { value = stagnantOrdersCount },
+                uncollectedOrders = new { value = uncollectedOrdersCount },
+                lowStockItems = new { value = lowStockItemsCount }
             });
         });
 
@@ -118,7 +88,7 @@ public static class OperationalDashboardEndpoints
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Key == "OPERATIONAL_CAPACITY_MAX_ORDERS");
 
-            var maxCapacity = 50;
+            var maxCapacity = 10;
             if (config != null && int.TryParse(config.Value, out var parsedCap) && parsedCap > 0)
             {
                 maxCapacity = parsedCap;
@@ -342,7 +312,6 @@ public static class OperationalDashboardEndpoints
             var consumablesWithStock = await context.Consumables
                 .AsNoTracking()
                 .Include(c => c.Unit)
-                .Where(c => c.MinimumStock > 0)
                 .Select(c => new
                 {
                     c.Id,

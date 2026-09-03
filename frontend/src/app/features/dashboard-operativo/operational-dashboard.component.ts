@@ -25,7 +25,9 @@ import {
   InventoryAlertsResponse,
   UpcomingFixedCost
 } from './models/operational-dashboard.model';
-import { ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectorRef, computed } from '@angular/core';
+import { EmpresaConfigService } from '../../core/services/empresa-config.service';
+import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-operational-dashboard',
@@ -85,8 +87,17 @@ export class OperationalDashboardComponent implements OnInit {
 
   constructor(
     private dashboardService: OperationalDashboardService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    public empresaConfig: EmpresaConfigService,
+    private sanitizer: DomSanitizer
   ) {}
+
+  safeLogoSvg = computed(() => {
+    const svg = this.empresaConfig.empresaActual()?.logoSvg;
+    if (!svg) return null;
+    const base64 = btoa(unescape(encodeURIComponent(svg)));
+    return this.sanitizer.bypassSecurityTrustResourceUrl(`data:image/svg+xml;base64,${base64}`);
+  });
 
   ngOnInit(): void {
     this.loadAllData();

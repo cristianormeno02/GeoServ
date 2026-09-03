@@ -1,12 +1,14 @@
-﻿import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-sparkline-card',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatIconModule],
+  imports: [CommonModule, MatCardModule, MatIconModule, MatTooltipModule, MatButtonModule],
   template: `
     <mat-card class="kpi-card" [ngClass]="semanticState || 'neutral'">
       <div class="kpi-header">
@@ -21,7 +23,7 @@ import { MatIconModule } from '@angular/material/icon';
 
       <div class="kpi-body">
         <div class="kpi-value-container">
-          <span class="kpi-value">{{ formattedValue }}</span>
+          <span class="kpi-value" [style.color]="iconColor">{{ formattedValue }}</span>
           <span *ngIf="unit" class="kpi-unit">{{ unit }}</span>
         </div>
 
@@ -31,17 +33,10 @@ import { MatIconModule } from '@angular/material/icon';
         </div>
       </div>
 
-      <div class="sparkline-container" *ngIf="trend && trend.length > 1">
-        <svg viewBox="0 0 120 36" class="sparkline-svg" preserveAspectRatio="none">
-          <defs>
-            <linearGradient [id]="gradientId" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" [attr.stop-color]="sparkColor" stop-opacity="0.35"/>
-              <stop offset="100%" [attr.stop-color]="sparkColor" stop-opacity="0.0"/>
-            </linearGradient>
-          </defs>
-          <path [attr.d]="areaPath" [attr.fill]="'url(#' + gradientId + ')'" />
-          <path [attr.d]="linePath" fill="none" [attr.stroke]="sparkColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
+      <div class="kpi-help-button" *ngIf="helpText">
+        <button mat-icon-button [matTooltip]="helpText" matTooltipPosition="above" matTooltipClass="custom-help-tooltip">
+          <mat-icon>help_outline</mat-icon>
+        </button>
       </div>
     </mat-card>
   `,
@@ -107,9 +102,8 @@ import { MatIconModule } from '@angular/material/icon';
       gap: 4px;
     }
     .kpi-value {
-      font-size: 28px;
+      font-size: 56px;
       font-weight: 700;
-      color: #1e293b;
       line-height: 1.1;
     }
     .kpi-unit {
@@ -136,19 +130,19 @@ import { MatIconModule } from '@angular/material/icon';
     .kpi-badge.warning { background: #fef3c7; color: #b45309; }
     .kpi-badge.neutral { background: #f1f5f9; color: #475569; }
 
-    .sparkline-container {
-      height: 36px;
-      width: 100%;
-      margin-top: 6px;
+    .kpi-help-button {
+      position: absolute;
+      bottom: 4px;
+      right: 4px;
+      transform: scale(0.8);
+      opacity: 0.5;
     }
-    .sparkline-svg {
-      width: 100%;
-      height: 100%;
-      overflow: visible;
+    .kpi-help-button:hover {
+      opacity: 1;
     }
   `]
 })
-export class SparklineCardComponent implements OnChanges {
+export class SparklineCardComponent {
   @Input() title: string = '';
   @Input() subtitle?: string;
   @Input() value: number | string = 0;
@@ -161,52 +155,12 @@ export class SparklineCardComponent implements OnChanges {
   @Input() semanticState?: 'positive' | 'negative' | 'warning' | 'neutral' = 'neutral';
   @Input() badgeText?: string;
   @Input() badgeIcon: string = 'trending_flat';
-
-  gradientId = 'spark-grad-' + Math.random().toString(36).substring(2, 9);
-  linePath: string = '';
-  areaPath: string = '';
+  @Input() helpText?: string;
 
   get formattedValue(): string {
     if (typeof this.value === 'number') {
       return this.value.toLocaleString();
     }
     return this.value || '0';
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['trend'] || changes['value']) {
-      this.calculateSparkline();
-    }
-  }
-
-  private calculateSparkline(): void {
-    if (!this.trend || this.trend.length < 2) {
-      this.linePath = '';
-      this.areaPath = '';
-      return;
-    }
-
-    const min = Math.min(...this.trend);
-    const max = Math.max(...this.trend);
-    const range = max - min === 0 ? 1 : max - min;
-    const width = 120;
-    const height = 36;
-    const padding = 4;
-    const effectiveHeight = height - padding * 2;
-
-    const points = this.trend.map((val, idx) => {
-      const x = (idx / (this.trend.length - 1)) * width;
-      const normalized = (val - min) / range;
-      const y = height - padding - normalized * effectiveHeight;
-      return { x, y };
-    });
-
-    let path = `M ${points[0].x} ${points[0].y}`;
-    for (let i = 1; i < points.length; i++) {
-      path += ` L ${points[i].x.toFixed(1)} ${points[i].y.toFixed(1)}`;
-    }
-
-    this.linePath = path;
-    this.areaPath = `${path} L ${width} ${height} L 0 ${height} Z`;
   }
 }
