@@ -30,7 +30,9 @@ import {
   FixedCostEvolutionItem,
   AssetsValuationResponse
 } from './models/financial-dashboard.model';
-import { ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectorRef, computed } from '@angular/core';
+import { DomSanitizer } from '@angular/platform-browser';
+import { EmpresaConfigService } from '../../core/services/empresa-config.service';
 
 @Component({
   selector: 'app-financial-dashboard',
@@ -59,6 +61,24 @@ import { ChangeDetectorRef } from '@angular/core';
 export class FinancialDashboardComponent implements OnInit {
   isLoading = true;
   lastUpdated: Date = new Date();
+
+  // Textos explicativos para los reportes
+  infoTexts = {
+    saldoCuentas: 'Total disponible consolidado en todas las cuentas bancarias de la empresa al cierre de la última actualización.',
+    ingresosMes: 'Monto total percibido por cobranzas durante el mes en curso.',
+    resultadoMes: 'Diferencia neta entre los ingresos percibidos y todos los egresos (fijos y variables) correspondientes al mes.',
+    saldoAcumulado: 'Acumulación de superávit o déficit operativo arrastrado desde el inicio del registro.',
+    cobertura: 'Este medidor muestra qué porcentaje de los costos totales del mes ha sido cubierto con los ingresos percibidos. Un valor de 100% o superior indica que la empresa ha logrado cubrir todos sus compromisos.',
+    margen: 'Representa el promedio del margen de ganancia de todas las órdenes cobradas en el período. Un margen alto sugiere buena rentabilidad operativa por servicio prestado.',
+    coberturaMensual: 'El gráfico principal muestra la evolución histórica de ingresos (barras) frente a los costos totales (línea roja). El área sombreada representa el arrastre acumulado: si está por encima de cero es superávit, por debajo es déficit.',
+    agingGastos: 'Desglosa los gastos fijos pendientes de pago organizados por tiempo de vencimiento. Ayuda a identificar deuda atrasada o próxima a vencer.',
+    proyeccionEgresos: 'Muestra los compromisos de pago futuros ya asumidos (costos fijos, impuestos, cuotas) distribuidos en los próximos 30, 60 y 90 días para previsibilidad del flujo de caja.',
+    costosDirectos: 'Visualiza la proporción de cada categoría de costo directo (materiales, mano de obra, viáticos, etc.) respecto al total de costos directos de las operaciones.',
+    topOrdenes: 'Lista las órdenes de servicio que generaron mayor ganancia neta en el período evaluado, descontando sus costos directos asociados.',
+    bottomOrdenes: 'Identifica las órdenes de servicio con menor margen de ganancia o pérdida, lo cual requiere atención para optimizar presupuestos futuros.',
+    distribucionIngresos: 'Compara los ingresos facturados o presupuestados (Esperado) contra los cobros reales (Real) según diferentes conceptos de facturación.',
+    patrimonioActivos: 'Detalla el valor de los bienes de capital adquiridos por la empresa (vehículos, maquinaria, equipos) basados en su precio histórico de compra.'
+  };
 
   // Period Selector
   selectedPeriod: number = 12; // 3, 6, 12 months
@@ -101,8 +121,17 @@ export class FinancialDashboardComponent implements OnInit {
 
   constructor(
     private dashboardService: FinancialDashboardService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    public empresaConfig: EmpresaConfigService,
+    private sanitizer: DomSanitizer
   ) {}
+
+  safeLogoSvg = computed(() => {
+    const svg = this.empresaConfig.empresaActual()?.logoSvg;
+    if (!svg) return null;
+    const base64 = btoa(unescape(encodeURIComponent(svg)));
+    return this.sanitizer.bypassSecurityTrustResourceUrl(`data:image/svg+xml;base64,${base64}`);
+  });
 
   ngOnInit(): void {
     this.loadAllData();

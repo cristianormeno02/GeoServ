@@ -1,4 +1,4 @@
-﻿import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 
@@ -19,7 +19,7 @@ export interface DonutSlice {
     <mat-card class="donut-card">
       <div class="donut-header">
         <span class="donut-title">{{ title }}</span>
-        <span class="donut-total" *ngIf="totalCount > 0">Total: {{ totalCount }}</span>
+        <span class="donut-total" *ngIf="totalCount > 0">Total: <ng-container *ngIf="isCurrency">$</ng-container>{{ totalCount | number:'1.0-0' }}</span>
       </div>
 
       <div class="donut-content" *ngIf="slices.length > 0; else emptyState">
@@ -39,7 +39,7 @@ export interface DonutSlice {
             />
           </svg>
           <div class="donut-center-label">
-            <span class="center-count">{{ totalCount }}</span>
+            <span class="center-count"><ng-container *ngIf="isCurrency">$</ng-container>{{ totalCount | number:'1.0-0' }}</span>
             <span class="center-text">{{ centerSubtitle || 'Órdenes' }}</span>
           </div>
         </div>
@@ -48,7 +48,7 @@ export interface DonutSlice {
           <div *ngFor="let item of processedSlices" class="legend-row">
             <div class="legend-color-dot" [style.background-color]="item.color"></div>
             <span class="legend-label" [title]="item.label">{{ item.label }}</span>
-            <span class="legend-value">{{ item.value }} ({{ item.percentage }}%)</span>
+            <span class="legend-value"><ng-container *ngIf="isCurrency">$</ng-container>{{ item.value | number:'1.0-0' }} ({{ item.percentage }}%)</span>
           </div>
         </div>
       </div>
@@ -182,6 +182,7 @@ export class DonutChartComponent implements OnChanges {
   @Input() title: string = '';
   @Input() centerSubtitle?: string = 'Total';
   @Input() slices: DonutSlice[] = [];
+  @Input() isCurrency: boolean = false;
 
   processedSlices: DonutSlice[] = [];
   totalCount: number = 0;
