@@ -20,7 +20,7 @@ import { MatChipsModule } from '@angular/material/chips';
 
 // ngx-mask
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
-import { NumericInputDirective } from '../../../shared/directives/numeric-input.directive';
+import { NumericInputDirective } from '../../../../shared/directives/numeric-input.directive';
 
 import { ServiceOrderService } from '../../services/service-order.service';
 import { EmpresaConfigService } from '../../../empresa-config/empresa-config.service';

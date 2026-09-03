@@ -9,7 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule, MAT_DATE_LOCALE, DateAdapter, NativeDateAdapter, MAT_DATE_FORMATS } from '@angular/material/core';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
-import { NumericInputDirective } from '../../../shared/directives/numeric-input.directive';
+import { NumericInputDirective } from '../../../../shared/directives/numeric-input.directive';
 
 import { DirectCost, CreateDirectCostDto } from '../../models/direct-cost.model';
 import { DirectCostCategoryService } from '../../../direct-cost-categories/services/direct-cost-category.service';
