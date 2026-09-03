@@ -256,6 +256,14 @@
               <input matInput type="text" mask="separator.2" thousandSeparator="." decimalMarker="," style="text-align: right" formControlName="actualAmount">
             </mat-form-field>
 
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 40px;">
+              <button type="button" mat-icon-button (click)="moveDistribution(i, -1)" [disabled]="i === 0" style="width: 24px; height: 24px; line-height: 24px;">
+                <mat-icon style="font-size: 18px;">keyboard_arrow_up</mat-icon>
+              </button>
+              <button type="button" mat-icon-button (click)="moveDistribution(i, 1)" [disabled]="i === distributions.length - 1" style="width: 24px; height: 24px; line-height: 24px;">
+                <mat-icon style="font-size: 18px;">keyboard_arrow_down</mat-icon>
+              </button>
+            </div>
             <button type="button" mat-icon-button color="warn" (click)="removeDistribution(i)">
               <mat-icon>delete</mat-icon>
             </button>
@@ -331,6 +339,14 @@
               <input matInput type="number" style="text-align: right;" formControlName="progressPercentage">
             </mat-form-field>
 
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 40px;">
+              <button type="button" mat-icon-button (click)="moveActivity(i, -1)" [disabled]="i === 0" style="width: 24px; height: 24px; line-height: 24px;">
+                <mat-icon style="font-size: 18px;">keyboard_arrow_up</mat-icon>
+              </button>
+              <button type="button" mat-icon-button (click)="moveActivity(i, 1)" [disabled]="i === activities.length - 1" style="width: 24px; height: 24px; line-height: 24px;">
+                <mat-icon style="font-size: 18px;">keyboard_arrow_down</mat-icon>
+              </button>
+            </div>
             <button type="button" mat-icon-button color="warn" (click)="removeActivity(i)">
               <mat-icon>delete</mat-icon>
             </button>
@@ -373,6 +389,9 @@
             <div style="padding-top: 16px;">
         
         <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+          <button type="button" mat-stroked-button (click)="openCopyDirectCostsDialog()" style="margin-right: 10px;">
+            <mat-icon>content_copy</mat-icon> Copiar de otra orden
+          </button>
           <button type="button" mat-raised-button color="primary" (click)="openDirectCostDialog()">
             <mat-icon>add</mat-icon> Registrar Costo
           </button>
@@ -424,7 +443,13 @@
 
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef> Acciones </th>
-            <td mat-cell *matCellDef="let element" style="text-align: right;">
+            <td mat-cell *matCellDef="let element; let i = index" style="text-align: right;">
+              <button type="button" mat-icon-button (click)="moveDirectCost(i, -1)" [disabled]="i === 0">
+                <mat-icon>arrow_upward</mat-icon>
+              </button>
+              <button type="button" mat-icon-button (click)="moveDirectCost(i, 1)" [disabled]="i === directCostsDataSource.data.length - 1">
+                <mat-icon>arrow_downward</mat-icon>
+              </button>
               <button type="button" mat-icon-button color="primary" (click)="openDirectCostDialog(element)">
                 <mat-icon>edit</mat-icon>
               </button>

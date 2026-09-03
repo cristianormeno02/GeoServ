@@ -20,6 +20,7 @@ import { MatChipsModule } from '@angular/material/chips';
 
 // ngx-mask
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
+import { NumericInputDirective } from '../../../shared/directives/numeric-input.directive';
 
 import { ServiceOrderService } from '../../services/service-order.service';
 import { EmpresaConfigService } from '../../../empresa-config/empresa-config.service';
@@ -30,6 +31,7 @@ import { ServiceOrderObservationsComponent } from '../service-order-observations
 import { CopyOrderDetailsDialogComponent } from '../copy-order-details-dialog/copy-order-details-dialog.component';
 import { CopyBillingDistributionDialogComponent } from '../copy-billing-distribution-dialog/copy-billing-distribution-dialog.component';
 import { CopyOperativeActivitiesDialogComponent } from '../copy-operative-activities-dialog/copy-operative-activities-dialog.component';
+import { CopyDirectCostsDialogComponent } from '../copy-direct-costs-dialog/copy-direct-costs-dialog.component';
 
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -84,6 +86,7 @@ export const CUSTOM_DATE_FORMATS = {
     MatTableModule,
     MatProgressSpinnerModule,
     NgxMaskDirective,
+    NumericInputDirective,
     ServiceOrderObservationsComponent,
     MatDialogModule
   ],
@@ -300,6 +303,16 @@ export class ServiceOrderFormComponent implements OnInit {
     this.distributions.removeAt(index);
   }
 
+  moveDistribution(index: number, direction: number) {
+    const newIndex = index + direction;
+    if (newIndex >= 0 && newIndex < this.distributions.length) {
+      const current = this.distributions.at(index);
+      this.distributions.removeAt(index);
+      this.distributions.insert(newIndex, current);
+      this.orderForm.markAsDirty();
+    }
+  }
+
   get totalDistributionPercentage(): number {
     return this.distributions.controls.reduce((sum, ctrl) => sum + (Number(ctrl.get('percentage')?.value) || 0), 0);
   }
@@ -401,6 +414,16 @@ export class ServiceOrderFormComponent implements OnInit {
 
   removeActivity(index: number) {
     this.activities.removeAt(index);
+  }
+
+  moveActivity(index: number, direction: number) {
+    const newIndex = index + direction;
+    if (newIndex >= 0 && newIndex < this.activities.length) {
+      const current = this.activities.at(index);
+      this.activities.removeAt(index);
+      this.activities.insert(newIndex, current);
+      this.orderForm.markAsDirty();
+    }
   }
 
   // Carga de catálogos
@@ -642,6 +665,11 @@ export class ServiceOrderFormComponent implements OnInit {
   }
 
   goBack(): void {
+    if (this.orderForm.dirty) {
+      if (!window.confirm('Hay modificaciones sin guardar. ¿Desea salir sin guardar los datos?')) {
+        return;
+      }
+    }
     this.router.navigate(['/ordenes-servicio']);
   }
 
@@ -749,6 +777,43 @@ export class ServiceOrderFormComponent implements OnInit {
     return this.directCostsDataSource.data.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0);
   }
 
+  openCopyDirectCostsDialog(): void {
+    const dialogRef = this.dialog.open(CopyDirectCostsDialogComponent, {
+      width: '600px',
+      disableClose: true
+    });
+
+    dialogRef.afterClosed().subscribe((result: any[]) => {
+      if (result && Array.isArray(result) && result.length > 0) {
+        // Copiar y generar nuevos UUIDs si es necesario, preservando orden.
+        const copiedCosts = result.map(cost => {
+          return {
+             ...cost,
+             id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(),
+             serviceOrderId: this.orderId || null
+          };
+        });
+        
+        this.directCostsDataSource.data = [...this.directCostsDataSource.data, ...copiedCosts];
+        this.orderForm.markAsDirty();
+        this.snackBar.open('Costos directos copiados con éxito', 'Cerrar', { duration: 3000 });
+        
+        // Si estamos editando y el form ya se guardó, quizás deberíamos guardarlos 
+        // pero la instrucción dice de 'Copiar desde otra orden' con inserción. 
+        // Al copiarlos los guardamos localmente. El save total debería guardarlos o podemos subirlos.
+        // Dado que directCost tiene endpoint propio, quizas debamos postear.
+        if (this.isEditMode && this.orderId) {
+           copiedCosts.forEach(cc => {
+               this.directCostService.createCost(cc).subscribe({
+                  next: () => this.loadDirectCosts(),
+                  error: err => console.error(err)
+               });
+           });
+        }
+      }
+    });
+  }
+
   openDirectCostDialog(cost?: DirectCost): void {
     const dialogRef = this.dialog.open(DirectCostDialogComponent, {
       width: '600px',
@@ -803,6 +868,7 @@ export class ServiceOrderFormComponent implements OnInit {
     if (confirm('¿Estás seguro de que deseas eliminar este costo directo?')) {
       if (!this.isEditMode) {
           this.directCostsDataSource.data = this.directCostsDataSource.data.filter(c => c.id !== costId);
+          this.orderForm.markAsDirty();
           this.snackBar.open('Costo directo eliminado localmente.', 'Cerrar', { duration: 3000 });
           return;
       }
@@ -817,6 +883,18 @@ export class ServiceOrderFormComponent implements OnInit {
           this.snackBar.open('Error al eliminar costo directo.', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] });
         }
       });
+    }
+  }
+
+  moveDirectCost(index: number, direction: number) {
+    const newIndex = index + direction;
+    const data = this.directCostsDataSource.data;
+    if (newIndex >= 0 && newIndex < data.length) {
+      const temp = data[index];
+      data[index] = data[newIndex];
+      data[newIndex] = temp;
+      this.directCostsDataSource.data = [...data];
+      this.orderForm.markAsDirty();
     }
   }
 }

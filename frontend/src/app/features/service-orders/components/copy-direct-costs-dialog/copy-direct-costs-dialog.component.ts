@@ -1,0 +1,95 @@
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatButtonModule } from '@angular/material/button';
+import { MatListModule } from '@angular/material/list';
+import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
+import { ServiceOrderService } from '../../services/service-order.service';
+import { DirectCostService } from '../../services/direct-cost.service';
+import { of } from 'rxjs';
+
+@Component({
+  selector: 'app-copy-direct-costs-dialog',
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatAutocompleteModule,
+    MatButtonModule,
+    MatListModule
+  ],
+  templateUrl: './copy-direct-costs-dialog.component.html',
+  styleUrls: ['./copy-direct-costs-dialog.component.scss']
+})
+export class CopyDirectCostsDialogComponent implements OnInit {
+  searchControl = new FormControl('');
+  filteredOrders: any[] = [];
+  selectedCosts: any[] = [];
+  isLoading = false;
+  selectedOrderNumber: string = '';
+
+  constructor(
+    public dialogRef: MatDialogRef<CopyDirectCostsDialogComponent>,
+    private serviceOrderService: ServiceOrderService,
+    private directCostService: DirectCostService,
+    private cdr: ChangeDetectorRef
+  ) {}
+
+  ngOnInit(): void {
+    this.searchControl.valueChanges.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      tap(() => {
+        this.isLoading = true;
+        this.cdr.detectChanges();
+      }),
+      switchMap(value => {
+        if (typeof value === 'string' && value.length > 0) {
+          return this.serviceOrderService.searchServiceOrders(value);
+        }
+        return of([]);
+      })
+    ).subscribe({
+      next: (results) => {
+        this.filteredOrders = results;
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.filteredOrders = [];
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  displayFn(order: any): string {
+    return order ? `${order.orderNumber} - ${order.clientName || 'Sin Cliente'}` : '';
+  }
+
+  onOptionSelected(event: any): void {
+    const order = event.option.value;
+    if (order.id) {
+      this.directCostService.getCostsByOrder(order.id).subscribe(costs => {
+        this.selectedCosts = costs || [];
+        this.selectedOrderNumber = order.orderNumber;
+        this.cdr.detectChanges();
+      });
+    }
+  }
+
+  onCancel(): void {
+    this.dialogRef.close();
+  }
+
+  onConfirm(): void {
+    this.dialogRef.close(this.selectedCosts);
+  }
+}
