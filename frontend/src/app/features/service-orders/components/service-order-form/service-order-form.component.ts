@@ -306,13 +306,15 @@ export class ServiceOrderFormComponent implements OnInit {
   moveDistribution(index: number, direction: number) {
     const newIndex = index + direction;
     if (newIndex >= 0 && newIndex < this.distributions.length) {
-      const controls = this.distributions.controls;
-      const temp = controls[index];
-      controls[index] = controls[newIndex];
-      controls[newIndex] = temp;
+      const currentControl = this.distributions.at(index);
+      const targetControl = this.distributions.at(newIndex);
       
-      // Forzar actualización
-      this.distributions.updateValueAndValidity();
+      const currentVal = currentControl.getRawValue();
+      const targetVal = targetControl.getRawValue();
+      
+      currentControl.patchValue(targetVal, { emitEvent: true });
+      targetControl.patchValue(currentVal, { emitEvent: true });
+      
       this.orderForm.markAsDirty();
     }
   }
@@ -423,12 +425,15 @@ export class ServiceOrderFormComponent implements OnInit {
   moveActivity(index: number, direction: number) {
     const newIndex = index + direction;
     if (newIndex >= 0 && newIndex < this.activities.length) {
-      const controls = this.activities.controls;
-      const temp = controls[index];
-      controls[index] = controls[newIndex];
-      controls[newIndex] = temp;
+      const currentControl = this.activities.at(index);
+      const targetControl = this.activities.at(newIndex);
       
-      this.activities.updateValueAndValidity();
+      const currentVal = currentControl.getRawValue();
+      const targetVal = targetControl.getRawValue();
+      
+      currentControl.patchValue(targetVal, { emitEvent: true });
+      targetControl.patchValue(currentVal, { emitEvent: true });
+      
       this.orderForm.markAsDirty();
     }
   }
