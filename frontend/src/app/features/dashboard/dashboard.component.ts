@@ -10,6 +10,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { computed } from '@angular/core';
 
 import { DonutChartComponent, DonutSlice } from '../../shared/components/charts/donut-chart.component';
+import { SparklineCardComponent } from '../../shared/components/charts/sparkline-card.component';
 import { GeneralDashboardService } from './services/general-dashboard.service';
 import { EmpresaConfigService } from '../../core/services/empresa-config.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -32,7 +33,8 @@ import {
     MatChipsModule,
     MatTooltipModule,
     MatDividerModule,
-    DonutChartComponent
+    DonutChartComponent,
+    SparklineCardComponent
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
@@ -46,6 +48,7 @@ export class DashboardComponent implements OnInit {
   activeOrders: ActiveOrderItem[] = [];
   pendingActivities: PendingActivityItem[] = [];
   recentObservations: RecentObservationItem[] = [];
+  hasAccessError = false;
 
   statusSlices: DonutSlice[] = [];
   prioritySlices: DonutSlice[] = [];
@@ -125,7 +128,16 @@ export class DashboardComponent implements OnInit {
 
   loadData(): void {
     this.isLoading = true;
+    this.hasAccessError = false;
     this.lastUpdated = new Date();
+
+    const handleError = (err: any) => {
+      if (err.status === 403 || err.status === 401) {
+        this.hasAccessError = true;
+      }
+      this.isLoading = false;
+      this.cdr.detectChanges();
+    };
 
     // Cargar profile
     this.dashboardService.getProfile().subscribe({
@@ -136,8 +148,7 @@ export class DashboardComponent implements OnInit {
       },
       error: (err) => {
         console.error('[Dashboard] Error fetching profile:', err);
-        this.profile = { hasResponsible: true, userName: this.authService.getUserName() };
-        this.cdr.detectChanges();
+        handleError(err);
       }
     });
 
@@ -158,7 +169,10 @@ export class DashboardComponent implements OnInit {
         }));
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('[Dashboard] Error fetching KPIs:', err)
+      error: (err) => {
+        console.error('[Dashboard] Error fetching KPIs:', err);
+        handleError(err);
+      }
     });
 
     // Cargar órdenes activas
@@ -168,7 +182,10 @@ export class DashboardComponent implements OnInit {
         this.activeOrders = orders ?? [];
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('[Dashboard] Error fetching active orders:', err)
+      error: (err) => {
+        console.error('[Dashboard] Error fetching active orders:', err);
+        handleError(err);
+      }
     });
 
     // Cargar actividades pendientes
@@ -178,7 +195,10 @@ export class DashboardComponent implements OnInit {
         this.pendingActivities = activities ?? [];
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('[Dashboard] Error fetching pending activities:', err)
+      error: (err) => {
+        console.error('[Dashboard] Error fetching pending activities:', err);
+        handleError(err);
+      }
     });
 
     // Cargar observaciones recientes
@@ -191,8 +211,7 @@ export class DashboardComponent implements OnInit {
       },
       error: (err) => {
         console.error('[Dashboard] Error fetching recent observations:', err);
-        this.isLoading = false;
-        this.cdr.detectChanges();
+        handleError(err);
       }
     });
   }

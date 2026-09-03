@@ -1,4 +1,4 @@
-﻿export interface UserProfileResponse {
+export interface UserProfileResponse {
   hasResponsible: boolean;
   userName: string;
   responsibleName?: string;
@@ -27,6 +27,8 @@ export interface GeneralKpisResponse {
   progresoPromedio?: number;
   byStatus?: StatusCount[];
   byPriority?: PriorityCount[];
+  stagnantOrders?: { value: number; series: number[] };
+  deadlineCompliance?: { value: number; series: number[] };
 }
 
 export type AlertLevel = 'ok' | 'warning' | 'overdue';

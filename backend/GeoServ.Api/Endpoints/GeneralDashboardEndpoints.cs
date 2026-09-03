@@ -11,7 +11,24 @@ public static class GeneralDashboardEndpoints
 {
     public static void MapGeneralDashboardEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/dashboard/general").RequireAuthorization();
+        var group = app.MapGroup("/api/dashboard/general")
+            .RequireAuthorization()
+            .AddEndpointFilter(async (context, next) =>
+            {
+                var dbContext = context.HttpContext.RequestServices.GetRequiredService<GeoServDbContext>();
+                var userPrincipal = context.HttpContext.User;
+                var (userId, userObj, isAdmin) = await GetUserContext(dbContext, userPrincipal);
+                var matchedRespIds = await GetMatchedResponsibleIds(dbContext, userId, userObj, userPrincipal);
+
+                if (matchedRespIds.Count == 0 && !isAdmin) // Maybe admin still gets a pass? 
+                {
+                    // The spec says: "cuando el userId no tenga un Responsible vinculado". If admin doesn't have one, do they get 403?
+                    // "Si el usuario autenticado no tiene ningún Responsible con UserId igual a su User.Id -> devuelven HTTP 403"
+                    return Results.Json(new { message = "Tu perfil no está vinculado a ningún responsable." }, statusCode: 403);
+                }
+
+                return await next(context);
+            });
 
         // =====================================================================
         // HELPERS
@@ -377,6 +394,15 @@ public static class GeneralDashboardEndpoints
                 .Select(g => new { priority = g.Key, count = g.Count() })
                 .ToList();
 
+            // NEW: Órdenes Estancadas
+            var now = DateTime.UtcNow;
+            var stagnantThresholdDate = now.AddDays(-7);
+            var stagnantOrdersCount = myOrders.Count(o => o.Status != null && o.Status.Name != "Cobrada" && o.Status.Name != "Cancelada" && o.UpdatedAt <= stagnantThresholdDate);
+
+            // NEW: Cumplimiento de Plazos
+            var onTimeCount = activeOrders.Count(o => o.UpdatedAt > stagnantThresholdDate);
+            var deadlineCompliancePercentage = activeOrders.Count > 0 ? Math.Round((decimal)onTimeCount / activeOrders.Count * 100, 1) : 100.0m;
+
             return Results.Ok(new
             {
                 hasResponsible = true,
@@ -387,7 +413,9 @@ public static class GeneralDashboardEndpoints
                 totalOrdenes,
                 progresoPromedio,
                 byStatus,
-                byPriority
+                byPriority,
+                stagnantOrders = new { value = stagnantOrdersCount, series = new[] { 0, 0, 0, 0, 0, stagnantOrdersCount } },
+                deadlineCompliance = new { value = deadlineCompliancePercentage, series = new[] { 0, 0, 0, 0, 0, (double)deadlineCompliancePercentage } }
             });
         });
 

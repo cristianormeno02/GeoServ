@@ -1,5 +1,12 @@
 <div class="dashboard-container">
 
+  <div *ngIf="hasAccessError" class="access-error-state" style="text-align: center; padding: 48px 24px; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-top: 24px;">
+    <mat-icon style="font-size: 64px; height: 64px; width: 64px; color: #ef4444; margin-bottom: 16px;">gpp_bad</mat-icon>
+    <h2 style="font-size: 24px; color: #1e293b; margin-bottom: 8px;">Perfil Incompleto</h2>
+    <p style="color: #64748b; font-size: 16px; margin-bottom: 0;">Tu perfil no está vinculado a ningún responsable. Contactá al administrador.</p>
+  </div>
+
+  <ng-container *ngIf="!hasAccessError">
   <!-- Topbar de bienvenida con Empresa y Usuario -->
   <div class="dashboard-topbar">
     <div class="welcome-section">
@@ -32,49 +39,57 @@
 
   <!-- KPI Cards -->
   <div class="kpi-grid">
-    <div class="kpi-card">
-      <div class="kpi-icon-wrap" style="background:#e0f2fe;">
-        <mat-icon style="color:#0284c7;">work</mat-icon>
-      </div>
-      <div class="kpi-body">
-        <span class="kpi-label">Órdenes Activas</span>
-        <span class="kpi-value">{{ kpis?.ordenesActivas ?? 0 }}</span>
-      </div>
-      <div class="kpi-badge blue">de {{ kpis?.totalOrdenes ?? 0 }} total</div>
-    </div>
+    <app-sparkline-card
+      title="Órdenes Activas"
+      subtitle="Mis órdenes en curso"
+      [value]="kpis?.ordenesActivas ?? 0"
+      unit="OS"
+      icon="assignment"
+      iconColor="#0284c7"
+      iconBgColor="#e0f2fe"
+      [badgeText]="'de ' + (kpis?.totalOrdenes ?? 0) + ' total'"
+      semanticState="neutral"
+      helpText="Cantidad de órdenes asignadas a ti que se encuentran actualmente en progreso o presupuesto."
+    ></app-sparkline-card>
 
-    <div class="kpi-card">
-      <div class="kpi-icon-wrap" style="background:#dcfce7;">
-        <mat-icon style="color:#16a34a;">task_alt</mat-icon>
-      </div>
-      <div class="kpi-body">
-        <span class="kpi-label">Órdenes Entregadas</span>
-        <span class="kpi-value">{{ kpis?.ordenesEntregadas ?? 0 }}</span>
-      </div>
-      <div class="kpi-badge green">pendientes de cobro</div>
-    </div>
+    <app-sparkline-card
+      title="Órdenes Estancadas"
+      subtitle="> 7 días en mismo estado"
+      [value]="kpis?.stagnantOrders?.value ?? 0"
+      unit="OS"
+      icon="warning"
+      iconColor="#ef4444"
+      iconBgColor="#fee2e2"
+      [badgeText]="(kpis?.stagnantOrders?.value ?? 0) > 0 ? 'Riesgo demoras' : 'Al día'"
+      [semanticState]="(kpis?.stagnantOrders?.value ?? 0) > 0 ? 'negative' : 'positive'"
+      helpText="Órdenes asignadas a ti que no han cambiado de estado en los últimos 7 días."
+    ></app-sparkline-card>
 
-    <div class="kpi-card">
-      <div class="kpi-icon-wrap" style="background:#f3e8ff;">
-        <mat-icon style="color:#7c3aed;">verified</mat-icon>
-      </div>
-      <div class="kpi-body">
-        <span class="kpi-label">Órdenes Cobradas</span>
-        <span class="kpi-value">{{ kpis?.ordenesCobradas ?? 0 }}</span>
-      </div>
-      <div class="kpi-badge purple">finalizadas</div>
-    </div>
+    <app-sparkline-card
+      title="Órdenes Entregadas"
+      subtitle="Pendientes de cobro"
+      [value]="kpis?.ordenesEntregadas ?? 0"
+      unit="OS"
+      icon="task_alt"
+      iconColor="#16a34a"
+      iconBgColor="#dcfce7"
+      badgeText="Pendientes"
+      semanticState="positive"
+      helpText="Órdenes tuyas entregadas al cliente pero aún pendientes de cobro total."
+    ></app-sparkline-card>
 
-    <div class="kpi-card">
-      <div class="kpi-icon-wrap" style="background:#fef9c3;">
-        <mat-icon style="color:#ca8a04;">trending_up</mat-icon>
-      </div>
-      <div class="kpi-body">
-        <span class="kpi-label">Progreso Promedio</span>
-        <span class="kpi-value">{{ (kpis?.progresoPromedio || 0) | number:'1.0-1' }}%</span>
-      </div>
-      <div class="kpi-badge amber">en mis órdenes activas</div>
-    </div>
+    <app-sparkline-card
+      title="Cumplimiento Plazos"
+      subtitle="Actualizado < 7 días"
+      [value]="kpis?.deadlineCompliance?.value ?? 100"
+      unit="%"
+      icon="trending_up"
+      iconColor="#ca8a04"
+      iconBgColor="#fef9c3"
+      [badgeText]="(kpis?.deadlineCompliance?.value ?? 100) >= 80 ? 'Óptimo' : 'Alerta'"
+      [semanticState]="(kpis?.deadlineCompliance?.value ?? 100) >= 80 ? 'positive' : 'warning'"
+      helpText="Porcentaje de tus órdenes activas actualizadas recientemente."
+    ></app-sparkline-card>
   </div>
 
   <!-- Distribuciones (Donuts) -->
@@ -217,5 +232,5 @@
     </mat-card>
 
   </div>
-
+  </ng-container>
 </div>
