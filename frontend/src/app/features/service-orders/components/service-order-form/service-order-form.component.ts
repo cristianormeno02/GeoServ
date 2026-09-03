@@ -306,9 +306,13 @@ export class ServiceOrderFormComponent implements OnInit {
   moveDistribution(index: number, direction: number) {
     const newIndex = index + direction;
     if (newIndex >= 0 && newIndex < this.distributions.length) {
-      const current = this.distributions.at(index);
-      this.distributions.removeAt(index);
-      this.distributions.insert(newIndex, current);
+      const controls = this.distributions.controls;
+      const temp = controls[index];
+      controls[index] = controls[newIndex];
+      controls[newIndex] = temp;
+      
+      // Forzar actualización
+      this.distributions.updateValueAndValidity();
       this.orderForm.markAsDirty();
     }
   }
@@ -419,9 +423,12 @@ export class ServiceOrderFormComponent implements OnInit {
   moveActivity(index: number, direction: number) {
     const newIndex = index + direction;
     if (newIndex >= 0 && newIndex < this.activities.length) {
-      const current = this.activities.at(index);
-      this.activities.removeAt(index);
-      this.activities.insert(newIndex, current);
+      const controls = this.activities.controls;
+      const temp = controls[index];
+      controls[index] = controls[newIndex];
+      controls[newIndex] = temp;
+      
+      this.activities.updateValueAndValidity();
       this.orderForm.markAsDirty();
     }
   }
