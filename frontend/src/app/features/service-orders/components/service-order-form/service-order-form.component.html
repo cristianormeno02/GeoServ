@@ -256,12 +256,12 @@
               <input matInput type="text" mask="separator.2" thousandSeparator="." decimalMarker="," style="text-align: right" formControlName="actualAmount">
             </mat-form-field>
 
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 40px;">
-              <button type="button" mat-icon-button (click)="moveDistribution(i, -1)" [disabled]="i === 0" style="width: 24px; height: 24px; line-height: 24px;">
-                <mat-icon style="font-size: 18px;">keyboard_arrow_up</mat-icon>
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 40px; gap: 4px;">
+              <button type="button" mat-icon-button (click)="moveDistribution(i, -1)" [disabled]="i === 0" style="width: 32px; height: 32px; padding: 0;">
+                <mat-icon style="font-size: 24px; line-height: 24px; width: 24px; height: 24px;">keyboard_arrow_up</mat-icon>
               </button>
-              <button type="button" mat-icon-button (click)="moveDistribution(i, 1)" [disabled]="i === distributions.length - 1" style="width: 24px; height: 24px; line-height: 24px;">
-                <mat-icon style="font-size: 18px;">keyboard_arrow_down</mat-icon>
+              <button type="button" mat-icon-button (click)="moveDistribution(i, 1)" [disabled]="i === distributions.length - 1" style="width: 32px; height: 32px; padding: 0;">
+                <mat-icon style="font-size: 24px; line-height: 24px; width: 24px; height: 24px;">keyboard_arrow_down</mat-icon>
               </button>
             </div>
             <button type="button" mat-icon-button color="warn" (click)="removeDistribution(i)">
@@ -339,12 +339,12 @@
               <input matInput type="number" style="text-align: right;" formControlName="progressPercentage">
             </mat-form-field>
 
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 40px;">
-              <button type="button" mat-icon-button (click)="moveActivity(i, -1)" [disabled]="i === 0" style="width: 24px; height: 24px; line-height: 24px;">
-                <mat-icon style="font-size: 18px;">keyboard_arrow_up</mat-icon>
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 40px; gap: 4px;">
+              <button type="button" mat-icon-button (click)="moveActivity(i, -1)" [disabled]="i === 0" style="width: 32px; height: 32px; padding: 0;">
+                <mat-icon style="font-size: 24px; line-height: 24px; width: 24px; height: 24px;">keyboard_arrow_up</mat-icon>
               </button>
-              <button type="button" mat-icon-button (click)="moveActivity(i, 1)" [disabled]="i === activities.length - 1" style="width: 24px; height: 24px; line-height: 24px;">
-                <mat-icon style="font-size: 18px;">keyboard_arrow_down</mat-icon>
+              <button type="button" mat-icon-button (click)="moveActivity(i, 1)" [disabled]="i === activities.length - 1" style="width: 32px; height: 32px; padding: 0;">
+                <mat-icon style="font-size: 24px; line-height: 24px; width: 24px; height: 24px;">keyboard_arrow_down</mat-icon>
               </button>
             </div>
             <button type="button" mat-icon-button color="warn" (click)="removeActivity(i)">
