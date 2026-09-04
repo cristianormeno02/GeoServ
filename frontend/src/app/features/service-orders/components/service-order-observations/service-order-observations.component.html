@@ -32,7 +32,7 @@
           <strong>{{ obs.userName || 'Usuario' }}</strong>
           <span class="timeline-date">{{ obs.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
           <span class="timeline-badge" [style.backgroundColor]="getColor(obs.observationType)">{{ obs.observationType || 'Nota General' }}</span>
-          <button mat-icon-button color="warn" class="delete-btn" (click)="deleteObservation(obs.id)" title="Eliminar observación">
+          <button type="button" mat-icon-button color="warn" class="delete-btn" (click)="deleteObservation(obs.id)" title="Eliminar observación">
             <mat-icon>delete</mat-icon>
           </button>
         </div>

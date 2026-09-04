@@ -38,6 +38,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { DirectCostService } from '../../services/direct-cost.service';
 import { DirectCost } from '../../models/direct-cost.model';
 import { DirectCostDialogComponent } from '../direct-cost-dialog/direct-cost-dialog.component';
+import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Injectable()
 export class CustomDateAdapter extends NativeDateAdapter {
@@ -663,6 +664,7 @@ export class ServiceOrderFormComponent implements OnInit {
         createdAt: new Date().toISOString()
       };
       this.observations = [tempObs, ...this.observations];
+      this.cdr.detectChanges();
       this.snackBar.open('Observación registrada', 'Cerrar', { duration: 2000 });
       return;
     }
@@ -670,6 +672,7 @@ export class ServiceOrderFormComponent implements OnInit {
     this.serviceOrderService.addObservation(this.orderId, payload).subscribe({
       next: (obs) => {
         this.observations = [obs, ...this.observations];
+        this.cdr.detectChanges();
         this.snackBar.open('Observación guardada', 'Cerrar', { duration: 2000 });
       },
       error: () => {
@@ -681,6 +684,7 @@ export class ServiceOrderFormComponent implements OnInit {
   onObservationDeleted(id: string): void {
     if (!this.isEditMode) {
       this.observations = this.observations.filter(o => o.id !== id);
+      this.cdr.detectChanges();
       this.snackBar.open('Observación eliminada localmente', 'Cerrar', { duration: 2000 });
       return;
     }
@@ -688,6 +692,7 @@ export class ServiceOrderFormComponent implements OnInit {
     this.serviceOrderService.deleteObservation(this.orderId, id).subscribe({
       next: () => {
         this.observations = this.observations.filter(o => o.id !== id);
+        this.cdr.detectChanges();
         this.snackBar.open('Observación eliminada', 'Cerrar', { duration: 2000 });
       },
       error: () => {
@@ -698,9 +703,22 @@ export class ServiceOrderFormComponent implements OnInit {
 
   goBack(): void {
     if (this.orderForm.dirty) {
-      if (!window.confirm('Hay modificaciones sin guardar. ¿Desea salir sin guardar los datos?')) {
-        return;
-      }
+      const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+        width: '400px',
+        data: {
+          title: 'Salir sin guardar',
+          message: 'Hay modificaciones sin guardar. ¿Desea salir sin guardar los datos?',
+          isDestructive: true,
+          confirmText: 'Salir'
+        }
+      });
+
+      dialogRef.afterClosed().subscribe(result => {
+        if (result) {
+          this.router.navigate(['/ordenes-servicio']);
+        }
+      });
+      return;
     }
     this.router.navigate(['/ordenes-servicio']);
   }
@@ -897,25 +915,37 @@ export class ServiceOrderFormComponent implements OnInit {
   }
 
   deleteDirectCost(costId: string): void {
-    if (confirm('¿Estás seguro de que deseas eliminar este costo directo?')) {
-      if (!this.isEditMode) {
-          this.directCostsDataSource.data = this.directCostsDataSource.data.filter(c => c.id !== costId);
-          this.orderForm.markAsDirty();
-          this.snackBar.open('Costo directo eliminado localmente.', 'Cerrar', { duration: 3000 });
-          return;
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '400px',
+      data: {
+        title: 'Eliminar Costo Directo',
+        message: '¿Estás seguro de que deseas eliminar este costo directo?',
+        isDestructive: true,
+        confirmText: 'Eliminar'
       }
-      if (!this.orderId) return;
-      this.directCostService.deleteCost(this.orderId, costId).subscribe({
-        next: () => {
-          this.snackBar.open('Costo directo eliminado.', 'Cerrar', { duration: 3000 });
-          this.loadDirectCosts();
-        },
-        error: (err) => {
-          console.error(err);
-          this.snackBar.open('Error al eliminar costo directo.', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] });
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        if (!this.isEditMode) {
+            this.directCostsDataSource.data = this.directCostsDataSource.data.filter(c => c.id !== costId);
+            this.orderForm.markAsDirty();
+            this.snackBar.open('Costo directo eliminado localmente.', 'Cerrar', { duration: 3000 });
+            return;
         }
-      });
-    }
+        if (!this.orderId) return;
+        this.directCostService.deleteCost(this.orderId, costId).subscribe({
+          next: () => {
+            this.snackBar.open('Costo directo eliminado.', 'Cerrar', { duration: 3000 });
+            this.loadDirectCosts();
+          },
+          error: (err) => {
+            console.error(err);
+            this.snackBar.open('Error al eliminar costo directo.', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] });
+          }
+        });
+      }
+    });
   }
 
   moveDirectCost(index: number, direction: number) {

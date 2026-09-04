@@ -6,6 +6,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-service-order-observations',
@@ -17,7 +19,8 @@ import { MatIconModule } from '@angular/material/icon';
     MatInputModule,
     MatSelectModule,
     MatButtonModule,
-    MatIconModule
+    MatIconModule,
+    MatDialogModule
   ],
   templateUrl: './service-order-observations.component.html',
   styleUrls: ['./service-order-observations.component.scss']
@@ -27,6 +30,8 @@ export class ServiceOrderObservationsComponent {
   @Input() observations: any[] = [];
   @Output() observationAdded = new EventEmitter<any>();
   @Output() observationDeleted = new EventEmitter<string>();
+
+  constructor(private dialog: MatDialog) {}
 
   newObservationText: string = '';
   observationType: string = 'Nota General';
@@ -63,8 +68,20 @@ export class ServiceOrderObservationsComponent {
   }
 
   deleteObservation(id: string) {
-    if (confirm('¿Está seguro de eliminar esta observación?')) {
-      this.observationDeleted.emit(id);
-    }
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '400px',
+      data: {
+        title: 'Eliminar Observación',
+        message: '¿Está seguro de eliminar esta observación?',
+        isDestructive: true,
+        confirmText: 'Eliminar'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.observationDeleted.emit(id);
+      }
+    });
   }
 }
