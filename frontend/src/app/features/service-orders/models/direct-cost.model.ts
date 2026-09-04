@@ -18,6 +18,7 @@ export interface DirectCost {
   paymentMethodName?: string;
   status: string;
   observations?: string;
+  orderIndex?: number;
 }
 
 export interface CreateDirectCostDto {
@@ -34,4 +35,5 @@ export interface CreateDirectCostDto {
   paymentMethodId?: string;
   status: string;
   observations?: string;
+  orderIndex?: number;
 }

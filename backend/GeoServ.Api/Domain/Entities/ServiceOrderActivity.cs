@@ -16,4 +16,5 @@ public class ServiceOrderActivity
     
     // De 1 a 100
     public int ProgressPercentage { get; set; } = 0;
+    public int OrderIndex { get; set; } = 0;
 }

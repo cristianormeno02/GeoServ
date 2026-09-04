@@ -30,6 +30,7 @@ export interface CreateFixedCostItemRequest {
   initialAmount: number;
   isRecurring: boolean;
   observation?: string;
+  payments?: Partial<CreateFixedCostPaymentRequest>[];
 }
 
 export interface CreateFixedCostPaymentRequest {

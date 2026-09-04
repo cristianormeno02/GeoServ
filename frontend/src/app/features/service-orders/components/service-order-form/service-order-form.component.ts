@@ -585,18 +585,20 @@ export class ServiceOrderFormComponent implements OnInit {
     }
 
     if (formValue.distributions && formValue.distributions.length > 0) {
-      formValue.distributions = formValue.distributions.map((d: any) => ({
+      formValue.distributions = formValue.distributions.map((d: any, index: number) => ({
         ...d,
         percentage: parseAmount(d.percentage),
         expectedAmount: parseAmount(d.expectedAmount),
-        actualAmount: parseAmount(d.actualAmount)
+        actualAmount: parseAmount(d.actualAmount),
+        orderIndex: index
       }));
     }
 
     if (formValue.activities && formValue.activities.length > 0) {
-      formValue.activities = formValue.activities.map((a: any) => ({
+      formValue.activities = formValue.activities.map((a: any, index: number) => ({
         ...a,
-        state: a.status
+        state: a.status,
+        orderIndex: index
       }));
     }
 
@@ -631,9 +633,9 @@ export class ServiceOrderFormComponent implements OnInit {
          }));
       }
       if (this.directCostsDataSource.data.length > 0) {
-         formValue.directCosts = this.directCostsDataSource.data.map(c => {
+         formValue.directCosts = this.directCostsDataSource.data.map((c, index) => {
             const { id, ...rest } = c as any;
-            return rest;
+            return { ...rest, orderIndex: index };
          });
       }
 
@@ -672,6 +674,24 @@ export class ServiceOrderFormComponent implements OnInit {
       },
       error: () => {
         this.snackBar.open('Error al guardar observación', 'Cerrar', { duration: 3000, panelClass: ['snackbar-error'] });
+      }
+    });
+  }
+
+  onObservationDeleted(id: string): void {
+    if (!this.isEditMode) {
+      this.observations = this.observations.filter(o => o.id !== id);
+      this.snackBar.open('Observación eliminada localmente', 'Cerrar', { duration: 2000 });
+      return;
+    }
+    if (!this.orderId) return;
+    this.serviceOrderService.deleteObservation(this.orderId, id).subscribe({
+      next: () => {
+        this.observations = this.observations.filter(o => o.id !== id);
+        this.snackBar.open('Observación eliminada', 'Cerrar', { duration: 2000 });
+      },
+      error: () => {
+        this.snackBar.open('Error al eliminar observación', 'Cerrar', { duration: 3000, panelClass: ['snackbar-error'] });
       }
     });
   }
@@ -907,6 +927,19 @@ export class ServiceOrderFormComponent implements OnInit {
       data[newIndex] = temp;
       this.directCostsDataSource.data = [...data];
       this.orderForm.markAsDirty();
+      
+      // If we are in edit mode, we could update the orderIndex for all costs
+      if (this.isEditMode && this.orderId) {
+        // Ideally we should have a bulk update for order, but for now we can update the two swapped costs
+        const cost1 = data[index];
+        const cost2 = data[newIndex];
+        
+        cost1.orderIndex = index;
+        cost2.orderIndex = newIndex;
+
+        this.directCostService.updateCost(cost1.id!, cost1).subscribe();
+        this.directCostService.updateCost(cost2.id!, cost2).subscribe();
+      }
     }
   }
 }

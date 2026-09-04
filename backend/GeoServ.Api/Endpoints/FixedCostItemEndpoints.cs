@@ -17,6 +17,7 @@ public static class FixedCostItemEndpoints
             var items = await context.FixedCostItems
                 .Include(f => f.Category)
                 .Include(f => f.Provider)
+                .Include(f => f.Payments)
                 .ToListAsync();
             return Results.Ok(items);
         }).WithName("GetFixedCostItems").WithOpenApi();
@@ -41,7 +42,17 @@ public static class FixedCostItemEndpoints
                 ProviderId = request.ProviderId,
                 InitialAmount = request.InitialAmount,
                 IsRecurring = request.IsRecurring,
-                Observation = request.Observation
+                Observation = request.Observation,
+                Payments = request.Payments.Select(p => new FixedCostPayment
+                {
+                    Id = Guid.NewGuid(),
+                    DueDate = p.DueDate,
+                    Amount = p.Amount,
+                    IsPaid = p.IsPaid,
+                    PaymentDate = p.PaymentDate,
+                    PaymentMethodId = p.PaymentMethodId,
+                    ReceiptNumber = p.ReceiptNumber
+                }).ToList()
             };
             context.FixedCostItems.Add(item);
             await context.SaveChangesAsync();
@@ -50,7 +61,7 @@ public static class FixedCostItemEndpoints
 
         group.MapPut("/{id:guid}", async (Guid id, UpdateFixedCostItemRequest request, GeoServDbContext context) =>
         {
-            var item = await context.FixedCostItems.FindAsync(id);
+            var item = await context.FixedCostItems.Include(f => f.Payments).FirstOrDefaultAsync(f => f.Id == id);
             if (item is null) return Results.NotFound();
 
             item.Name = request.Name;
@@ -59,6 +70,18 @@ public static class FixedCostItemEndpoints
             item.InitialAmount = request.InitialAmount;
             item.IsRecurring = request.IsRecurring;
             item.Observation = request.Observation;
+            
+            context.FixedCostPayments.RemoveRange(item.Payments);
+            item.Payments = request.Payments.Select(p => new FixedCostPayment
+            {
+                Id = Guid.NewGuid(),
+                DueDate = p.DueDate,
+                Amount = p.Amount,
+                IsPaid = p.IsPaid,
+                PaymentDate = p.PaymentDate,
+                PaymentMethodId = p.PaymentMethodId,
+                ReceiptNumber = p.ReceiptNumber
+            }).ToList();
 
             await context.SaveChangesAsync();
             return Results.NoContent();
@@ -131,6 +154,7 @@ public class CreateFixedCostItemRequest
     public decimal InitialAmount { get; set; }
     public bool IsRecurring { get; set; }
     public string? Observation { get; set; }
+    public List<CreateFixedCostPaymentRequest> Payments { get; set; } = new();
 }
 
 public class UpdateFixedCostItemRequest
@@ -141,6 +165,7 @@ public class UpdateFixedCostItemRequest
     public decimal InitialAmount { get; set; }
     public bool IsRecurring { get; set; }
     public string? Observation { get; set; }
+    public List<UpdateFixedCostPaymentRequest> Payments { get; set; } = new();
 }
 
 public class CreateFixedCostPaymentRequest

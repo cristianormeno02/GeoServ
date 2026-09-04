@@ -157,8 +157,8 @@ public static class ServiceOrderEndpoints
                         r.Responsible.UserId, 
                         UserName = r.Responsible.User?.Name 
                     }),
-                    Activities = order.Activities.Select(a => new { a.Id, a.ShortDetail, a.LongDetail, State = a.State.ToString(), StateValue = (int)a.State, a.ProgressPercentage }),
-                    Distributions = order.Distributions.Select(d => new { d.Id, d.DistributionConceptId, ConceptName = d.DistributionConcept.Name, d.Percentage, d.ExpectedAmount, d.ActualAmount }),
+                    Activities = order.Activities.OrderBy(a => a.OrderIndex).Select(a => new { a.Id, a.ShortDetail, a.LongDetail, State = a.State.ToString(), StateValue = (int)a.State, a.ProgressPercentage, a.OrderIndex }),
+                    Distributions = order.Distributions.OrderBy(d => d.OrderIndex).Select(d => new { d.Id, d.DistributionConceptId, ConceptName = d.DistributionConcept.Name, d.Percentage, d.ExpectedAmount, d.ActualAmount, d.OrderIndex }),
                     Documents = order.Documents.Select(d => new { d.Id, d.FileName, d.ContentType, d.IsVisibleToClient, d.UploadedAt, d.UploadedById }),
                     Observations = order.Observations.OrderByDescending(o => o.CreatedAt).Select(o => new { o.Id, o.Text, o.ObservationType, UserName = o.User != null ? o.User.Name : o.UserId.ToString(), o.CreatedAt })
                 });
@@ -254,7 +254,8 @@ public static class ServiceOrderEndpoints
                             DistributionConceptId = dist.DistributionConceptId,
                             Percentage = dist.Percentage,
                             ExpectedAmount = dist.ExpectedAmount,
-                            ActualAmount = dist.ActualAmount
+                            ActualAmount = dist.ActualAmount,
+                            OrderIndex = dist.OrderIndex
                         });
                     }
                 }
@@ -270,7 +271,8 @@ public static class ServiceOrderEndpoints
                             ShortDetail = act.ShortDetail,
                             LongDetail = act.LongDetail,
                             State = Enum.Parse<GeoServ.Api.Domain.Enums.ActivityState>(act.State.Replace(" ", ""), true),
-                            ProgressPercentage = act.ProgressPercentage
+                            ProgressPercentage = act.ProgressPercentage,
+                            OrderIndex = act.OrderIndex
                         });
                     }
                 }
@@ -472,7 +474,8 @@ public static class ServiceOrderEndpoints
                             DistributionConceptId = dist.DistributionConceptId,
                             Percentage = dist.Percentage,
                             ExpectedAmount = dist.ExpectedAmount,
-                            ActualAmount = dist.ActualAmount
+                            ActualAmount = dist.ActualAmount,
+                            OrderIndex = dist.OrderIndex
                         });
                     }
                 }
@@ -493,7 +496,8 @@ public static class ServiceOrderEndpoints
                             ShortDetail = act.ShortDetail,
                             LongDetail = act.LongDetail,
                             State = Enum.Parse<GeoServ.Api.Domain.Enums.ActivityState>(act.State?.Replace(" ", "") ?? "EnProceso", true),
-                            ProgressPercentage = act.ProgressPercentage
+                            ProgressPercentage = act.ProgressPercentage,
+                            OrderIndex = act.OrderIndex
                         });
                     }
                 }
@@ -603,6 +607,29 @@ public static class ServiceOrderEndpoints
         })
         .WithName("AddServiceOrderObservation")
         .WithOpenApi();
+
+        group.MapDelete("/{id:guid}/observations/{obsId:guid}", async (Guid id, Guid obsId, HttpContext httpContext, GeoServDbContext context) =>
+        {
+            var userIdStr = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId)) return Results.Unauthorized();
+
+            var observation = await context.ServiceOrderObservations.FirstOrDefaultAsync(o => o.Id == obsId && o.ServiceOrderId == id);
+            if (observation == null) return Results.NotFound();
+
+            // Check if user is admin or the owner of the observation
+            var user = await context.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.Id == userId);
+            if (user?.Role?.Name != "Administrador" && observation.UserId != userId)
+            {
+                return Results.Forbid();
+            }
+
+            context.ServiceOrderObservations.Remove(observation);
+            await context.SaveChangesAsync();
+
+            return Results.NoContent();
+        })
+        .WithName("DeleteServiceOrderObservation")
+        .WithOpenApi();
     }
 }
 
@@ -659,5 +686,5 @@ public record UpdateServiceOrderRequest(
     List<Guid>? ResponsibleIds
 );
 
-public record DistributionDto(Guid DistributionConceptId, decimal Percentage, decimal ExpectedAmount, decimal ActualAmount);
-public record ActivityDto(string ShortDetail, string? LongDetail, string State, int ProgressPercentage);
+public record DistributionDto(Guid DistributionConceptId, decimal Percentage, decimal ExpectedAmount, decimal ActualAmount, int OrderIndex = 0);
+public record ActivityDto(string ShortDetail, string? LongDetail, string State, int ProgressPercentage, int OrderIndex = 0);

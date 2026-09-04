@@ -475,7 +475,8 @@
         <app-service-order-observations 
           [serviceOrderId]="orderId"
           [observations]="observations"
-          (observationAdded)="onObservationAdded($event)">
+          (observationAdded)="onObservationAdded($event)"
+          (observationDeleted)="onObservationDeleted($event)">
         </app-service-order-observations>
       </div>
           </mat-tab>

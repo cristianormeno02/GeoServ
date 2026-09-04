@@ -13,4 +13,5 @@ public class ServiceOrderDistribution
     public decimal Percentage { get; set; }
     public decimal ExpectedAmount { get; set; }
     public decimal ActualAmount { get; set; }
+    public int OrderIndex { get; set; } = 0;
 }

@@ -26,6 +26,7 @@ export class ServiceOrderObservationsComponent {
   @Input() serviceOrderId: string | null = null;
   @Input() observations: any[] = [];
   @Output() observationAdded = new EventEmitter<any>();
+  @Output() observationDeleted = new EventEmitter<string>();
 
   newObservationText: string = '';
   observationType: string = 'Nota General';
@@ -59,5 +60,11 @@ export class ServiceOrderObservationsComponent {
   getColor(type: string): string {
     const found = this.observationTypes.find(t => t.value === type);
     return found ? found.color : '#757575';
+  }
+
+  deleteObservation(id: string) {
+    if (confirm('¿Está seguro de eliminar esta observación?')) {
+      this.observationDeleted.emit(id);
+    }
   }
 }

@@ -36,4 +36,5 @@ public class DirectCost
     
     public Guid RegisteredByUserId { get; set; }
     public User RegisteredByUser { get; set; } = null!;
+    public int OrderIndex { get; set; } = 0;
 }

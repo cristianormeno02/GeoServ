@@ -20,7 +20,7 @@ public static class DirectCostEndpoints
                 .Include(c => c.PaidBy)
                 .Include(c => c.PaymentMethod)
                 .Where(c => c.ServiceOrderId == serviceOrderId)
-                .OrderByDescending(c => c.Date)
+                .OrderBy(c => c.OrderIndex).ThenByDescending(c => c.Date)
                 .ToListAsync();
 
             return Results.Ok(costs);
@@ -63,7 +63,8 @@ public static class DirectCostEndpoints
                 PaymentMethodId = request.PaymentMethodId,
                 Status = request.Status ?? "Pendiente",
                 Observations = request.Observations,
-                RegisteredByUserId = userId
+                RegisteredByUserId = userId,
+                OrderIndex = request.OrderIndex
             };
 
             context.DirectCosts.Add(directCost);
@@ -89,6 +90,7 @@ public static class DirectCostEndpoints
             directCost.PaymentMethodId = request.PaymentMethodId;
             directCost.Status = request.Status ?? "Pendiente";
             directCost.Observations = request.Observations;
+            directCost.OrderIndex = request.OrderIndex;
 
             await context.SaveChangesAsync();
 
@@ -122,4 +124,5 @@ public class DirectCostRequest
     public Guid? PaymentMethodId { get; set; }
     public string? Status { get; set; }
     public string? Observations { get; set; }
+    public int OrderIndex { get; set; } = 0;
 }
