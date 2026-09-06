@@ -51,7 +51,7 @@ export class KpiDetailModal implements OnInit {
 
   loadData() {
     this.loading = true;
-    const url = `${environment.apiUrl}/api/dashboard/${this.data.dashboardType}/kpis/${this.data.kpiId}/details`;
+    const url = `${environment.apiUrl}/dashboard/${this.data.dashboardType}/kpis/${this.data.kpiId}/details`;
     
     let params = new HttpParams()
       .set('page', this.page.toString())
