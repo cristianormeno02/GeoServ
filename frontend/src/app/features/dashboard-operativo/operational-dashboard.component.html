@@ -145,7 +145,34 @@
       </button>
     </div>
   </div>
-
+  <!-- Row 3.5: Mapa de Proyectos -->
+  <div class="map-section" style="margin-top: 20px;">
+    <mat-card class="table-card" style="position: relative; overflow: hidden; padding: 0;">
+      <button mat-icon-button class="widget-help-btn" matTooltip="Ubicación geográfica de los proyectos. Los marcadores verdes indican proyectos con órdenes activas; los rojos, sin órdenes activas." matTooltipPosition="above" matTooltipClass="custom-help-tooltip" style="z-index: 10;">
+        <mat-icon>help_outline</mat-icon>
+      </button>
+      <div class="card-header" style="padding: 16px;">
+        <div class="header-left">
+          <mat-icon class="header-icon" style="color: #0284c7;">map</mat-icon>
+          <span class="card-title">Mapa de Proyectos</span>
+        </div>
+      </div>
+      <div style="height: 400px; width: 100%;">
+        <google-map 
+          width="100%" 
+          height="100%" 
+          [center]="mapCenter" 
+          [zoom]="mapZoom">
+          <map-marker 
+            *ngFor="let marker of mapMarkers"
+            [position]="marker.position"
+            [title]="marker.title"
+            [options]="marker.options">
+          </map-marker>
+        </google-map>
+      </div>
+    </mat-card>
+  </div>
   <!-- Row 4: Tablas de Monitoreo -->
   <div class="tables-grid">
     <!-- Tabla de Órdenes Estancadas -->

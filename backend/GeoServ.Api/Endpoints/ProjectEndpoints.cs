@@ -20,7 +20,9 @@ public static class ProjectEndpoints
                     p.Id,
                     p.Name,
                     p.Description,
-                    p.CreatedAt
+                    p.CreatedAt,
+                    p.Latitud,
+                    p.Longitud
                 })
                 .ToListAsync();
 
@@ -42,7 +44,9 @@ public static class ProjectEndpoints
                 project.Id,
                 project.Name,
                 project.Description,
-                project.CreatedAt
+                project.CreatedAt,
+                project.Latitud,
+                project.Longitud
             });
         })
         .WithName("GetProjectById")
@@ -56,12 +60,19 @@ public static class ProjectEndpoints
                 return Results.BadRequest(new { message = "Ya existe un proyecto con este nombre." });
             }
 
+            if (request.Latitud.HasValue && (request.Latitud.Value < -90 || request.Latitud.Value > 90))
+                return Results.BadRequest(new { message = "La latitud debe estar entre -90 y 90." });
+            if (request.Longitud.HasValue && (request.Longitud.Value < -180 || request.Longitud.Value > 180))
+                return Results.BadRequest(new { message = "La longitud debe estar entre -180 y 180." });
+
             var project = new Project
             {
                 Id = Guid.NewGuid(),
                 Name = request.Name,
                 Description = request.Description,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                Latitud = request.Latitud,
+                Longitud = request.Longitud
             };
 
             context.Projects.Add(project);
@@ -80,11 +91,18 @@ public static class ProjectEndpoints
                 return Results.BadRequest(new { message = "Ya existe otro proyecto con este nombre." });
             }
 
+            if (request.Latitud.HasValue && (request.Latitud.Value < -90 || request.Latitud.Value > 90))
+                return Results.BadRequest(new { message = "La latitud debe estar entre -90 y 90." });
+            if (request.Longitud.HasValue && (request.Longitud.Value < -180 || request.Longitud.Value > 180))
+                return Results.BadRequest(new { message = "La longitud debe estar entre -180 y 180." });
+
             var project = await context.Projects.FindAsync(id);
             if (project is null) return Results.NotFound();
 
             project.Name = request.Name;
             project.Description = request.Description;
+            project.Latitud = request.Latitud;
+            project.Longitud = request.Longitud;
 
             await context.SaveChangesAsync();
             return Results.NoContent();
@@ -120,10 +138,14 @@ public class CreateProjectRequest
 {
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public decimal? Latitud { get; set; }
+    public decimal? Longitud { get; set; }
 }
 
 public class UpdateProjectRequest
 {
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public decimal? Latitud { get; set; }
+    public decimal? Longitud { get; set; }
 }

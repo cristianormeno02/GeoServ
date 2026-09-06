@@ -3,14 +3,20 @@ export interface Project {
   name: string;
   description?: string;
   createdAt: string;
+  latitud?: number;
+  longitud?: number;
 }
 
 export interface CreateProjectRequest {
   name: string;
   description?: string;
+  latitud?: number;
+  longitud?: number;
 }
 
 export interface UpdateProjectRequest {
   name: string;
   description?: string;
+  latitud?: number;
+  longitud?: number;
 }

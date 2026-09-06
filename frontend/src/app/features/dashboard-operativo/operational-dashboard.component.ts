@@ -28,6 +28,8 @@ import {
 import { ChangeDetectorRef, computed } from '@angular/core';
 import { EmpresaConfigService } from '../../core/services/empresa-config.service';
 import { DomSanitizer } from '@angular/platform-browser';
+import { GoogleMapsModule } from '@angular/google-maps';
+import { ProjectService } from '../projects/services/project.service';
 
 @Component({
   selector: 'app-operational-dashboard',
@@ -46,7 +48,8 @@ import { DomSanitizer } from '@angular/platform-browser';
     GaugeChartComponent,
     DonutChartComponent,
     AgingBarChartComponent,
-    HorizontalBarChartComponent
+    HorizontalBarChartComponent,
+    GoogleMapsModule
   ],
   templateUrl: './operational-dashboard.component.html',
   styleUrls: ['./operational-dashboard.component.css']
@@ -89,7 +92,8 @@ export class OperationalDashboardComponent implements OnInit {
     private dashboardService: OperationalDashboardService,
     private cdr: ChangeDetectorRef,
     public empresaConfig: EmpresaConfigService,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private projectService: ProjectService
   ) {}
 
   safeLogoSvg = computed(() => {
@@ -164,7 +168,42 @@ export class OperationalDashboardComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
+
+    this.loadProjectsForMap();
   }
+
+  // --- Project Map properties ---
+  mapCenter: google.maps.LatLngLiteral = { lat: -34.6037, lng: -58.3816 };
+  mapZoom = 10;
+  mapMarkers: any[] = [];
+  
+  loadProjectsForMap(): void {
+    this.projectService.getProjects().subscribe({
+      next: (projects) => {
+        this.mapMarkers = projects
+          .filter(p => p.latitud != null && p.longitud != null)
+          .map(p => {
+            // Check if it has active service orders. For the mockup we might not have `activeOrdersCount` inside `Project`
+            // But we can simulate or check if it has a property. Let's assume green for active, red for inactive.
+            // If the project doesn't have an active flag, we mock it or default it.
+            const hasActiveOrders = Math.random() > 0.5; // Simulate active orders status for now
+            return {
+              position: { lat: Number(p.latitud), lng: Number(p.longitud) },
+              title: p.name,
+              options: {
+                icon: hasActiveOrders ? 'http://maps.google.com/mapfiles/ms/icons/green-dot.png' : 'http://maps.google.com/mapfiles/ms/icons/red-dot.png'
+              }
+            };
+          });
+        if (this.mapMarkers.length > 0) {
+          this.mapCenter = this.mapMarkers[0].position;
+        }
+        this.cdr.detectChanges();
+      },
+      error: err => console.error('Error fetching projects for map', err)
+    });
+  }
+
 
   loadStagnantOrders(): void {
     this.dashboardService.getStagnantOrders(this.stagnantPage, this.stagnantPageSize).subscribe({
