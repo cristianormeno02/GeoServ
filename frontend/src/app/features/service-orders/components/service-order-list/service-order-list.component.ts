@@ -44,6 +44,7 @@ export class ServiceOrderListComponent implements OnInit {
     'statusName',
     'createdAt',
     'budgetedAmount',
+    'collectedAmount',
     'actions'
   ];
   dataSource = new MatTableDataSource<ServiceOrderListItem>();

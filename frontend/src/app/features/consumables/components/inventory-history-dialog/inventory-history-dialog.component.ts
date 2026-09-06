@@ -1,8 +1,8 @@
-﻿import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
-import { MatTableModule } from '@angular/material/table';
+import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { InventoryMovementService } from '../../services/inventory-movement.service';
@@ -21,7 +21,7 @@ import { MatSelectModule } from '@angular/material/select';
     <mat-dialog-content>
       
       <div *ngIf="!showNewForm">
-        <table mat-table [dataSource]="movements" class="mat-elevation-z2" style="width: 100%;">
+        <table mat-table [dataSource]="dataSource" class="mat-elevation-z2" style="width: 100%;">
           <ng-container matColumnDef="fecha">
             <th mat-header-cell *matHeaderCellDef> Fecha </th>
             <td mat-cell *matCellDef="let el"> {{el.fecha | date:'shortDate'}} </td>
@@ -38,11 +38,17 @@ import { MatSelectModule } from '@angular/material/select';
           </ng-container>
           <ng-container matColumnDef="motivo">
             <th mat-header-cell *matHeaderCellDef> Motivo </th>
-            <td mat-cell *matCellDef="let el"> {{el.motivo}} </td>
+            <td mat-cell *matCellDef="let el"> {{el.motivo || '-'}} </td>
           </ng-container>
 
           <tr mat-header-row *matHeaderRowDef="['fecha', 'tipo', 'cantidad', 'motivo']"></tr>
           <tr mat-row *matRowDef="let row; columns: ['fecha', 'tipo', 'cantidad', 'motivo'];"></tr>
+
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell" colspan="4" style="text-align: center; padding: 20px; color: #666;">
+              No hay movimientos registrados para este insumo.
+            </td>
+          </tr>
         </table>
         
         <div style="margin-top: 15px;">
@@ -89,6 +95,7 @@ import { MatSelectModule } from '@angular/material/select';
   `]
 })
 export class InventoryHistoryDialogComponent implements OnInit {
+  dataSource = new MatTableDataSource<InventoryMovement>([]);
   movements: InventoryMovement[] = [];
   showNewForm = false;
   form: FormGroup;
@@ -98,7 +105,8 @@ export class InventoryHistoryDialogComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: { consumableId: string },
     private invService: InventoryMovementService,
     private fb: FormBuilder,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private cdr: ChangeDetectorRef
   ) {
     this.form = this.fb.group({
       movementType: ['AjusteNegativo', Validators.required],
@@ -126,8 +134,16 @@ export class InventoryHistoryDialogComponent implements OnInit {
   }
 
   loadMovements() {
-    this.invService.getMovementsByConsumableId(this.data.consumableId).subscribe(res => {
-      this.movements = [...res];
+    this.invService.getMovementsByConsumableId(this.data.consumableId).subscribe({
+      next: (res) => {
+        this.movements = [...res];
+        this.dataSource.data = res;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error al cargar movimientos', err);
+        this.snackBar.open('Error al cargar los movimientos del insumo', 'Cerrar', { duration: 3000 });
+      }
     });
   }
 
