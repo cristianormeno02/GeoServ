@@ -3,12 +3,14 @@
     <mat-icon>menu</mat-icon>
   </button>
   <div class="logo-container">
-    <!-- Si hay SVG dinámico de la base de datos lo mostramos aquí -->
-    <img *ngIf="safeLogoSvg()" [src]="safeLogoSvg()" class="dynamic-logo-img" alt="Logo de la Empresa" />
-    
-    <!-- Fallback si no hay logo dinámico -->
-    <img *ngIf="!safeLogoSvg()" src="assets/geoserv-logo.svg" alt="GeoServ Logo" class="logo-img" />
-    
+    <div class="logo-circle">
+      <!-- Si hay SVG dinámico de la base de datos lo mostramos aquí -->
+      <img *ngIf="safeLogoSvg()" [src]="safeLogoSvg()" alt="Logo de la Empresa" />
+      
+      <!-- Fallback si no hay logo dinámico -->
+      <img *ngIf="!safeLogoSvg()" src="assets/geoserv-logo.svg" alt="GeoServ Logo" onerror="this.style.display='none'; this.parentElement.innerHTML='<mat-icon style=\'font-size: 30px; width: 30px; height: 30px; color: #0284c7;\'>business</mat-icon>';" />
+    </div>
+
     <!-- Nombre de la empresa o GeoServ por defecto -->
     <span class="company-name">{{ empresaConfig.empresaActual()?.nombre || 'GeoServ' }}</span>
   </div>
