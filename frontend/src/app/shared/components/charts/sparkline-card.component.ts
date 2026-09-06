@@ -10,7 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
   standalone: true,
   imports: [CommonModule, MatCardModule, MatIconModule, MatTooltipModule, MatButtonModule],
   template: `
-    <mat-card class="kpi-card" [ngClass]="[semanticState || 'neutral', isClickable ? 'clickable' : '']" (click)="onCardClick()">
+    <mat-card class="kpi-card" [ngClass]="[semanticState || 'neutral', isClickable ? 'clickable' : '', 'size-' + (size || 'normal')]" (click)="onCardClick()">
       <div class="kpi-header">
         <div class="kpi-title-area">
           <span class="kpi-title">{{ title }}</span>
@@ -107,11 +107,24 @@ import { MatButtonModule } from '@angular/material/button';
       align-items: baseline;
       gap: 4px;
       transition: opacity 0.2s ease;
+      max-width: 100%;
+      overflow: hidden;
     }
     .kpi-value {
-      font-size: 56px;
+      font-size: clamp(24px, 2.5vw, 36px);
       font-weight: 700;
-      line-height: 1.1;
+      line-height: 1.15;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .kpi-card.size-small .kpi-value {
+      font-size: clamp(20px, 2vw, 26px);
+    }
+    .kpi-card.size-compact {
+      padding: 12px 14px;
+    }
+    .kpi-card.size-compact .kpi-value {
+      font-size: clamp(18px, 1.8vw, 22px);
     }
     .kpi-unit {
       font-size: 13px;
@@ -150,6 +163,7 @@ import { MatButtonModule } from '@angular/material/button';
   `]
 })
 export class SparklineCardComponent {
+  @Input() size: 'normal' | 'small' | 'compact' = 'normal';
   @Input() title: string = '';
   @Input() subtitle?: string;
   @Input() value: number | string = 0;

@@ -169,6 +169,12 @@ export class FinancialSummaryComponent implements OnInit {
   }
 
   formatCurrency(val: number): string {
-    return '$ ' + (val || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const v = val || 0;
+    // Si tiene centavos distintos de 0 los mostramos, si no redondeamos limpio para ahorrar espacio
+    const hasDecimals = v % 1 !== 0;
+    return '$ ' + v.toLocaleString('es-AR', { 
+      minimumFractionDigits: hasDecimals ? 2 : 0, 
+      maximumFractionDigits: hasDecimals ? 2 : 0 
+    });
   }
 }

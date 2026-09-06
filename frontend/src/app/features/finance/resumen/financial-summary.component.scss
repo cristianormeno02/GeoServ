@@ -118,28 +118,33 @@
 /* Grids */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
 }
 
 .row-2-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 18px;
+  gap: 16px;
 
-  @media (max-width: 900px) {
+  @media (max-width: 992px) {
     grid-template-columns: 1fr;
   }
 }
 
 .chart-box {
-  min-height: 240px;
+  display: flex;
+  flex-direction: column;
 }
 
 .kpi-pair-column {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Data Tabs Card */
