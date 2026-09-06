@@ -217,7 +217,18 @@ export class MovimientoFormComponent implements OnInit {
     let mapFn = (x: any) => ({ id: x.id, name: x.name || x.description || x.orderNumber });
     
     if (type === 'ServiceOrderIncome') endpoint = '/service-orders';
-    else if (type === 'DirectCost') endpoint = '/direct-costs';
+    else if (type === 'DirectCost') {
+      endpoint = '/direct-costs';
+      mapFn = (x: any) => {
+        const osPrefix = x.serviceOrderNumber ? `[OS #${x.serviceOrderNumber}] ` : '';
+        const catSuffix = x.categoryName ? ` (${x.categoryName})` : '';
+        const amountSuffix = x.totalAmount != null ? ` - $${Number(x.totalAmount).toLocaleString('es-AR')}` : '';
+        return {
+          id: x.id,
+          name: `${osPrefix}${x.description || 'Costo Directo'}${catSuffix}${amountSuffix}`
+        };
+      };
+    }
     else if (type === 'FixedCostPayment') {
       endpoint = '/fixed-cost-items';
       mapFn = (x: any) => ({

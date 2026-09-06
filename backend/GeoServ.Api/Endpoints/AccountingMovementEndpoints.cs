@@ -29,6 +29,8 @@ public static class AccountingMovementEndpoints
                 .Include(m => m.Category)
                 .Include(m => m.PaymentMethod)
                 .Include(m => m.ServiceOrder)
+                .Include(m => m.DirectCost)
+                    .ThenInclude(dc => dc!.ServiceOrder)
                 .AsQueryable();
 
             if (startDate.HasValue)
@@ -70,7 +72,7 @@ public static class AccountingMovementEndpoints
                     m.PaymentMethodId,
                     PaymentMethodName = m.PaymentMethod != null ? m.PaymentMethod.Name : null,
                     m.ServiceOrderId,
-                    ServiceOrderNumber = m.ServiceOrder != null ? m.ServiceOrder.OrderNumber : null,
+                    ServiceOrderNumber = m.ServiceOrder != null ? m.ServiceOrder.OrderNumber : (m.DirectCost != null && m.DirectCost.ServiceOrder != null ? m.DirectCost.ServiceOrder.OrderNumber : null),
                     m.FixedCostId,
                     m.DirectCostId,
                     m.AssetId,
@@ -119,6 +121,19 @@ public static class AccountingMovementEndpoints
                 var sourceId = request.SourceId;
                 var sourceType = request.SourceType;
 
+                Guid? serviceOrderId = null;
+                Guid? directCostId = null;
+                Guid? fixedCostId = null;
+                Guid? assetId = null;
+
+                if (Guid.TryParse(sourceId, out var parsedGuid))
+                {
+                    if (sourceType == MovementSourceType.ServiceOrderIncome) serviceOrderId = parsedGuid;
+                    else if (sourceType == MovementSourceType.DirectCost) directCostId = parsedGuid;
+                    else if (sourceType == MovementSourceType.FixedCostPayment) fixedCostId = parsedGuid;
+                    else if (sourceType == MovementSourceType.AssetPurchase) assetId = parsedGuid;
+                }
+
                 var movement = new AccountingMovement
                 {
                     Id = Guid.NewGuid(),
@@ -133,7 +148,11 @@ public static class AccountingMovementEndpoints
                     ResponsibleId = request.ResponsibleId,
                     RegisteredByUserId = userId,
                     SourceType = sourceType,
-                    SourceId = sourceId
+                    SourceId = sourceId,
+                    ServiceOrderId = serviceOrderId,
+                    DirectCostId = directCostId,
+                    FixedCostId = fixedCostId,
+                    AssetId = assetId
                 };
 
                 context.AccountingMovements.Add(movement);
@@ -159,6 +178,11 @@ public static class AccountingMovementEndpoints
                 var sourceType = request.SourceType ?? MovementSourceType.Manual;
                 var sourceId = request.SourceId;
 
+                Guid? serviceOrderId = request.ServiceOrderId;
+                Guid? directCostId = request.DirectCostId;
+                Guid? fixedCostId = request.FixedCostId;
+                Guid? assetId = request.AssetId;
+
                 if (!request.SourceType.HasValue)
                 {
                     sourceId = request.ServiceOrderId?.ToString() ?? request.DirectCostId?.ToString() ?? request.FixedCostId?.ToString() ?? request.AssetId?.ToString();
@@ -166,6 +190,13 @@ public static class AccountingMovementEndpoints
                     else if (request.DirectCostId.HasValue) sourceType = MovementSourceType.DirectCost;
                     else if (request.FixedCostId.HasValue) sourceType = MovementSourceType.FixedCostPayment;
                     else if (request.AssetId.HasValue) sourceType = MovementSourceType.AssetPurchase;
+                }
+                else if (Guid.TryParse(sourceId, out var parsedGuid))
+                {
+                    if (sourceType == MovementSourceType.ServiceOrderIncome) serviceOrderId = parsedGuid;
+                    else if (sourceType == MovementSourceType.DirectCost) directCostId = parsedGuid;
+                    else if (sourceType == MovementSourceType.FixedCostPayment) fixedCostId = parsedGuid;
+                    else if (sourceType == MovementSourceType.AssetPurchase) assetId = parsedGuid;
                 }
 
                 movement.IsIncome = request.IsIncome;
@@ -175,10 +206,10 @@ public static class AccountingMovementEndpoints
                 movement.Description = request.Description ?? string.Empty;
                 movement.FinancialAccountId = request.FinancialAccountId;
                 movement.PaymentMethodId = request.PaymentMethodId;
-                movement.ServiceOrderId = request.ServiceOrderId;
-                movement.FixedCostId = request.FixedCostId;
-                movement.DirectCostId = request.DirectCostId;
-                movement.AssetId = request.AssetId;
+                movement.ServiceOrderId = serviceOrderId;
+                movement.FixedCostId = fixedCostId;
+                movement.DirectCostId = directCostId;
+                movement.AssetId = assetId;
                 movement.CheckId = request.CheckId;
                 movement.ResponsibleId = request.ResponsibleId;
                 movement.SourceType = sourceType;

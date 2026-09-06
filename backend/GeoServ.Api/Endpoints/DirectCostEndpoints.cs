@@ -9,6 +9,49 @@ public static class DirectCostEndpoints
 {
     public static void MapDirectCostEndpoints(this IEndpointRouteBuilder app)
     {
+        // --- Global Direct Costs Endpoints ---
+        var globalGroup = app.MapGroup("/api/direct-costs").RequireAuthorization();
+
+        globalGroup.MapGet("/", async (GeoServDbContext context) =>
+        {
+            var costs = await context.DirectCosts
+                .Include(c => c.ServiceOrder)
+                .Include(c => c.Category)
+                .Include(c => c.Provider)
+                .OrderByDescending(c => c.Date)
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Description,
+                    c.TotalAmount,
+                    c.Date,
+                    c.Status,
+                    c.ServiceOrderId,
+                    ServiceOrderNumber = c.ServiceOrder != null ? c.ServiceOrder.OrderNumber : null,
+                    CategoryName = c.Category != null ? c.Category.Name : null,
+                    ProviderName = c.Provider != null ? c.Provider.Name : null
+                })
+                .ToListAsync();
+
+            return Results.Ok(costs);
+        }).WithName("GetAllDirectCosts").WithOpenApi();
+
+        globalGroup.MapGet("/{id:guid}", async (Guid id, GeoServDbContext context) =>
+        {
+            var cost = await context.DirectCosts
+                .Include(c => c.ServiceOrder)
+                .Include(c => c.Category)
+                .Include(c => c.Provider)
+                .Include(c => c.Unit)
+                .Include(c => c.PaidBy)
+                .Include(c => c.PaymentMethod)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (cost is null) return Results.NotFound();
+
+            return Results.Ok(cost);
+        }).WithName("GetDirectCostById").WithOpenApi();
+
         var group = app.MapGroup("/api/service-orders/{serviceOrderId:guid}/direct-costs").RequireAuthorization();
 
         group.MapGet("/", async (Guid serviceOrderId, GeoServDbContext context) =>
