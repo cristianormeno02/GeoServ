@@ -2,9 +2,9 @@
 
   <div *ngIf="hasAccessError" class="access-error-state" style="text-align: center; padding: 48px 24px; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-top: 24px;">
     <div style="display: flex; justify-content: center; margin-bottom: 24px;">
-      <div style="width: 80px; height: 80px; background-color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-        <img *ngIf="safeLogoSvg()" [src]="safeLogoSvg()" alt="Logo" style="max-width: 50px; max-height: 50px; object-fit: contain;" />
-        <img *ngIf="!safeLogoSvg()" src="assets/geoserv-logo.svg" alt="GeoServ" style="max-width: 50px; max-height: 50px; object-fit: contain;" />
+      <div style="width: 160px; height: 160px; background-color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+        <img *ngIf="safeLogoSvg()" [src]="safeLogoSvg()" alt="Logo" style="max-width: 120px; max-height: 120px; object-fit: contain;" />
+        <img *ngIf="!safeLogoSvg()" src="assets/geoserv-logo.svg" alt="GeoServ" style="max-width: 120px; max-height: 120px; object-fit: contain;" />
       </div>
     </div>
     <mat-icon style="font-size: 64px; height: 64px; width: 64px; color: #ef4444; margin-bottom: 16px;">gpp_bad</mat-icon>
