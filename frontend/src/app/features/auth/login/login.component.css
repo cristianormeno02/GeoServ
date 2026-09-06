@@ -35,7 +35,7 @@
 }
 
 .app-logo {
-  height: 120px; /* Aún más grande */
+  height: 300px; /* Aún más grande */
   width: auto;
   display: block;
   object-fit: contain;
@@ -126,7 +126,7 @@
 }
 
 .form-logo {
-  height: 80px; /* Aumentamos el tamaño significativamente */
+  height: 160px; /* Aumentamos el tamaño significativamente */
   width: auto;
   display: block;
   /* Quitamos el filtro invert para que se vea en su color natural (negro) sobre fondo blanco */

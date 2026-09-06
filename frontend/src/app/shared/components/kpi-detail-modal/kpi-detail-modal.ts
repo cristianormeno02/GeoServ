@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -42,7 +42,8 @@ export class KpiDetailModal implements OnInit {
   constructor(
     private dialogRef: MatDialogRef<KpiDetailModal>,
     @Inject(MAT_DIALOG_DATA) public data: KpiDetailModalData,
-    private http: HttpClient
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -72,10 +73,12 @@ export class KpiDetailModal implements OnInit {
         }
         
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         console.error('Error loading KPI details', err);
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }

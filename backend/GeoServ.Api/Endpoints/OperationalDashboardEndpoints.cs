@@ -11,6 +11,14 @@ namespace GeoServ.Api.Endpoints;
 
 public static class OperationalDashboardEndpoints
 {
+    public static IQueryable<ServiceOrder> GetUncollectedDeliveredOrdersQuery(GeoServDbContext context)
+    {
+        return context.ServiceOrders
+            .AsNoTracking()
+            .Include(o => o.Status)
+            .Where(o => o.Status != null && o.Status.Name == "Entregada" && o.TotalAmount > o.CollectedAmount);
+    }
+
     public static void MapOperationalDashboardEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/dashboard/operational").RequireAuthorization();
@@ -60,9 +68,8 @@ public static class OperationalDashboardEndpoints
                 .CountAsync(o => o.Status.Name != "Cobrada" && o.Status.Name != "Cancelada" && o.UpdatedAt <= stagnantThresholdDate);
 
             // Entregadas sin cobrar
-            var uncollectedOrdersCount = await context.ServiceOrders
-                .AsNoTracking()
-                .CountAsync(o => o.Status.Name != "Cancelada" && o.TotalAmount > o.CollectedAmount && (o.Status.Name == "Entregada" || o.ActualEndDate != null));
+            var uncollectedOrdersCount = await GetUncollectedDeliveredOrdersQuery(context)
+                .CountAsync();
 
             var lowStockItemsCount = await context.Consumables
                 .AsNoTracking()
@@ -254,9 +261,7 @@ public static class OperationalDashboardEndpoints
             var actualPage = page ?? 1;
             var actualPageSize = pageSize ?? 10;
 
-            var query = context.ServiceOrders
-                .AsNoTracking()
-                .Where(o => o.Status.Name != "Cancelada" && o.TotalAmount > o.CollectedAmount && (o.Status.Name == "Entregada" || o.ActualEndDate != null))
+            var query = GetUncollectedDeliveredOrdersQuery(context)
                 .Include(o => o.Client)
                 .Include(o => o.ServiceType);
 
@@ -442,11 +447,8 @@ public static class OperationalDashboardEndpoints
             }
             else if (kpi_id == "uncollectedOrders")
             {
-                var query = context.ServiceOrders
-                    .AsNoTracking()
-                    .Where(o => o.Status != null && o.Status.Name != "Cancelada" && o.TotalAmount > o.CollectedAmount && (o.Status.Name == "Entregada" || o.ActualEndDate != null))
-                    .Include(o => o.Client)
-                    .Include(o => o.Status);
+                var query = GetUncollectedDeliveredOrdersQuery(context)
+                    .Include(o => o.Client);
 
                 var totalCount = await query.CountAsync();
                 var items = await query

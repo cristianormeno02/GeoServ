@@ -20,11 +20,13 @@ context: |
 # Per-operation guidance (optional)
 # Add advisory guidance for how apply and archive work should be conducted.
 # This is separate from artifact rules above.
-# Example:
-#   operations:
-#     apply:
-#       guidance:
-#         - Keep test summaries concise
-#     archive:
-#       guidance:
-#         - Summarize the archive outcome before finishing
+operations:
+  apply:
+    guidance:
+      - "Superpowers TDD: Para cada tarea en tasks.md, aplicar ciclo Red-Green-Refactor escribiendo primero pruebas que fallen (superpowers-tdd)."
+      - "Superpowers Debugging: En caso de errores o fallos en pruebas, diagnosticar la causa raíz antes de modificar código (superpowers-debugging)."
+      - "Superpowers Code Review: Antes de marcar una tarea como completada, validar conformidad con la especificación delta y calidad de arquitectura (superpowers-code-review)."
+  archive:
+    guidance:
+      - "Verificar que toda la suite de pruebas automatizadas (.NET y Angular) pase exitosamente antes de archivar."
+
