@@ -1,13 +1,13 @@
 <div class="login-wrapper">
   <!-- Left/Top Section: Branding Graphic (Abstract/Geometric) -->
   <div class="branding-section">
-    <!-- App Logo (GeoServ) in the top left -->
-    <div class="app-logo-container">
-      <img [src]="appLogo" alt="Logo de {{appName}}" class="app-logo" (error)="appLogo = ''" *ngIf="appLogo">
-      <span *ngIf="!appLogo" class="app-name-fallback">{{ appName }}</span>
-    </div>
-
     <div class="branding-overlay">
+      <!-- App Logo (GeoServ) -->
+      <div class="app-logo-container">
+        <img [src]="appLogo" alt="Logo de {{appName}}" class="app-logo" (error)="appLogo = ''" *ngIf="appLogo">
+        <span *ngIf="!appLogo" class="app-name-fallback">{{ appName }}</span>
+      </div>
+
       <div class="tenant-logo-container">
         <!-- Subdominio detectado -->
         <h1 class="tenant-name">Workspace: {{ empresaConfig.obtenerSubdominioActual() }}</h1>
