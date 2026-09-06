@@ -86,7 +86,8 @@ export class LoginComponent implements OnInit, AfterViewInit {
         next: () => {
           this.empresaConfig.cargarConfiguracion().subscribe({
             next: () => {
-              this.router.navigate(['/']);
+              const targetRoute = this.authService.getDefaultDashboardRoute();
+              this.router.navigate([targetRoute]);
             },
             error: () => {
               this.isLoading = false;
@@ -132,7 +133,8 @@ export class LoginComponent implements OnInit, AfterViewInit {
         // El AuthService ya guarda el token. Ahora cargamos la configuración:
         this.empresaConfig.cargarConfiguracion().subscribe({
           next: () => {
-            this.router.navigate(['/']); // Redirigir al inicio/dashboard
+            const targetRoute = this.authService.getDefaultDashboardRoute();
+            this.router.navigate([targetRoute]); // Redirigir al dashboard según rol
           },
           error: () => {
             this.isLoading = false;

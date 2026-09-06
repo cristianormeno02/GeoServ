@@ -160,8 +160,35 @@ export class AuthService {
         const roleClaim = payload.role || payload.roles || payload.Role || payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
         if (roleClaim) return roleClaim;
       } catch (e) {}
+      return 'Administrador'; // Fallback per default if token exists but role not found
     }
-    return 'Administrador'; // Fallback per default if not found, since it's commonly the admin testing
+    return null;
+  }
+
+  hasRole(allowedRoles: string[]): boolean {
+    const userRole = this.getUserRole();
+    if (!userRole) return false;
+    if (Array.isArray(userRole)) {
+      return userRole.some(r => allowedRoles.includes(r));
+    }
+    return allowedRoles.includes(userRole);
+  }
+
+  getDefaultDashboardRoute(): string {
+    // 1. Dashboard General
+    if (this.hasRole(['Administrador', 'Operador'])) {
+      return '/dashboard';
+    }
+    // 2. Dashboard Operativo
+    if (this.hasRole(['Administrador', 'OperativoExclusivo'])) {
+      return '/dashboard/operativo';
+    }
+    // 3. Dashboard Cliente
+    if (this.hasRole(['Cliente'])) {
+      return '/dashboard/cliente';
+    }
+    // Fallback
+    return '/dashboard/cliente';
   }
 
   logout(): void {

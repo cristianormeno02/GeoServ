@@ -1,5 +1,8 @@
+import { inject } from '@angular/core';
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { dashboardRoleGuard } from './core/guards/dashboard-role.guard';
+import { AuthService } from './core/services/auth.service';
 
 export const routes: Routes = [
   { path: 'login', loadComponent: () => import('./features/auth/login/login.component').then(m => m.LoginComponent) },
@@ -10,10 +13,30 @@ export const routes: Routes = [
     loadComponent: () => import('./core/layout/main-layout/main-layout.component').then(m => m.MainLayoutComponent),
     canActivate: [authGuard],
     children: [
-      { path: 'dashboard', loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent) },
-      { path: 'dashboard/operativo', loadComponent: () => import('./features/dashboard-operativo/operational-dashboard.component').then(m => m.OperationalDashboardComponent) },
-      { path: 'dashboard/financiero', loadComponent: () => import('./features/dashboard-financiero/financial-dashboard.component').then(m => m.FinancialDashboardComponent) },
-      { path: 'dashboard/cliente', loadComponent: () => import('./shared/components/under-construction/under-construction.component').then(m => m.UnderConstructionComponent) },
+      { 
+        path: 'dashboard', 
+        loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
+        canActivate: [dashboardRoleGuard],
+        data: { roles: ['Administrador', 'Operador'] }
+      },
+      { 
+        path: 'dashboard/operativo', 
+        loadComponent: () => import('./features/dashboard-operativo/operational-dashboard.component').then(m => m.OperationalDashboardComponent),
+        canActivate: [dashboardRoleGuard],
+        data: { roles: ['Administrador', 'OperativoExclusivo'] }
+      },
+      { 
+        path: 'dashboard/financiero', 
+        loadComponent: () => import('./features/dashboard-financiero/financial-dashboard.component').then(m => m.FinancialDashboardComponent),
+        canActivate: [dashboardRoleGuard],
+        data: { roles: ['Administrador'] }
+      },
+      { 
+        path: 'dashboard/cliente', 
+        loadComponent: () => import('./features/dashboard-cliente/client-dashboard.component').then(m => m.ClientDashboardComponent),
+        canActivate: [dashboardRoleGuard],
+        data: { roles: ['Administrador', 'Cliente'] }
+      },
       { path: 'en-construccion', loadComponent: () => import('./shared/components/under-construction/under-construction.component').then(m => m.UnderConstructionComponent) },
       { path: 'inventario', loadComponent: () => import('./features/inventario/inventario.component').then(m => m.InventarioComponent) },
       { path: 'finanzas/resumen', loadComponent: () => import('./features/finance/resumen/financial-summary.component').then(m => m.FinancialSummaryComponent) },
@@ -44,7 +67,15 @@ export const routes: Routes = [
       { path: 'insumos', loadComponent: () => import('./features/consumables/components/consumable-list/consumable-list.component').then(m => m.ConsumableListComponent) },
       { path: 'tipos-insumo', loadComponent: () => import('./features/consumables/components/consumable-type-list/consumable-type-list.component').then(m => m.ConsumableTypeListComponent) },
       { path: 'clases-insumo', loadComponent: () => import('./features/consumables/components/consumable-class-list/consumable-class-list.component').then(m => m.ConsumableClassListComponent) },
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
+      { 
+        path: '', 
+        pathMatch: 'full',
+        redirectTo: () => {
+          const authService = inject(AuthService);
+          const target = authService.getDefaultDashboardRoute();
+          return target.startsWith('/') ? target.slice(1) : target;
+        }
+      }
     ]
   },
   { path: '**', redirectTo: '' }
