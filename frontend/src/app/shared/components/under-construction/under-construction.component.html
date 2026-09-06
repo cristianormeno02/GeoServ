@@ -1,0 +1,22 @@
+<div class="construction-container">
+  <div class="construction-card">
+    <!-- Logo grande de la empresa dentro del círculo blanco, centrado -->
+    <div class="logo-wrapper">
+      <div class="logo-circle">
+        <img *ngIf="safeLogoSvg()" [src]="safeLogoSvg()" alt="Logo de la Empresa" class="company-logo" />
+        <img *ngIf="!safeLogoSvg()" src="assets/geoserv-logo.svg" alt="GeoServ" class="company-logo" />
+      </div>
+    </div>
+
+    <!-- Ícono grande indicando página en construcción -->
+    <div class="icon-wrapper">
+      <mat-icon class="construction-icon">construction</mat-icon>
+    </div>
+
+    <!-- Texto indicando que la página se encuentra en construcción -->
+    <div class="text-content">
+      <h1 class="construction-title">{{ title }}</h1>
+      <p class="construction-subtitle">{{ subtitle }}</p>
+    </div>
+  </div>
+</div>

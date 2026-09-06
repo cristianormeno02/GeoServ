@@ -24,7 +24,7 @@ export class SidebarComponent implements OnInit {
         { name: 'Mi Dashboard', path: '/dashboard', icon: 'dashboard', roles: ['Administrador', 'Operador'] },
         { name: 'Dashboard Operativo', path: '/dashboard/operativo', icon: 'insights', roles: ['Administrador'] },
         { name: 'Dashboard Financiero', path: '/dashboard/financiero', icon: 'query_stats', roles: ['Administrador'] },
-        { name: 'Dashboard Cliente', path: '/dashboard/cliente', icon: 'person', roles: ['Administrador', 'Cliente'] }
+        { name: 'Dashboard Cliente', path: '/en-construccion', icon: 'person', roles: ['Administrador', 'Cliente'] }
       ]
     },
     {
