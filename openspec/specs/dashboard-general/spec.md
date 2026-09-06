@@ -1,4 +1,4 @@
-﻿## Purpose
+## Purpose
 
 Dashboard personal centrado en el usuario autenticado que muestra únicamente las órdenes de servicio en las que el usuario figura como responsable, junto con el estado, progreso de actividades y observaciones recientes de esas órdenes, sin exponer información financiera ni operativa global de la empresa.
 
@@ -149,11 +149,11 @@ El sistema SHALL filtrar todos los datos exclusivamente usando el `userId` del J
 - **THEN** no se acepta ningún parámetro externo que permita acceder a datos de otro usuario
 
 ### Requirement: Interacción de detalle en KPIs Personales
-El sistema DEBE permitir al usuario visualizar el listado detallado de las órdenes de servicio que componen el valor principal de un KPI personal en "Mi dashboard" (Dashboard General). Esta acción se desencadenará al interactuar (hacer click) con el indicador numérico.
+El sistema SHALL permitir al usuario visualizar el listado detallado de las órdenes de servicio que componen el valor principal de un KPI personal en "Mi dashboard" (Dashboard General). Esta acción se desencadenará al interactuar (hacer click) con el indicador numérico, y el modal SHALL renderizar de forma inmediata el listado tan pronto como se complete la respuesta asíncrona del backend, sin requerir clics ni interacciones adicionales.
 
 #### Scenario: Visualización del detalle de órdenes en Mi Dashboard
 - **WHEN** el usuario hace click en el valor numérico principal de una tarjeta de KPI personal (por ejemplo, "Órdenes Activas", "Órdenes Entregadas")
-- **THEN** el sistema despliega un modal superpuesto que muestra un listado con el detalle de sus órdenes correspondientes a dicho KPI, respetando el filtrado por su identidad (usuario logueado).
+- **THEN** el sistema despliega un modal superpuesto y, al completarse la petición HTTP, renderiza de forma inmediata el listado con el detalle de sus órdenes sin exigir clics adicionales, respetando el filtrado por su identidad (usuario logueado).
 
 ### Requirement: Endpoint para listado de detalle de KPI Personal
 El sistema DEBE proveer la capacidad para obtener el listado paginado de órdenes de servicio que actualmente cumplen con la condición lógica del KPI personal seleccionado, asegurando que solo se devuelvan las órdenes donde el usuario actual es responsable.
