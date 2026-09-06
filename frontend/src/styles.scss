@@ -1,5 +1,128 @@
+@use '@angular/material' as mat;
 
-/* Tooltip Personalizado para Dashboard */
+// =========================================================================
+// ANGULAR MATERIAL 3 THEMING SETUP (Light & Dark)
+// =========================================================================
+
+$theme-light: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: mat.$orange-palette,
+  ),
+  typography: (
+    plain-family: Roboto,
+    brand-family: Roboto,
+  ),
+  density: (
+    scale: 0,
+  ),
+));
+
+$theme-dark: mat.define-theme((
+  color: (
+    theme-type: dark,
+    primary: mat.$orange-palette,
+  ),
+  typography: (
+    plain-family: Roboto,
+    brand-family: Roboto,
+  ),
+  density: (
+    scale: 0,
+  ),
+));
+
+:root {
+  // Aplicación del tema claro por defecto
+  @include mat.all-component-themes($theme-light);
+  @include mat.system-level-colors($theme-light);
+  @include mat.system-level-typography($theme-light);
+
+  // Calibración del token primario al color de marca Copper exacto
+  --mat-sys-primary: #D97706;
+  --mat-sys-on-primary: #ffffff;
+
+  // Calibración de superficies Material 3 al tono ámbar/naranja cálido (#D97706)
+  // Reemplaza el matiz rosado por defecto (#FEF1EC / #FFF8F5)
+  --mat-sys-background: #FFFCF9;
+  --mat-sys-surface: #FFFFFF;
+  --mat-sys-surface-bright: #FFFFFF;
+  --mat-sys-surface-container-lowest: #FFFFFF;
+  --mat-sys-surface-container-low: #FDF8F3;
+  --mat-sys-surface-container: #FAF2E9;
+  --mat-sys-surface-container-high: #F5EAE0;
+  --mat-sys-surface-container-highest: #EFE2D4;
+  --mat-sys-surface-dim: #EFE5DB;
+  --mat-sys-outline-variant: #E8DCCF;
+
+  /* Identidad */
+  --color-primary: #1E293B;
+  --color-accent: #D97706;
+
+  /* Estados Semánticos (Modo Claro) */
+  --color-success: #059669;
+  --color-error: #DC2626;
+  --color-warning: #F59E0B;
+  --color-info: #2563EB;
+
+  /* Superficies */
+  --color-background: #FAF8F5;
+  --color-surface: #FFFFFF;
+
+  /* Texto */
+  --text-primary: #FFFFFF;
+  --text-secondary: #1E293B;
+
+  /* Bordes */
+  --border-color: #E2E8F0;
+}
+
+// Mecanismo de conmutación a Modo Oscuro
+html.dark-theme,
+[data-theme="dark"] {
+  @include mat.all-component-colors($theme-dark);
+  @include mat.system-level-colors($theme-dark);
+
+  // Token primario en modo oscuro
+  --mat-sys-primary: #FBBF24;
+  --mat-sys-on-primary: #451a03;
+
+  /* Superficies */
+  --color-background: #0F172A;
+  --color-surface: #1E293B;
+
+  /* Texto */
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+
+  /* Bordes */
+  --border-color: #334155;
+
+  /* Estados Semánticos (Calibrados para alto contraste en fondo oscuro) */
+  --color-success: #10B981;
+  --color-error: #F87171;
+  --color-warning: #FBBF24;
+  --color-info: #60A5FA;
+}
+
+/* =========================================================================
+   ESTILOS GENERALES
+   ========================================================================= */
+
+html, body { 
+  height: 100%; 
+  background-color: var(--color-background); 
+  color: var(--text-secondary); 
+}
+
+body { 
+  margin: 0; 
+  font-family: Roboto, "Helvetica Neue", sans-serif; 
+}
+
+/* =========================================================================
+   TOOLTIP PERSONALIZADO PARA DASHBOARD
+   ========================================================================= */
 .custom-help-tooltip {
   background-color: #1e293b !important;
   color: #ffffff !important;
@@ -10,155 +133,6 @@
   line-height: 1.4 !important;
   max-width: 280px !important;
   text-align: center;
-}
-
-:root {
-  /* Identidad */
-  --color-primary: #1E293B;
-  --color-accent: #D97706;
-
-  /* Estados */
-  --color-success: #059669;
-  --color-error: #DC2626;
-  --color-warning: #F59E0B;
-  --color-info: #2563EB;
-
-  /* Superficies */
-  --color-background: #F8FAFC;
-  --color-surface: #FFFFFF;
-
-  /* Texto */
-  --text-primary: #FFFFFF;
-  --text-secondary: #1E293B;
-
-  /* Bordes */
-  --border-color: #E2E8F0;
-
-  /* Material MDC variables overrides for primary color (Copper: #D97706) */
-  --mdc-theme-primary: #D97706;
-  --mdc-theme-on-primary: #ffffff;
-  --mdc-theme-primary-container: #f5d9b3;
-  --mdc-theme-on-primary-container: #1e293b;
-}
-
-html, body { 
-  height: 100%; 
-  background-color: var(--color-background); 
-}
-body { 
-  margin: 0; 
-  font-family: Roboto, "Helvetica Neue", sans-serif; 
-}
-
-/* =========================================================================
-   MATERIAL OVERRIDES: Primary Color -> Copper (#D97706)
-   ========================================================================= */
-
-/* Action Buttons (Raised, Flat, FABs) */
-.mat-mdc-raised-button.mat-primary, 
-.mat-mdc-unelevated-button.mat-primary,
-.mat-mdc-fab.mat-primary,
-.mat-mdc-mini-fab.mat-primary,
-.mat-raised-button.mat-primary, 
-.mat-fab.mat-primary,
-.mat-mini-fab.mat-primary {
-  --mdc-protected-button-container-color: var(--color-accent) !important;
-  --mdc-filled-button-container-color: var(--color-accent) !important;
-  --mdc-fab-container-color: var(--color-accent) !important;
-  background-color: var(--color-accent) !important;
-  color: white !important;
-}
-
-/* Text, Outlined, Icon Buttons */
-.mat-mdc-outlined-button.mat-primary,
-.mat-mdc-button.mat-primary,
-.mat-mdc-icon-button.mat-primary,
-.mat-button.mat-primary,
-.mat-stroked-button.mat-primary,
-.mat-icon-button.mat-primary {
-  --mdc-outlined-button-label-text-color: var(--color-accent) !important;
-  --mdc-text-button-label-text-color: var(--color-accent) !important;
-  --mdc-icon-button-icon-color: var(--color-accent) !important;
-  color: var(--color-accent) !important;
-}
-
-/* Form field focus (Outlined & Filled) */
-.mat-mdc-text-field-wrapper.mdc-text-field--outlined.mdc-text-field--focused .mdc-notched-outline__leading,
-.mat-mdc-text-field-wrapper.mdc-text-field--outlined.mdc-text-field--focused .mdc-notched-outline__notch,
-.mat-mdc-text-field-wrapper.mdc-text-field--outlined.mdc-text-field--focused .mdc-notched-outline__trailing {
-  border-color: var(--color-accent) !important;
-  border-width: 2px !important;
-}
-
-.mat-mdc-text-field-wrapper.mdc-text-field--filled.mdc-text-field--focused .mdc-line-ripple::before {
-  border-bottom-color: var(--color-accent) !important;
-}
-
-/* Form field floating label focused */
-.mat-mdc-form-field.mat-focused .mdc-floating-label,
-.mat-mdc-form-field.mat-focused .mat-mdc-select-value {
-  color: var(--color-accent) !important;
-}
-
-/* Select arrow focused */
-.mat-mdc-form-field.mat-focused.mat-primary .mat-mdc-select-arrow {
-  color: var(--color-accent) !important;
-}
-
-/* Tabs active state */
-.mat-mdc-tab-group .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
-  color: var(--color-accent) !important;
-}
-.mat-mdc-tab-group .mat-mdc-tab .mdc-tab-indicator__content--underline {
-  border-color: var(--color-accent) !important;
-}
-
-/* Checkboxes and Radios (if primary) */
-.mat-mdc-checkbox.mat-primary .mdc-checkbox__native-control:checked ~ .mdc-checkbox__background {
-  border-color: var(--color-accent) !important;
-  background-color: var(--color-accent) !important;
-}
-.mat-mdc-radio-button.mat-primary .mdc-radio__native-control:checked ~ .mdc-radio__background .mdc-radio__outer-circle {
-  border-color: var(--color-accent) !important;
-}
-.mat-mdc-radio-button.mat-primary .mdc-radio__native-control:checked ~ .mdc-radio__background .mdc-radio__inner-circle {
-  border-color: var(--color-accent) !important;
-}
-
-/* Global focus visible outline */
-*:focus-visible {
-  outline-color: var(--color-accent) !important;
-}
-
-/* Spinner (mat-spinner) primary color */
-.mat-mdc-progress-spinner {
-  --mdc-circular-progress-active-indicator-color: var(--color-accent) !important;
-}
-
-.mat-mdc-progress-spinner circle,
-.mdc-circular-progress__indeterminate-circle-graphic {
-  stroke: var(--color-accent) !important;
-}
-
-/* Warn Buttons */
-.mat-mdc-raised-button.mat-warn, 
-.mat-mdc-unelevated-button.mat-warn,
-.mat-mdc-fab.mat-warn,
-.mat-mdc-mini-fab.mat-warn {
-  --mdc-protected-button-container-color: var(--color-error) !important;
-  --mdc-filled-button-container-color: var(--color-error) !important;
-  --mdc-fab-container-color: var(--color-error) !important;
-  background-color: var(--color-error) !important;
-  color: white !important;
-}
-
-.mat-mdc-outlined-button.mat-warn,
-.mat-mdc-button.mat-warn,
-.mat-mdc-icon-button.mat-warn {
-  --mdc-outlined-button-label-text-color: var(--color-error) !important;
-  --mdc-text-button-label-text-color: var(--color-error) !important;
-  --mdc-icon-button-icon-color: var(--color-error) !important;
-  color: var(--color-error) !important;
 }
 
 /* =========================================================================
@@ -212,7 +186,7 @@ body {
   vertical-align: middle;
 }
 
-/* Make text and button stand out in all custom snackbars */
+/* Tipografía y acciones en snackbars personalizados */
 .mat-mdc-snack-bar-container.snackbar-success .mdc-snackbar__label,
 .mat-mdc-snack-bar-container.snackbar-error .mdc-snackbar__label,
 .mat-mdc-snack-bar-container.snackbar-warning .mdc-snackbar__label {
@@ -233,19 +207,9 @@ body {
   margin-left: 16px !important;
 }
 
-/* Superficies globales */
-.mat-mdc-card, 
-.mat-mdc-dialog-surface,
-.mat-mdc-select-panel,
-.mat-mdc-autocomplete-panel,
-.mat-mdc-menu-panel,
-.mdc-menu-surface,
-.mat-mdc-datepicker-content,
-.mat-datepicker-content {
-  background-color: var(--color-surface) !important;
-}
-
-/* Utilidades de Estado Semántico */
+/* =========================================================================
+   UTILIDADES DE ESTADO SEMÁNTICO Y BADGES
+   ========================================================================= */
 .text-success { color: var(--color-success) !important; }
 .text-warning { color: var(--color-warning) !important; }
 .text-error { color: var(--color-error) !important; }
@@ -261,7 +225,6 @@ body {
 .border-error { border-color: var(--color-error) !important; }
 .border-info { border-color: var(--color-info) !important; }
 
-/* Global Status Badge */
 .status-badge {
   display: inline-flex;
   align-items: center;
@@ -273,41 +236,17 @@ body {
   line-height: 1;
 }
 
-
 /* =========================================================================
-
-
-/* =========================================================================
-   FORM FIELDS (INPUT BORDERS)
+   FORM FIELDS (SPACING & INFIX ALIGNMENT)
    ========================================================================= */
 
-/* Normal state */
-.mat-mdc-text-field-wrapper.mdc-text-field--outlined .mdc-notched-outline__leading,
-.mat-mdc-text-field-wrapper.mdc-text-field--outlined .mdc-notched-outline__notch,
-.mat-mdc-text-field-wrapper.mdc-text-field--outlined .mdc-notched-outline__trailing {
-  border-color: var(--border-color) !important;
-}
-
-/* Error state */
-.mat-mdc-form-field.mat-form-field-invalid .mdc-notched-outline__leading,
-.mat-mdc-form-field.mat-form-field-invalid .mdc-notched-outline__notch,
-.mat-mdc-form-field.mat-form-field-invalid .mdc-notched-outline__trailing {
-  border-color: var(--color-error) !important;
-  border-width: 2px !important;
-}
-
-.mat-mdc-form-field.mat-form-field-invalid .mdc-floating-label,
-.mat-mdc-form-field.mat-form-field-invalid .mat-mdc-form-field-error-wrapper {
-  color: var(--color-error) !important;
-}
-
-/* Fix para el padding interno de los inputs, textareas y selects */
+/* Ajuste de espaciado interno para inputs, textareas y selects */
 .mat-mdc-form-field-infix {
   padding-left: 16px !important;
   padding-right: 16px !important;
 }
 
-/* Ajuste para que el ícono de prefijo/sufijo (ej. la lupa) no quede pegado al borde */
+/* Ajuste de íconos de prefijo/sufijo para no pegar contra el borde */
 .mat-mdc-form-field-icon-suffix, 
 .mat-mdc-form-field-text-suffix {
   padding-right: 12px !important;
