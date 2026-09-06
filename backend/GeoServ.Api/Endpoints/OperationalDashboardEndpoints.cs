@@ -393,7 +393,7 @@ public static class OperationalDashboardEndpoints
             {
                 var query = context.ServiceOrders
                     .AsNoTracking()
-                    .Where(o => o.Status.Name != "Cobrada" && o.Status.Name != "Cancelada")
+                    .Where(o => o.Status != null && o.Status.Name != "Cobrada" && o.Status.Name != "Cancelada")
                     .Include(o => o.Client)
                     .Include(o => o.Status);
 
@@ -406,8 +406,8 @@ public static class OperationalDashboardEndpoints
                     {
                         o.Id,
                         o.OrderNumber,
-                        clientName = o.Client.CompanyName,
-                        statusName = o.Status.Name,
+                        clientName = o.Client != null ? o.Client.CompanyName : "Sin cliente",
+                        statusName = o.Status != null ? o.Status.Name : "Alta",
                         date = o.CreatedAt
                     })
                     .ToListAsync();
@@ -419,7 +419,7 @@ public static class OperationalDashboardEndpoints
                 var thresholdDate = now.AddDays(-7);
                 var query = context.ServiceOrders
                     .AsNoTracking()
-                    .Where(o => o.Status.Name != "Cobrada" && o.Status.Name != "Cancelada" && o.UpdatedAt <= thresholdDate)
+                    .Where(o => o.Status != null && o.Status.Name != "Cobrada" && o.Status.Name != "Cancelada" && o.UpdatedAt <= thresholdDate)
                     .Include(o => o.Client)
                     .Include(o => o.Status);
 
@@ -432,8 +432,8 @@ public static class OperationalDashboardEndpoints
                     {
                         o.Id,
                         o.OrderNumber,
-                        clientName = o.Client.CompanyName,
-                        statusName = o.Status.Name,
+                        clientName = o.Client != null ? o.Client.CompanyName : "Sin cliente",
+                        statusName = o.Status != null ? o.Status.Name : "Alta",
                         date = o.UpdatedAt
                     })
                     .ToListAsync();
@@ -444,7 +444,7 @@ public static class OperationalDashboardEndpoints
             {
                 var query = context.ServiceOrders
                     .AsNoTracking()
-                    .Where(o => o.Status.Name != "Cancelada" && o.TotalAmount > o.CollectedAmount && (o.Status.Name == "Entregada" || o.ActualEndDate != null))
+                    .Where(o => o.Status != null && o.Status.Name != "Cancelada" && o.TotalAmount > o.CollectedAmount && (o.Status.Name == "Entregada" || o.ActualEndDate != null))
                     .Include(o => o.Client)
                     .Include(o => o.Status);
 
@@ -457,8 +457,8 @@ public static class OperationalDashboardEndpoints
                     {
                         o.Id,
                         o.OrderNumber,
-                        clientName = o.Client.CompanyName,
-                        statusName = o.Status.Name,
+                        clientName = o.Client != null ? o.Client.CompanyName : "Sin cliente",
+                        statusName = o.Status != null ? o.Status.Name : "Alta",
                         date = o.ActualEndDate ?? o.UpdatedAt
                     })
                     .ToListAsync();
