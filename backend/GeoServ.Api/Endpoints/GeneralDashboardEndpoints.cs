@@ -11,24 +11,22 @@ public static class GeneralDashboardEndpoints
 {
     public static void MapGeneralDashboardEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/dashboard/general")
-            .RequireAuthorization()
-            .AddEndpointFilter(async (context, next) =>
-            {
-                var dbContext = context.HttpContext.RequestServices.GetRequiredService<GeoServDbContext>();
-                var userPrincipal = context.HttpContext.User;
-                var (userId, userObj, isAdmin) = await GetUserContext(dbContext, userPrincipal);
-                var matchedRespIds = await GetMatchedResponsibleIds(dbContext, userId, userObj, userPrincipal);
-
-                if (matchedRespIds.Count == 0 && !isAdmin) // Maybe admin still gets a pass? 
+            var group = app.MapGroup("/api/dashboard/general")
+                .RequireAuthorization()
+                .AddEndpointFilter(async (context, next) =>
                 {
-                    // The spec says: "cuando el userId no tenga un Responsible vinculado". If admin doesn't have one, do they get 403?
-                    // "Si el usuario autenticado no tiene ningún Responsible con UserId igual a su User.Id -> devuelven HTTP 403"
-                    return Results.Json(new { message = "Tu perfil no está vinculado a ningún responsable." }, statusCode: 403);
-                }
+                    var dbContext = context.HttpContext.RequestServices.GetRequiredService<GeoServDbContext>();
+                    var userPrincipal = context.HttpContext.User;
+                    var (userId, userObj, isAdmin) = await GetUserContext(dbContext, userPrincipal);
+                    var matchedRespIds = await GetMatchedResponsibleIds(dbContext, userId, userObj, userPrincipal);
 
-                return await next(context);
-            });
+                    if (matchedRespIds.Count == 0)
+                    {
+                        return Results.Json(new { message = "Tu perfil no está vinculado a ningún responsable." }, statusCode: 403);
+                    }
+
+                    return await next(context);
+                });
 
         // =====================================================================
         // HELPERS
@@ -121,97 +119,19 @@ public static class GeneralDashboardEndpoints
             return (userId ?? userObj?.Id, userObj, isAdmin);
         }
 
-        // Obtiene TODOS los Responsible IDs que corresponden al usuario actual.
-        // Estrategia simplificada:
-        //   1. Match directo por UserId en Responsibles.UserId
-        //   2. Match exacto por nombre (case-insensitive)
-        //   3. Match parcial: algún token del nombre del usuario contiene o está contenido en el nombre del responsable
         static async Task<List<Guid>> GetMatchedResponsibleIds(
             GeoServDbContext context, Guid? userId, User? userObj, ClaimsPrincipal userPrincipal)
         {
-            var allResponsibles = await context.Responsibles.AsNoTracking().ToListAsync();
             var matched = new HashSet<Guid>();
 
-            // 1. Match por UserId
+            // Match por UserId
             if (userId.HasValue)
             {
+                var allResponsibles = await context.Responsibles.AsNoTracking().ToListAsync();
                 foreach (var r in allResponsibles)
                 {
                     if (r.UserId.HasValue && r.UserId.Value == userId.Value)
                         matched.Add(r.Id);
-                }
-            }
-
-            // Si ya encontramos por UserId, retornamos inmediatamente (es el match más fiable)
-            if (matched.Count > 0)
-                return matched.ToList();
-
-            // 2. Recolectar candidatos de nombres para matching textual
-            var candidates = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            if (!string.IsNullOrWhiteSpace(userObj?.Name))
-                candidates.Add(userObj.Name.Trim());
-
-            var claimName = GetUserName(userPrincipal);
-            if (!string.IsNullOrWhiteSpace(claimName) && claimName != "Usuario")
-                candidates.Add(claimName.Trim());
-
-            if (!string.IsNullOrWhiteSpace(userObj?.Email))
-            {
-                var prefix = userObj.Email.Split('@')[0].Replace(".", " ").Replace("_", " ").Trim();
-                if (!string.IsNullOrWhiteSpace(prefix))
-                    candidates.Add(prefix);
-            }
-
-            if (candidates.Count == 0)
-                return new List<Guid>();
-
-            // 2a. Match exacto por nombre
-            foreach (var r in allResponsibles)
-            {
-                var rName = r.Name?.Trim() ?? "";
-                if (string.IsNullOrEmpty(rName)) continue;
-
-                foreach (var cand in candidates)
-                {
-                    if (rName.Equals(cand, StringComparison.OrdinalIgnoreCase))
-                    {
-                        matched.Add(r.Id);
-                        break;
-                    }
-                }
-            }
-
-            if (matched.Count > 0)
-                return matched.ToList();
-
-            // 2b. Match parcial: nombre contiene candidato o viceversa
-            foreach (var r in allResponsibles)
-            {
-                var rName = r.Name?.Trim() ?? "";
-                if (string.IsNullOrEmpty(rName)) continue;
-
-                foreach (var cand in candidates)
-                {
-                    // Nombre completo contiene al otro
-                    if (rName.Contains(cand, StringComparison.OrdinalIgnoreCase) ||
-                        cand.Contains(rName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        matched.Add(r.Id);
-                        break;
-                    }
-
-                    // Tokens individuales (partes del nombre) >= 3 chars
-                    var parts = cand.Split(new[] { ' ', ',', '-' }, StringSplitOptions.RemoveEmptyEntries);
-                    foreach (var part in parts)
-                    {
-                        if (part.Length >= 3 && rName.Contains(part, StringComparison.OrdinalIgnoreCase))
-                        {
-                            matched.Add(r.Id);
-                            break;
-                        }
-                    }
-                    if (matched.Contains(r.Id)) break;
                 }
             }
 
