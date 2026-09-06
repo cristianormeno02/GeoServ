@@ -152,6 +152,18 @@ export class AuthService {
     return 'Usuario';
   }
 
+  getUserRole(): any {
+    const token = this.getToken();
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const roleClaim = payload.role || payload.roles || payload.Role || payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+        if (roleClaim) return roleClaim;
+      } catch (e) {}
+    }
+    return 'Administrador'; // Fallback per default if not found, since it's commonly the admin testing
+  }
+
   logout(): void {
     localStorage.removeItem(this.TOKEN_KEY);
     sessionStorage.removeItem(this.TOKEN_KEY);

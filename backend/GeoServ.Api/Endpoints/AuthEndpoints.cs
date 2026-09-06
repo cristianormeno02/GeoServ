@@ -15,7 +15,7 @@ public static class AuthEndpoints
     {
         app.MapPost("/api/login", async (LoginRequest request, GeoServDbContext context) =>
         {
-            var user = await context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            var user = await context.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.Email == request.Email);
             if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
                 return Results.Unauthorized();
@@ -33,6 +33,7 @@ public static class AuthEndpoints
                     new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                     new Claim(ClaimTypes.Email, user.Email),
                     new Claim(ClaimTypes.Name, user.Name ?? ""),
+                    new Claim(ClaimTypes.Role, user.Role?.Name ?? "Administrador"),
                     new Claim("TenantId", tenantId)
                 }),
                 Expires = DateTime.UtcNow.AddHours(8),
@@ -81,7 +82,7 @@ public static class AuthEndpoints
             }
 
             // payload.Email contiene el correo del usuario validado
-            var user = await context.Users.FirstOrDefaultAsync(u => u.Email == payload.Email);
+            var user = await context.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.Email == payload.Email);
             if (user == null)
             {
                 // Si quieres crear el usuario automáticamente, podrías hacerlo aquí
@@ -100,6 +101,7 @@ public static class AuthEndpoints
                     new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                     new Claim(ClaimTypes.Email, user.Email),
                     new Claim(ClaimTypes.Name, user.Name ?? ""),
+                    new Claim(ClaimTypes.Role, user.Role?.Name ?? "Administrador"),
                     new Claim("TenantId", tenantId)
                 }),
                 Expires = DateTime.UtcNow.AddHours(8),
@@ -140,7 +142,7 @@ public static class AuthEndpoints
                 return Results.Unauthorized();
             }
 
-            var user = await context.Users.FindAsync(userId);
+            var user = await context.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null || user.RefreshToken != request.RefreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
             {
                 return Results.Unauthorized();
@@ -158,6 +160,7 @@ public static class AuthEndpoints
                     new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                     new Claim(ClaimTypes.Email, user.Email),
                     new Claim(ClaimTypes.Name, user.Name ?? ""),
+                    new Claim(ClaimTypes.Role, user.Role?.Name ?? "Administrador"),
                     new Claim("TenantId", tenantIdClaim?.Value ?? "")
                 }),
                 Expires = DateTime.UtcNow.AddHours(8),

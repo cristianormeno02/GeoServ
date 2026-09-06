@@ -99,3 +99,12 @@ mat-panel-title {
 ::ng-deep .mat-expansion-panel-body {
   padding: 0 0 0 16px !important;
 }
+::ng-deep .mat-expansion-indicator {
+  color: var(--text-primary) !important;
+}
+::ng-deep .mat-expansion-indicator svg {
+  fill: var(--text-primary) !important;
+}
+::ng-deep .mat-expansion-indicator::after {
+  color: var(--text-primary) !important;
+}
