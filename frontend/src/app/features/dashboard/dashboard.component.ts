@@ -6,11 +6,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { computed } from '@angular/core';
 
 import { DonutChartComponent, DonutSlice } from '../../shared/components/charts/donut-chart.component';
 import { SparklineCardComponent } from '../../shared/components/charts/sparkline-card.component';
+import { KpiDetailModal } from '../../shared/components/kpi-detail-modal/kpi-detail-modal';
 import { GeneralDashboardService } from './services/general-dashboard.service';
 import { EmpresaConfigService } from '../../core/services/empresa-config.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -33,6 +35,7 @@ import {
     MatChipsModule,
     MatTooltipModule,
     MatDividerModule,
+    MatDialogModule,
     DonutChartComponent,
     SparklineCardComponent
   ],
@@ -114,8 +117,20 @@ export class DashboardComponent implements OnInit {
     public empresaConfig: EmpresaConfigService,
     public authService: AuthService,
     private sanitizer: DomSanitizer,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private dialog: MatDialog
   ) {}
+
+  openKpiDetail(kpiId: string, kpiTitle: string) {
+    this.dialog.open(KpiDetailModal, {
+      width: '800px',
+      data: {
+        dashboardType: 'general',
+        kpiId,
+        kpiTitle
+      }
+    });
+  }
 
   ngOnInit(): void {
     if (!this.empresaConfig.empresaActual()) {

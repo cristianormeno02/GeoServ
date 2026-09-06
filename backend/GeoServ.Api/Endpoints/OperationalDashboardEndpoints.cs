@@ -381,5 +381,123 @@ public static class OperationalDashboardEndpoints
 
             return Results.Ok(items);
         });
+
+        // 10. Detalle de KPIs
+        group.MapGet("/kpis/{kpi_id}/details", async (string kpi_id, int? page, int? pageSize, GeoServDbContext context) =>
+        {
+            var now = DateTime.UtcNow;
+            var actualPage = page ?? 1;
+            var actualPageSize = pageSize ?? 10;
+
+            if (kpi_id == "activeOrders")
+            {
+                var query = context.ServiceOrders
+                    .AsNoTracking()
+                    .Where(o => o.Status.Name != "Cobrada" && o.Status.Name != "Cancelada")
+                    .Include(o => o.Client)
+                    .Include(o => o.Status);
+
+                var totalCount = await query.CountAsync();
+                var items = await query
+                    .OrderByDescending(o => o.CreatedAt)
+                    .Skip((actualPage - 1) * actualPageSize)
+                    .Take(actualPageSize)
+                    .Select(o => new
+                    {
+                        o.Id,
+                        o.OrderNumber,
+                        clientName = o.Client.CompanyName,
+                        statusName = o.Status.Name,
+                        date = o.CreatedAt
+                    })
+                    .ToListAsync();
+
+                return Results.Ok(new { entityType = "orders", items, totalCount, page = actualPage, pageSize = actualPageSize });
+            }
+            else if (kpi_id == "stagnantOrders")
+            {
+                var thresholdDate = now.AddDays(-7);
+                var query = context.ServiceOrders
+                    .AsNoTracking()
+                    .Where(o => o.Status.Name != "Cobrada" && o.Status.Name != "Cancelada" && o.UpdatedAt <= thresholdDate)
+                    .Include(o => o.Client)
+                    .Include(o => o.Status);
+
+                var totalCount = await query.CountAsync();
+                var items = await query
+                    .OrderBy(o => o.UpdatedAt)
+                    .Skip((actualPage - 1) * actualPageSize)
+                    .Take(actualPageSize)
+                    .Select(o => new
+                    {
+                        o.Id,
+                        o.OrderNumber,
+                        clientName = o.Client.CompanyName,
+                        statusName = o.Status.Name,
+                        date = o.UpdatedAt
+                    })
+                    .ToListAsync();
+
+                return Results.Ok(new { entityType = "orders", items, totalCount, page = actualPage, pageSize = actualPageSize });
+            }
+            else if (kpi_id == "uncollectedOrders")
+            {
+                var query = context.ServiceOrders
+                    .AsNoTracking()
+                    .Where(o => o.Status.Name != "Cancelada" && o.TotalAmount > o.CollectedAmount && (o.Status.Name == "Entregada" || o.ActualEndDate != null))
+                    .Include(o => o.Client)
+                    .Include(o => o.Status);
+
+                var totalCount = await query.CountAsync();
+                var items = await query
+                    .OrderByDescending(o => o.ActualEndDate ?? o.UpdatedAt)
+                    .Skip((actualPage - 1) * actualPageSize)
+                    .Take(actualPageSize)
+                    .Select(o => new
+                    {
+                        o.Id,
+                        o.OrderNumber,
+                        clientName = o.Client.CompanyName,
+                        statusName = o.Status.Name,
+                        date = o.ActualEndDate ?? o.UpdatedAt
+                    })
+                    .ToListAsync();
+
+                return Results.Ok(new { entityType = "orders", items, totalCount, page = actualPage, pageSize = actualPageSize });
+            }
+            else if (kpi_id == "criticalConsumables")
+            {
+                var consumablesWithStock = await context.Consumables
+                    .AsNoTracking()
+                    .Select(c => new
+                    {
+                        c.Id,
+                        c.Description,
+                        minimumStock = c.MinimumStock,
+                        currentStock = c.InventoryMovements.Sum(m => (decimal?)m.Cantidad) ?? 0
+                    })
+                    .Where(c => c.currentStock < c.minimumStock)
+                    .OrderByDescending(c => c.minimumStock - c.currentStock)
+                    .ToListAsync(); // Resolve evaluation client side
+
+                var totalCount = consumablesWithStock.Count;
+                var items = consumablesWithStock
+                    .Skip((actualPage - 1) * actualPageSize)
+                    .Take(actualPageSize)
+                    .Select(c => new
+                    {
+                        id = c.Id,
+                        description = c.Description,
+                        currentStock = c.currentStock,
+                        minimumStock = c.minimumStock,
+                        deficit = c.minimumStock - c.currentStock
+                    })
+                    .ToList();
+
+                return Results.Ok(new { entityType = "consumables", items, totalCount, page = actualPage, pageSize = actualPageSize });
+            }
+
+            return Results.BadRequest(new { message = "Invalid KPI ID" });
+        });
     }
 }

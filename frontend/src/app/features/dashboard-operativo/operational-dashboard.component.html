@@ -36,6 +36,8 @@
       badgeText="En curso"
       semanticState="neutral"
       helpText="Cantidad total de órdenes de servicio que se encuentran actualmente en progreso o en fase de presupuesto."
+      [isClickable]="true"
+      (cardClick)="openKpiDetail('activeOrders', 'Órdenes Activas')"
     ></app-sparkline-card>
 
     <app-sparkline-card
@@ -48,33 +50,39 @@
       iconBgColor="#fee2e2"
       [badgeText]="(kpis?.stagnantOrders?.value ?? 0) > 0 ? 'Riesgo demoras' : 'Al día'"
       [semanticState]="(kpis?.stagnantOrders?.value ?? 0) > 0 ? 'negative' : 'positive'"
-      helpText="Órdenes que no han cambiado de estado en los últimos 7 días. Valores altos indican cuellos de botella en la operación."
+      helpText="Órdenes que llevan más de 7 días sin cambiar de estado (excluyendo entregadas, cobradas y canceladas)."
+      [isClickable]="true"
+      (cardClick)="openKpiDetail('stagnantOrders', 'Órdenes Estancadas')"
     ></app-sparkline-card>
 
     <app-sparkline-card
       title="Entregadas sin Cobrar"
-      subtitle="Facturación / saldo pendiente"
+      subtitle="Trabajos finalizados"
       [value]="kpis?.uncollectedOrders?.value ?? 0"
       unit="OS"
       icon="payments"
       iconColor="#f59e0b"
       iconBgColor="#fef3c7"
-      badgeText="Cobranza"
+      badgeText="Por facturar"
       semanticState="warning"
-      helpText="Órdenes que ya fueron entregadas al cliente pero aún tienen un saldo monetario pendiente de cobro."
+      helpText="Órdenes que ya han sido entregadas al cliente pero cuyo saldo no ha sido cobrado en su totalidad."
+      [isClickable]="true"
+      (cardClick)="openKpiDetail('uncollectedOrders', 'Entregadas sin Cobrar')"
     ></app-sparkline-card>
 
     <app-sparkline-card
       title="Insumos Críticos"
       subtitle="Bajo stock mínimo"
       [value]="kpis?.lowStockItems?.value ?? 0"
-      unit="ítems"
+      unit="Items"
       icon="inventory_2"
       iconColor="#8b5cf6"
-      iconBgColor="#f3e8ff"
+      iconBgColor="#ede9fe"
       [badgeText]="(kpis?.lowStockItems?.value ?? 0) > 0 ? 'Reponer' : 'Stock OK'"
       [semanticState]="(kpis?.lowStockItems?.value ?? 0) > 0 ? 'negative' : 'positive'"
-      helpText="Cantidad de insumos cuyo stock actual se encuentra por debajo del límite mínimo de seguridad configurado (o por debajo de 0 si no se configuró)."
+      helpText="Cantidad de insumos de inventario cuyo stock consolidado ha caído por debajo de la cantidad mínima configurada."
+      [isClickable]="true"
+      (cardClick)="openKpiDetail('criticalConsumables', 'Insumos Críticos')"
     ></app-sparkline-card>
   </div>
 

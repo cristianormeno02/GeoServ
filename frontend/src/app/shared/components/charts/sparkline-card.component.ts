@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -10,7 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
   standalone: true,
   imports: [CommonModule, MatCardModule, MatIconModule, MatTooltipModule, MatButtonModule],
   template: `
-    <mat-card class="kpi-card" [ngClass]="semanticState || 'neutral'">
+    <mat-card class="kpi-card" [ngClass]="[semanticState || 'neutral', isClickable ? 'clickable' : '']" (click)="onCardClick()">
       <div class="kpi-header">
         <div class="kpi-title-area">
           <span class="kpi-title">{{ title }}</span>
@@ -22,7 +22,7 @@ import { MatButtonModule } from '@angular/material/button';
       </div>
 
       <div class="kpi-body">
-        <div class="kpi-value-container">
+        <div class="kpi-value-container" [class.hover-effect]="isClickable">
           <span class="kpi-value" [style.color]="iconColor">{{ formattedValue }}</span>
           <span *ngIf="unit" class="kpi-unit">{{ unit }}</span>
         </div>
@@ -34,7 +34,7 @@ import { MatButtonModule } from '@angular/material/button';
       </div>
 
       <div class="kpi-help-button" *ngIf="helpText">
-        <button mat-icon-button [matTooltip]="helpText" matTooltipPosition="above" matTooltipClass="custom-help-tooltip">
+        <button mat-icon-button [matTooltip]="helpText" matTooltipPosition="above" matTooltipClass="custom-help-tooltip" (click)="$event.stopPropagation()">
           <mat-icon>help_outline</mat-icon>
         </button>
       </div>
@@ -54,6 +54,12 @@ import { MatButtonModule } from '@angular/material/button';
     .kpi-card:hover {
       transform: translateY(-2px);
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
+    .kpi-card.clickable {
+      cursor: pointer;
+    }
+    .kpi-card.clickable:hover .kpi-value-container {
+      opacity: 0.8;
     }
     .kpi-header {
       display: flex;
@@ -100,6 +106,7 @@ import { MatButtonModule } from '@angular/material/button';
       display: flex;
       align-items: baseline;
       gap: 4px;
+      transition: opacity 0.2s ease;
     }
     .kpi-value {
       font-size: 56px;
@@ -156,6 +163,9 @@ export class SparklineCardComponent {
   @Input() badgeText?: string;
   @Input() badgeIcon: string = 'trending_flat';
   @Input() helpText?: string;
+  @Input() isClickable: boolean = false;
+  
+  @Output() cardClick = new EventEmitter<void>();
 
   get formattedValue(): string {
     if (typeof this.value === 'number') {
@@ -163,4 +173,11 @@ export class SparklineCardComponent {
     }
     return this.value || '0';
   }
+
+  onCardClick() {
+    if (this.isClickable) {
+      this.cardClick.emit();
+    }
+  }
 }
+

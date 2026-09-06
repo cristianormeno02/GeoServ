@@ -56,6 +56,8 @@
       [badgeText]="'de ' + (kpis?.totalOrdenes ?? 0) + ' total'"
       semanticState="neutral"
       helpText="Cantidad de órdenes asignadas a ti que se encuentran actualmente en progreso o presupuesto."
+      [isClickable]="true"
+      (cardClick)="openKpiDetail('ordenesActivas', 'Órdenes Activas')"
     ></app-sparkline-card>
 
     <app-sparkline-card
@@ -69,6 +71,8 @@
       [badgeText]="(kpis?.stagnantOrders?.value ?? 0) > 0 ? 'Riesgo demoras' : 'Al día'"
       [semanticState]="(kpis?.stagnantOrders?.value ?? 0) > 0 ? 'negative' : 'positive'"
       helpText="Órdenes asignadas a ti que no han cambiado de estado en los últimos 7 días."
+      [isClickable]="true"
+      (cardClick)="openKpiDetail('stagnantOrders', 'Órdenes Estancadas')"
     ></app-sparkline-card>
 
     <app-sparkline-card
@@ -82,6 +86,8 @@
       badgeText="Pendientes"
       semanticState="positive"
       helpText="Órdenes tuyas entregadas al cliente pero aún pendientes de cobro total."
+      [isClickable]="true"
+      (cardClick)="openKpiDetail('ordenesEntregadas', 'Órdenes Entregadas')"
     ></app-sparkline-card>
 
     <app-sparkline-card

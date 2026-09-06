@@ -481,5 +481,69 @@ public static class GeneralDashboardEndpoints
 
             return Results.Ok(result);
         });
+
+        // 6. Detalle de KPIs
+        group.MapGet("/kpis/{kpi_id}/details", async (string kpi_id, ClaimsPrincipal userPrincipal, int? page, int? pageSize, GeoServDbContext context) =>
+        {
+            var (userId, userObj, isAdmin) = await GetUserContext(context, userPrincipal);
+            var actualPage = page ?? 1;
+            var actualPageSize = pageSize ?? 10;
+
+            var myOrderIds = await GetTargetOrderIds(context, userPrincipal, userObj, isAdmin);
+
+            if (myOrderIds.Count == 0)
+                return Results.Ok(new { entityType = "orders", items = Array.Empty<object>(), totalCount = 0, page = actualPage, pageSize = actualPageSize });
+
+            var query = context.ServiceOrders
+                .AsNoTracking()
+                .Where(o => myOrderIds.Contains(o.Id))
+                .Include(o => o.Client)
+                .Include(o => o.Status)
+                .AsQueryable();
+
+            if (kpi_id == "ordenesActivas")
+            {
+                var activeStatusNames = new[] { "Alta", "Presupuestada", "Aprobada", "Iniciada", "Entregada" };
+                query = query.Where(o => o.Status != null && activeStatusNames.Contains(o.Status.Name));
+            }
+            else if (kpi_id == "ordenesEntregadas")
+            {
+                query = query.Where(o => o.Status != null && o.Status.Name == "Entregada");
+            }
+            else if (kpi_id == "ordenesCobradas")
+            {
+                query = query.Where(o => o.Status != null && o.Status.Name == "Cobrada");
+            }
+            else if (kpi_id == "ordenesCanceladas")
+            {
+                query = query.Where(o => o.Status != null && o.Status.Name == "Cancelada");
+            }
+            else if (kpi_id == "stagnantOrders")
+            {
+                var thresholdDate = DateTime.UtcNow.AddDays(-7);
+                query = query.Where(o => o.Status != null && o.Status.Name != "Cobrada" && o.Status.Name != "Cancelada" && o.UpdatedAt <= thresholdDate);
+            }
+            else
+            {
+                return Results.BadRequest(new { message = "Invalid KPI ID" });
+            }
+
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .OrderByDescending(o => o.CreatedAt)
+                .Skip((actualPage - 1) * actualPageSize)
+                .Take(actualPageSize)
+                .Select(o => new
+                {
+                    o.Id,
+                    o.OrderNumber,
+                    clientName = o.Client != null ? o.Client.CompanyName : "Sin cliente",
+                    statusName = o.Status != null ? o.Status.Name : "Alta",
+                    date = o.CreatedAt
+                })
+                .ToListAsync();
+
+            return Results.Ok(new { entityType = "orders", items, totalCount, page = actualPage, pageSize = actualPageSize });
+        });
     }
 }

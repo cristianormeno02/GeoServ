@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ChangeDetectorRef, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -8,12 +8,14 @@ import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
 import { SparklineCardComponent } from '../../shared/components/charts/sparkline-card.component';
 import { GaugeChartComponent } from '../../shared/components/charts/gauge-chart.component';
 import { DonutChartComponent, DonutSlice } from '../../shared/components/charts/donut-chart.component';
 import { AgingBarChartComponent, AgingBucket } from '../../shared/components/charts/aging-bar-chart.component';
 import { HorizontalBarChartComponent, HorizontalBarItem } from '../../shared/components/charts/horizontal-bar-chart.component';
+import { KpiDetailModal } from '../../shared/components/kpi-detail-modal/kpi-detail-modal';
 
 import { OperationalDashboardService } from './services/operational-dashboard.service';
 import {
@@ -25,7 +27,6 @@ import {
   InventoryAlertsResponse,
   UpcomingFixedCost
 } from './models/operational-dashboard.model';
-import { ChangeDetectorRef, computed, ViewChild } from '@angular/core';
 import { EmpresaConfigService } from '../../core/services/empresa-config.service';
 import { DomSanitizer } from '@angular/platform-browser';
 import { GoogleMapsModule, GoogleMap } from '@angular/google-maps';
@@ -44,6 +45,7 @@ import { ProjectService } from '../projects/services/project.service';
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
+    MatDialogModule,
     SparklineCardComponent,
     GaugeChartComponent,
     DonutChartComponent,
@@ -93,8 +95,20 @@ export class OperationalDashboardComponent implements OnInit {
     private cdr: ChangeDetectorRef,
     public empresaConfig: EmpresaConfigService,
     private sanitizer: DomSanitizer,
-    private projectService: ProjectService
+    private projectService: ProjectService,
+    private dialog: MatDialog
   ) {}
+
+  openKpiDetail(kpiId: string, kpiTitle: string) {
+    this.dialog.open(KpiDetailModal, {
+      width: '800px',
+      data: {
+        dashboardType: 'operational',
+        kpiId,
+        kpiTitle
+      }
+    });
+  }
 
   safeLogoSvg = computed(() => {
     const svg = this.empresaConfig.empresaActual()?.logoSvg;
