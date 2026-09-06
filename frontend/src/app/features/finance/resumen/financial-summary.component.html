@@ -1,67 +1,328 @@
-<div class="financial-summary">
-  <h2>Resumen financiero</h2>
+<div class="summary-container">
+  <!-- Top Bar -->
+  <div class="summary-topbar">
+    <div class="topbar-title-section">
+      <div class="icon-circle">
+        <mat-icon>account_balance</mat-icon>
+      </div>
+      <div>
+        <h1 class="page-title">Resumen Financiero</h1>
+        <p class="page-subtitle">Saldos de cuentas, disponibilidad y gestión de cartera de cheques</p>
+      </div>
+    </div>
 
-  <div *ngIf="loading" class="loading">
-    Cargando datos...
+    <div class="topbar-actions">
+      <span class="last-sync-text">
+        <mat-icon class="sync-icon">schedule</mat-icon>
+        {{ lastUpdated | date:'HH:mm:ss' }}
+      </span>
+
+      <button mat-flat-button color="primary" class="refresh-btn" (click)="loadSummary()" [disabled]="loading">
+        <mat-icon [class.spin-icon]="loading">refresh</mat-icon>
+        <span>Actualizar</span>
+      </button>
+    </div>
   </div>
 
-  <div *ngIf="error" class="error">
-    {{ error }}
+  <!-- Error banner -->
+  <div *ngIf="error" class="error-banner">
+    <mat-icon>error_outline</mat-icon>
+    <span>{{ error }}</span>
   </div>
 
-  <section *ngIf="!loading && !error">
-    <h3>Cuentas</h3>
-    <table class="accounts-table">
-      <thead>
-        <tr>
-          <th>Nombre</th>
-          <th>Número</th>
-          <th>Tipo</th>
-          <th>Moneda</th>
-          <th>Saldo</th>
-          <th>Activo</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let acc of accounts">
-          <td>{{ acc.name }}</td>
-          <td>{{ acc.accountNumber }}</td>
-          <td>{{ acc.accountType }}</td>
-          <td>{{ acc.currencyName }}</td>
-          <td>{{ acc.balance | number:'1.2-2' }}</td>
-          <td>{{ acc.isActive ? 'Sí' : 'No' }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
+  <!-- KPI Row: Resumen rápido -->
+  <div class="kpi-grid" *ngIf="quickSummary">
+    <app-sparkline-card
+      title="Saldo Consolidado"
+      subtitle="Total disponible en cuentas"
+      [value]="formatCurrency(quickSummary.totalConsolidatedBalance)"
+      icon="account_balance_wallet"
+      iconColor="#0284c7"
+      iconBgColor="#e0f2fe"
+      badgeText="Total Cuentas"
+      semanticState="neutral"
+    ></app-sparkline-card>
 
-  <section *ngIf="!loading && !error">
-    <h3>Cheques</h3>
-    <table class="checks-table">
-      <thead>
-        <tr>
-          <th>Número</th>
-          <th>Banco</th>
-          <th>Emisor</th>
-          <th>Monto</th>
-          <th>Fecha emisión</th>
-          <th>Fecha vencimiento</th>
-          <th>Estado</th>
-          <th>Cliente</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let chk of checks">
-          <td>{{ chk.checkNumber }}</td>
-          <td>{{ chk.bankName }}</td>
-          <td>{{ chk.issuerName }}</td>
-          <td>{{ chk.amount | number:'1.2-2' }}</td>
-          <td>{{ chk.issueDate | date:'short' }}</td>
-          <td>{{ chk.dueDate | date:'short' }}</td>
-          <td>{{ chk.status }}</td>
-          <td>{{ chk.clientName || '-' }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
+    <app-sparkline-card
+      title="Cuentas Activas"
+      subtitle="Bancarias, efectivo y billeteras"
+      [value]="quickSummary.activeAccounts + ' / ' + quickSummary.totalAccounts"
+      icon="account_balance"
+      iconColor="#10b981"
+      iconBgColor="#dcfce7"
+      badgeText="Operativas"
+      semanticState="positive"
+    ></app-sparkline-card>
+
+    <app-sparkline-card
+      title="Cheques en Cartera"
+      subtitle="Físicamente en oficina"
+      [value]="formatCurrency(quickSummary.checksInPortfolio.totalAmount)"
+      icon="receipt_long"
+      iconColor="#f59e0b"
+      iconBgColor="#fef3c7"
+      [badgeText]="quickSummary.checksInPortfolio.count + ' cheques'"
+      semanticState="warning"
+    ></app-sparkline-card>
+
+    <app-sparkline-card
+      title="Cheques Depositados"
+      subtitle="En proceso bancario"
+      [value]="formatCurrency(quickSummary.checksDeposited.totalAmount)"
+      icon="hourglass_top"
+      iconColor="#0284c7"
+      iconBgColor="#e0f2fe"
+      [badgeText]="quickSummary.checksDeposited.count + ' cheques'"
+      semanticState="neutral"
+    ></app-sparkline-card>
+  </div>
+
+  <!-- Row 2: Más detalles rápidos de cheques y Gráfico -->
+  <div class="row-2-grid" *ngIf="quickSummary">
+    <!-- Donut de Cheques -->
+    <div class="chart-box">
+      <app-donut-chart
+        title="Distribución de Cheques por Estado"
+        centerSubtitle="Monto Cheques"
+        [slices]="checkSlices"
+        [isCurrency]="true"
+      ></app-donut-chart>
+    </div>
+
+    <!-- Tarjetas de Acreditados vs Rechazados -->
+    <div class="kpi-pair-column">
+      <app-sparkline-card
+        title="Cheques Acreditados"
+        subtitle="Fondos cobrados exitosamente"
+        [value]="formatCurrency(quickSummary.checksAccredited.totalAmount)"
+        icon="check_circle"
+        iconColor="#10b981"
+        iconBgColor="#dcfce7"
+        [badgeText]="quickSummary.checksAccredited.count + ' cobrados'"
+        semanticState="positive"
+      ></app-sparkline-card>
+
+      <app-sparkline-card
+        title="Cheques Rechazados"
+        subtitle="Atención: fondos devueltos / con defectos"
+        [value]="formatCurrency(quickSummary.checksRejected.totalAmount)"
+        icon="cancel"
+        iconColor="#ef4444"
+        iconBgColor="#fee2e2"
+        [badgeText]="quickSummary.checksRejected.count + ' rechazados'"
+        semanticState="negative"
+      ></app-sparkline-card>
+    </div>
+  </div>
+
+  <!-- Tabs para Cuentas y Cheques -->
+  <mat-card class="data-tabs-card">
+    <mat-tab-group animationDuration="200ms">
+      
+      <!-- TAB 1: CUENTAS BANCARIAS -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">account_balance</mat-icon>
+          <span>Cuentas Bancarias ({{ accounts.length }})</span>
+        </ng-template>
+
+        <div class="tab-content">
+          <!-- Filtros de cuentas -->
+          <div class="table-filters">
+            <div class="filter-field search-field">
+              <mat-icon class="search-icon">search</mat-icon>
+              <input 
+                type="text" 
+                placeholder="Buscar por nombre, número o moneda..." 
+                [(ngModel)]="accountSearchTerm"
+              />
+              <button 
+                *ngIf="accountSearchTerm" 
+                mat-icon-button 
+                class="clear-btn" 
+                (click)="accountSearchTerm = ''"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+
+            <div class="type-filter">
+              <span class="filter-label">Tipo:</span>
+              <button 
+                mat-stroked-button 
+                class="filter-pill" 
+                [class.active]="accountTypeFilter === 'ALL'"
+                (click)="accountTypeFilter = 'ALL'"
+              >Todas</button>
+              <button 
+                mat-stroked-button 
+                class="filter-pill" 
+                [class.active]="accountTypeFilter === 'Cash'"
+                (click)="accountTypeFilter = 'Cash'"
+              >Efectivo</button>
+              <button 
+                mat-stroked-button 
+                class="filter-pill" 
+                [class.active]="accountTypeFilter === 'BankAccount'"
+                (click)="accountTypeFilter = 'BankAccount'"
+              >Bancaria</button>
+              <button 
+                mat-stroked-button 
+                class="filter-pill" 
+                [class.active]="accountTypeFilter === 'DigitalWallet'"
+                (click)="accountTypeFilter = 'DigitalWallet'"
+              >Billetera</button>
+            </div>
+          </div>
+
+          <!-- Tabla de cuentas -->
+          <div class="table-responsive">
+            <table class="styled-table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Número de Cuenta</th>
+                  <th>Tipo</th>
+                  <th>Moneda</th>
+                  <th class="text-right">Saldo Actual</th>
+                  <th class="text-center">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let acc of filteredAccounts">
+                  <td class="font-medium">{{ acc.name }}</td>
+                  <td>{{ acc.accountNumber || '-' }}</td>
+                  <td>
+                    <span class="account-type-tag" [ngClass]="acc.accountType?.toLowerCase()">
+                      {{ acc.accountType }}
+                    </span>
+                  </td>
+                  <td>{{ acc.currencyName }}</td>
+                  <td class="text-right font-bold" [class.negative-balance]="acc.balance < 0">
+                    {{ formatCurrency(acc.balance) }}
+                  </td>
+                  <td class="text-center">
+                    <span class="badge" [class.badge-active]="acc.isActive" [class.badge-inactive]="!acc.isActive">
+                      {{ acc.isActive ? 'Activa' : 'Inactiva' }}
+                    </span>
+                  </td>
+                </tr>
+                <tr *ngIf="filteredAccounts.length === 0">
+                  <td colspan="6" class="empty-row">
+                    <mat-icon>inbox</mat-icon>
+                    <span>No se encontraron cuentas con los filtros seleccionados</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- TAB 2: DETALLE DE CHEQUES -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">receipt_long</mat-icon>
+          <span>Cheques ({{ checks.length }})</span>
+        </ng-template>
+
+        <div class="tab-content">
+          <!-- Filtros de cheques -->
+          <div class="table-filters">
+            <div class="filter-field search-field">
+              <mat-icon class="search-icon">search</mat-icon>
+              <input 
+                type="text" 
+                placeholder="Buscar por número, banco, emisor o cliente..." 
+                [(ngModel)]="checkSearchTerm"
+              />
+              <button 
+                *ngIf="checkSearchTerm" 
+                mat-icon-button 
+                class="clear-btn" 
+                (click)="checkSearchTerm = ''"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+
+            <div class="type-filter">
+              <span class="filter-label">Estado:</span>
+              <button 
+                mat-stroked-button 
+                class="filter-pill" 
+                [class.active]="checkStatusFilter === 'ALL'"
+                (click)="checkStatusFilter = 'ALL'"
+              >Todos</button>
+              <button 
+                mat-stroked-button 
+                class="filter-pill" 
+                [class.active]="checkStatusFilter === '1'"
+                (click)="checkStatusFilter = '1'"
+              >En Cartera</button>
+              <button 
+                mat-stroked-button 
+                class="filter-pill" 
+                [class.active]="checkStatusFilter === '2'"
+                (click)="checkStatusFilter = '2'"
+              >Depositado</button>
+              <button 
+                mat-stroked-button 
+                class="filter-pill" 
+                [class.active]="checkStatusFilter === '3'"
+                (click)="checkStatusFilter = '3'"
+              >Acreditado</button>
+              <button 
+                mat-stroked-button 
+                class="filter-pill" 
+                [class.active]="checkStatusFilter === '4'"
+                (click)="checkStatusFilter = '4'"
+              >Rechazado</button>
+            </div>
+          </div>
+
+          <!-- Tabla de cheques -->
+          <div class="table-responsive">
+            <table class="styled-table">
+              <thead>
+                <tr>
+                  <th>N° Cheque</th>
+                  <th>Banco</th>
+                  <th>Emisor</th>
+                  <th>Cliente Recibido</th>
+                  <th>Fecha Emisión</th>
+                  <th>Vencimiento</th>
+                  <th class="text-right">Importe</th>
+                  <th class="text-center">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let chk of filteredChecks">
+                  <td class="font-medium">{{ chk.checkNumber }}</td>
+                  <td>{{ chk.bankName }}</td>
+                  <td>{{ chk.issuerName }}</td>
+                  <td>{{ chk.clientName || '-' }}</td>
+                  <td>{{ chk.issueDate | date:'dd/MM/yyyy' }}</td>
+                  <td>{{ chk.dueDate | date:'dd/MM/yyyy' }}</td>
+                  <td class="text-right font-bold">{{ formatCurrency(chk.amount) }}</td>
+                  <td class="text-center">
+                    <span class="badge" [ngClass]="getStatusClass(chk.status)">
+                      {{ getStatusLabel(chk.status) }}
+                    </span>
+                  </td>
+                </tr>
+                <tr *ngIf="filteredChecks.length === 0">
+                  <td colspan="8" class="empty-row">
+                    <mat-icon>inbox</mat-icon>
+                    <span>No se encontraron cheques con los filtros seleccionados</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </mat-tab>
+
+    </mat-tab-group>
+  </mat-card>
 </div>

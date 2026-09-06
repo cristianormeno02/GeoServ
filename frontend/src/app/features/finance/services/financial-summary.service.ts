@@ -22,14 +22,30 @@ export interface CheckSummary {
   amount: number;
   issueDate: string;
   dueDate: string;
-  status: string;
+  status: number;
   clientName?: string;
   observations?: string;
+}
+
+export interface CheckStatusGroup {
+  count: number;
+  totalAmount: number;
+}
+
+export interface QuickSummary {
+  totalAccounts: number;
+  activeAccounts: number;
+  totalConsolidatedBalance: number;
+  checksInPortfolio: CheckStatusGroup;
+  checksDeposited: CheckStatusGroup;
+  checksAccredited: CheckStatusGroup;
+  checksRejected: CheckStatusGroup;
 }
 
 export interface FinancialSummaryResponse {
   accounts: AccountSummary[];
   checks: CheckSummary[];
+  quickSummary: QuickSummary;
 }
 
 @Injectable({

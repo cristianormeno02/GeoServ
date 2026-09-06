@@ -41,13 +41,34 @@ public static class FinancialSummaryEndpoints
                     c.Amount,
                     c.IssueDate,
                     c.DueDate,
-                    c.Status,
+                    Status = (int)c.Status,
                     ClientName = c.ReceivedFromClient != null ? c.ReceivedFromClient.CompanyName : null,
                     c.Observations
                 })
                 .ToListAsync();
 
-            return Results.Ok(new { accounts = accountSummaries, checks });
+            var inPortfolio = checks.Where(c => c.Status == (int)CheckStatus.InPortfolio).ToList();
+            var deposited = checks.Where(c => c.Status == (int)CheckStatus.Deposited).ToList();
+            var accredited = checks.Where(c => c.Status == (int)CheckStatus.Accredited).ToList();
+            var rejected = checks.Where(c => c.Status == (int)CheckStatus.Rejected).ToList();
+
+            var quickSummary = new
+            {
+                totalAccounts = accountSummaries.Count,
+                activeAccounts = accountSummaries.Count(a => a.IsActive),
+                totalConsolidatedBalance = accountSummaries.Sum(a => a.Balance),
+                checksInPortfolio = new { count = inPortfolio.Count, totalAmount = inPortfolio.Sum(c => c.Amount) },
+                checksDeposited = new { count = deposited.Count, totalAmount = deposited.Sum(c => c.Amount) },
+                checksAccredited = new { count = accredited.Count, totalAmount = accredited.Sum(c => c.Amount) },
+                checksRejected = new { count = rejected.Count, totalAmount = rejected.Sum(c => c.Amount) }
+            };
+
+            return Results.Ok(new 
+            { 
+                accounts = accountSummaries, 
+                checks,
+                quickSummary
+            });
         })
         .WithName("GetFinancialSummary")
         .WithOpenApi();
