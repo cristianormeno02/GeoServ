@@ -25,10 +25,10 @@ import {
   InventoryAlertsResponse,
   UpcomingFixedCost
 } from './models/operational-dashboard.model';
-import { ChangeDetectorRef, computed } from '@angular/core';
+import { ChangeDetectorRef, computed, ViewChild } from '@angular/core';
 import { EmpresaConfigService } from '../../core/services/empresa-config.service';
 import { DomSanitizer } from '@angular/platform-browser';
-import { GoogleMapsModule } from '@angular/google-maps';
+import { GoogleMapsModule, GoogleMap } from '@angular/google-maps';
 import { ProjectService } from '../projects/services/project.service';
 
 @Component({
@@ -173,6 +173,8 @@ export class OperationalDashboardComponent implements OnInit {
   }
 
   // --- Project Map properties ---
+  @ViewChild(GoogleMap) googleMap!: GoogleMap;
+  mapOptions: google.maps.MapOptions = { mapTypeId: 'satellite' };
   mapCenter: google.maps.LatLngLiteral = { lat: -34.6037, lng: -58.3816 };
   mapZoom = 10;
   mapMarkers: any[] = [];
@@ -180,24 +182,53 @@ export class OperationalDashboardComponent implements OnInit {
   loadProjectsForMap(): void {
     this.projectService.getProjects().subscribe({
       next: (projects) => {
+        const bounds = new google.maps.LatLngBounds();
+        let hasValidCoords = false;
+
         this.mapMarkers = projects
           .filter(p => p.latitud != null && p.longitud != null)
           .map(p => {
-            // Check if it has active service orders. For the mockup we might not have `activeOrdersCount` inside `Project`
-            // But we can simulate or check if it has a property. Let's assume green for active, red for inactive.
-            // If the project doesn't have an active flag, we mock it or default it.
-            const hasActiveOrders = Math.random() > 0.5; // Simulate active orders status for now
+            const position = { lat: Number(p.latitud), lng: Number(p.longitud) };
+            bounds.extend(position);
+            hasValidCoords = true;
+
+            const hasActiveOrders = p.hasActiveOrders === true;
             return {
-              position: { lat: Number(p.latitud), lng: Number(p.longitud) },
+              position,
               title: p.name,
               options: {
-                icon: hasActiveOrders ? 'http://maps.google.com/mapfiles/ms/icons/green-dot.png' : 'http://maps.google.com/mapfiles/ms/icons/red-dot.png'
+                icon: hasActiveOrders ? {
+                  path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z',
+                  fillColor: '#0284c7',
+                  fillOpacity: 1,
+                  strokeWeight: 1,
+                  strokeColor: '#ffffff',
+                  scale: 1.5,
+                  anchor: new google.maps.Point(12, 22)
+                } : {
+                  path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z',
+                  fillColor: '#ef4444',
+                  fillOpacity: 1,
+                  strokeWeight: 1,
+                  strokeColor: '#ffffff',
+                  scale: 1.5,
+                  anchor: new google.maps.Point(12, 22)
+                }
               }
             };
           });
-        if (this.mapMarkers.length > 0) {
-          this.mapCenter = this.mapMarkers[0].position;
+
+        if (hasValidCoords) {
+          // A little delay to ensure the map component is initialized by Angular
+          setTimeout(() => {
+            if (this.googleMap && this.googleMap.googleMap) {
+              this.googleMap.fitBounds(bounds);
+            } else {
+               this.mapCenter = this.mapMarkers[0].position;
+            }
+          }, 200);
         }
+
         this.cdr.detectChanges();
       },
       error: err => console.error('Error fetching projects for map', err)

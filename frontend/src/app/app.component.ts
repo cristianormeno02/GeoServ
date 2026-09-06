@@ -22,7 +22,7 @@ export class AppComponent {
 
   private loadGoogleMapsApi() {
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsApiKey}&libraries=places`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsApiKey}&libraries=places&loading=async`;
     script.async = true;
     script.defer = true;
     document.head.appendChild(script);

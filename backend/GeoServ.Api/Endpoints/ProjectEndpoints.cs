@@ -22,7 +22,8 @@ public static class ProjectEndpoints
                     p.Description,
                     p.CreatedAt,
                     p.Latitud,
-                    p.Longitud
+                    p.Longitud,
+                    HasActiveOrders = p.ServiceOrders.Any(o => o.Status.Name != "Entregada" && o.Status.Name != "Cobrada" && o.Status.Name != "Cancelada")
                 })
                 .ToListAsync();
 

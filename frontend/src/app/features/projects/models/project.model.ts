@@ -5,6 +5,7 @@ export interface Project {
   createdAt: string;
   latitud?: number;
   longitud?: number;
+  hasActiveOrders?: boolean;
 }
 
 export interface CreateProjectRequest {

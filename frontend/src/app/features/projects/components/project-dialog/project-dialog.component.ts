@@ -35,7 +35,7 @@ import { Project } from '../../models/project.model';
 
         <mat-form-field appearance="outline">
           <mat-label>Descripción</mat-label>
-          <textarea matInput formControlName="description" rows="4" maxlength="500" #projDesc></textarea>
+          <textarea matInput formControlName="description" rows="3" maxlength="500" #projDesc></textarea>
           <mat-hint align="end">{{projDesc.value.length}} / 500</mat-hint>
         </mat-form-field>
 
@@ -60,9 +60,10 @@ import { Project } from '../../models/project.model';
         <div class="map-container">
           <google-map 
             width="100%" 
-            height="250px" 
+            height="300px" 
             [center]="mapCenter" 
             [zoom]="mapZoom"
+            [options]="mapOptions"
             (mapClick)="onMapClick($event)">
             <map-marker 
               *ngIf="markerPosition" 
@@ -86,9 +87,8 @@ import { Project } from '../../models/project.model';
     .project-form {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 12px;
       padding-top: 10px;
-      min-width: 500px;
     }
     .coords-row {
       display: flex;
@@ -98,7 +98,8 @@ import { Project } from '../../models/project.model';
       flex: 1;
     }
     .map-container {
-      margin-top: 8px;
+      margin-top: 4px;
+      margin-bottom: 8px;
       border: 1px solid #ccc;
       border-radius: 4px;
       overflow: hidden;
@@ -112,6 +113,7 @@ export class ProjectDialogComponent implements OnInit {
   projectForm: FormGroup;
   isEdit = false;
 
+  mapOptions: google.maps.MapOptions = { mapTypeId: 'satellite' };
   mapCenter: google.maps.LatLngLiteral = { lat: -34.6037, lng: -58.3816 }; // Buenos Aires default
   mapZoom = 10;
   markerPosition: google.maps.LatLngLiteral | null = null;

@@ -172,7 +172,8 @@ export class ProjectListComponent implements OnInit {
 
   openDialog(project?: Project) {
     const dialogRef = this.dialog.open(ProjectDialogComponent, {
-      width: '500px',
+      width: '700px',
+      maxWidth: '95vw',
       data: { project }
     });
 
