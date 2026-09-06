@@ -1,0 +1,19 @@
+/* Estilos básicos para la página de resumen financiero */
+.financial-summary {
+  padding: 1rem;
+}
+.accounts-table, .checks-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+.accounts-table th, .accounts-table td,
+.checks-table th, .checks-table td {
+  border: 1px solid #ddd;
+  padding: 0.5rem;
+  text-align: left;
+}
+.loading, .error {
+  margin: 1rem 0;
+  font-weight: bold;
+}

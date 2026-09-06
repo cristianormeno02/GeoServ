@@ -1,0 +1,67 @@
+<div class="financial-summary">
+  <h2>Resumen financiero</h2>
+
+  <div *ngIf="loading" class="loading">
+    Cargando datos...
+  </div>
+
+  <div *ngIf="error" class="error">
+    {{ error }}
+  </div>
+
+  <section *ngIf="!loading && !error">
+    <h3>Cuentas</h3>
+    <table class="accounts-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Número</th>
+          <th>Tipo</th>
+          <th>Moneda</th>
+          <th>Saldo</th>
+          <th>Activo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let acc of accounts">
+          <td>{{ acc.name }}</td>
+          <td>{{ acc.accountNumber }}</td>
+          <td>{{ acc.accountType }}</td>
+          <td>{{ acc.currencyName }}</td>
+          <td>{{ acc.balance | number:'1.2-2' }}</td>
+          <td>{{ acc.isActive ? 'Sí' : 'No' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section *ngIf="!loading && !error">
+    <h3>Cheques</h3>
+    <table class="checks-table">
+      <thead>
+        <tr>
+          <th>Número</th>
+          <th>Banco</th>
+          <th>Emisor</th>
+          <th>Monto</th>
+          <th>Fecha emisión</th>
+          <th>Fecha vencimiento</th>
+          <th>Estado</th>
+          <th>Cliente</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let chk of checks">
+          <td>{{ chk.checkNumber }}</td>
+          <td>{{ chk.bankName }}</td>
+          <td>{{ chk.issuerName }}</td>
+          <td>{{ chk.amount | number:'1.2-2' }}</td>
+          <td>{{ chk.issueDate | date:'short' }}</td>
+          <td>{{ chk.dueDate | date:'short' }}</td>
+          <td>{{ chk.status }}</td>
+          <td>{{ chk.clientName || '-' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</div>

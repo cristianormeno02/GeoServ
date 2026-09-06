@@ -150,5 +150,5 @@ GeoServ.Api.Endpoints.FixedCostCategoryEndpoints.MapFixedCostCategoryEndpoints(a
 GeoServ.Api.Endpoints.OperationalDashboardEndpoints.MapOperationalDashboardEndpoints(app);
 GeoServ.Api.Endpoints.FinancialDashboardEndpoints.MapFinancialDashboardEndpoints(app);
 GeoServ.Api.Endpoints.GeneralDashboardEndpoints.MapGeneralDashboardEndpoints(app);
-
+GeoServ.Api.Endpoints.FinancialSummaryEndpoints.MapFinancialSummaryEndpoints(app);
 app.Run();

@@ -15,7 +15,7 @@ export const routes: Routes = [
       { path: 'dashboard/financiero', loadComponent: () => import('./features/dashboard-financiero/financial-dashboard.component').then(m => m.FinancialDashboardComponent) },
       { path: 'dashboard/cliente', loadComponent: () => import('./features/dashboard-cliente/client-dashboard.component').then(m => m.ClientDashboardComponent) },
       { path: 'inventario', loadComponent: () => import('./features/inventario/inventario.component').then(m => m.InventarioComponent) },
-      { path: 'finanzas/resumen', loadComponent: () => import('./features/finance/resumen/resumen.component').then(m => m.ResumenComponent) },
+      { path: 'finanzas/resumen', loadComponent: () => import('./features/finance/resumen/financial-summary.component').then(m => m.FinancialSummaryComponent) },
       { path: 'clientes', loadComponent: () => import('./features/clients/components/client-list/client-list.component').then(m => m.ClientListComponent) },
       { path: 'tipos-compania', loadComponent: () => import('./features/company-types/components/company-type-list/company-type-list.component').then(m => m.CompanyTypeListComponent) },
       { path: 'tipos-servicio', loadComponent: () => import('./features/service-types/components/service-type-list/service-type-list.component').then(m => m.ServiceTypeListComponent) },
