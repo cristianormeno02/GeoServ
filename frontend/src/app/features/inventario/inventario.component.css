@@ -1,0 +1,135 @@
+﻿.page-container {
+  padding: 24px;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 500;
+  margin: 0 0 8px 0;
+  color: #333;
+}
+
+.page-subtitle {
+  color: #666;
+  margin: 0;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.kpi-card {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.kpi-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.kpi-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.kpi-icon.blue { background-color: #e3f2fd; color: #1976d2; }
+.kpi-icon.purple { background-color: #f3e5f5; color: #7b1fa2; }
+.kpi-icon.amber { background-color: #fff8e1; color: #ffa000; }
+.kpi-icon.red { background-color: #ffebee; color: #d32f2f; }
+
+.kpi-label {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+.kpi-value {
+  font-size: 28px;
+  font-weight: 600;
+  color: #333;
+}
+
+.kpi-value.warning { color: #f57c00; }
+.kpi-value.danger { color: #d32f2f; }
+
+.table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid #eee;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.filters {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.search-field {
+  width: 300px;
+}
+
+.filter-field {
+  width: 200px;
+}
+
+/* Reducir margen inferior de los form-fields en el toolbar */
+::ng-deep .toolbar .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+.fw-bold {
+  font-weight: 500;
+}
+
+.empty-table {
+  text-align: center;
+  padding: 48px;
+  color: #666;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-badge.normal {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-badge.critical {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+.status-badge.danger {
+  background-color: #ffebee;
+  color: #c62828;
+}

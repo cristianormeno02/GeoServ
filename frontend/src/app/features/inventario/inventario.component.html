@@ -1,0 +1,160 @@
+﻿<div class="page-container">
+  <div class="page-header">
+    <h1 class="page-title">Reporte de Inventario</h1>
+    <p class="page-subtitle">Estado actual, valorización y alertas de insumos</p>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <mat-card class="kpi-card">
+      <mat-card-content>
+        <div class="kpi-header">
+          <mat-icon class="kpi-icon blue">monetization_on</mat-icon>
+          <span class="kpi-label">Valor Total</span>
+        </div>
+        <div class="kpi-value">{{ totalValue | currency }}</div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="kpi-card">
+      <mat-card-content>
+        <div class="kpi-header">
+          <mat-icon class="kpi-icon purple">inventory_2</mat-icon>
+          <span class="kpi-label">Insumos Activos</span>
+        </div>
+        <div class="kpi-value">{{ totalActiveItems }}</div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="kpi-card">
+      <mat-card-content>
+        <div class="kpi-header">
+          <mat-icon class="kpi-icon amber">warning</mat-icon>
+          <span class="kpi-label">Bajo Stock Mínimo</span>
+        </div>
+        <div class="kpi-value warning">{{ criticalItemsCount }}</div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="kpi-card">
+      <mat-card-content>
+        <div class="kpi-header">
+          <mat-icon class="kpi-icon red">error_outline</mat-icon>
+          <span class="kpi-label">Agotados</span>
+        </div>
+        <div class="kpi-value danger">{{ outOfStockCount }}</div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <mat-card class="table-card">
+    <!-- Toolbar / Filtros -->
+    <div class="toolbar">
+      <div class="filters">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Buscar insumo...</mat-label>
+          <mat-icon matPrefix>search</mat-icon>
+          <input matInput [formControl]="searchControl" placeholder="Ej: Tornillo">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Clase de Insumo</mat-label>
+          <mat-select [formControl]="classControl">
+            <mat-option value="all">Todas</mat-option>
+            <mat-option *ngFor="let cls of consumableClasses" [value]="cls.id">
+              {{ cls.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Estado de Stock</mat-label>
+          <mat-select [formControl]="statusControl">
+            <mat-option value="all">Todos</mat-option>
+            <mat-option value="normal">Stock Normal</mat-option>
+            <mat-option value="critical">Bajo Mínimo</mat-option>
+            <mat-option value="out_of_stock">Agotados</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      
+      <div class="actions">
+        <button mat-flat-button color="primary" (click)="exportToCSV()">
+          <mat-icon>download</mat-icon>
+          Exportar CSV
+        </button>
+      </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-responsive">
+      <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z0">
+        
+        <ng-container matColumnDef="description">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Insumo </th>
+          <td mat-cell *matCellDef="let row" class="fw-bold"> {{row.description}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="className">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Clase </th>
+          <td mat-cell *matCellDef="let row"> {{row.consumableClass?.name}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="currentStock">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Stock Actual </th>
+          <td mat-cell *matCellDef="let row" class="fw-bold"> {{row.quantity}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="minimumStock">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Mínimo </th>
+          <td mat-cell *matCellDef="let row"> {{row.minimumStock}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="unitName">
+          <th mat-header-cell *matHeaderCellDef> Unidad </th>
+          <td mat-cell *matCellDef="let row"> {{row.unit?.name}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="unitCost">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Costo Unit. </th>
+          <td mat-cell *matCellDef="let row"> {{row.unitCost | currency}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="totalValue">
+          <th mat-header-cell *matHeaderCellDef> Valorización </th>
+          <td mat-cell *matCellDef="let row" class="fw-bold"> {{(row.quantity * row.unitCost) | currency}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef> Estado </th>
+          <td mat-cell *matCellDef="let row">
+            <span class="status-badge normal" *ngIf="row.quantity > row.minimumStock">Normal</span>
+            <span class="status-badge critical" *ngIf="row.quantity > 0 && row.quantity <= row.minimumStock">Bajo Mínimo</span>
+            <span class="status-badge danger" *ngIf="row.quantity === 0">Agotado</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef> </th>
+          <td mat-cell *matCellDef="let row">
+            <button mat-icon-button color="primary" matTooltip="Ver Historial" (click)="openHistory(row)">
+              <mat-icon>history</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+        <!-- Row shown when there is no matching data. -->
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell empty-table" [attr.colspan]="displayedColumns.length">
+            No se encontraron insumos que coincidan con los filtros.
+          </td>
+        </tr>
+      </table>
+    </div>
+    
+    <mat-paginator [pageSizeOptions]="[10, 25, 50, 100]" aria-label="Seleccionar página"></mat-paginator>
+  </mat-card>
+</div>

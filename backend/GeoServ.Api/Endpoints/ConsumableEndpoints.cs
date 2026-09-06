@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using GeoServ.Api.Domain.Entities;
 using GeoServ.Api.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -33,6 +33,7 @@ public static class ConsumableEndpoints
                     Unit = c.Unit,
                     c.UnitCost,
                     c.TotalCost,
+                    c.MinimumStock,
                     c.ProviderId,
                     Provider = c.Provider,
                     c.Observation

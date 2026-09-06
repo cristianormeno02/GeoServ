@@ -21,6 +21,7 @@ export interface Consumable {
   unit?: any; // Import Unit model if available
   unitCost: number;
   totalCost: number;
+  minimumStock: number;
   providerId?: string;
   provider?: any; // Import Provider model if available
   observation?: string;
