@@ -156,12 +156,17 @@ public static class AccountingMovementEndpoints
                 var movement = await context.AccountingMovements.FindAsync(id);
                 if (movement == null) return Results.NotFound();
 
-                var sourceId = request.ServiceOrderId?.ToString() ?? request.DirectCostId?.ToString() ?? request.FixedCostId?.ToString() ?? request.AssetId?.ToString();
-                var sourceType = MovementSourceType.Manual;
-                if (request.ServiceOrderId.HasValue) sourceType = MovementSourceType.ServiceOrderIncome;
-                else if (request.DirectCostId.HasValue) sourceType = MovementSourceType.DirectCost;
-                else if (request.FixedCostId.HasValue) sourceType = MovementSourceType.FixedCostPayment;
-                else if (request.AssetId.HasValue) sourceType = MovementSourceType.AssetPurchase;
+                var sourceType = request.SourceType ?? MovementSourceType.Manual;
+                var sourceId = request.SourceId;
+
+                if (!request.SourceType.HasValue)
+                {
+                    sourceId = request.ServiceOrderId?.ToString() ?? request.DirectCostId?.ToString() ?? request.FixedCostId?.ToString() ?? request.AssetId?.ToString();
+                    if (request.ServiceOrderId.HasValue) sourceType = MovementSourceType.ServiceOrderIncome;
+                    else if (request.DirectCostId.HasValue) sourceType = MovementSourceType.DirectCost;
+                    else if (request.FixedCostId.HasValue) sourceType = MovementSourceType.FixedCostPayment;
+                    else if (request.AssetId.HasValue) sourceType = MovementSourceType.AssetPurchase;
+                }
 
                 movement.IsIncome = request.IsIncome;
                 movement.CategoryId = request.CategoryId;
@@ -226,11 +231,14 @@ public record UpdateMovementRequest(
     string? Description,
     Guid FinancialAccountId,
     Guid? PaymentMethodId,
-    Guid? ServiceOrderId,
-    Guid? FixedCostId,
-    Guid? DirectCostId,
-    Guid? AssetId,
-    Guid? CheckId,
-    Guid? ResponsibleId
+    GeoServ.Api.Domain.Enums.MovementSourceType? SourceType = null,
+    string? SourceId = null,
+    Guid? ServiceOrderId = null,
+    Guid? FixedCostId = null,
+    Guid? DirectCostId = null,
+    Guid? AssetId = null,
+    Guid? CheckId = null,
+    Guid? ResponsibleId = null
 );
+
 

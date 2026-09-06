@@ -1,9 +1,4 @@
-# accounting-ui Specification
-
-## Purpose
-Interfaces de usuario para visualizar y registrar movimientos contables con soporte para orígenes polimórficos.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Interfaz de registro polimórfico
 El formulario de creación y edición de movimientos contables debe solicitar al usuario el tipo de origen antes de permitirle seleccionar el origen específico, cargando las entidades correspondientes según el tipo seleccionado y ocultando campos no relevantes.
@@ -19,10 +14,3 @@ El formulario de creación y edición de movimientos contables debe solicitar al
 #### Scenario: Persistencia al editar un movimiento con origen polimórfico
 - **WHEN** el usuario edita y guarda un movimiento contable que tiene asignado un origen polimórfico (`SourceType` y `SourceId`)
 - **THEN** el sistema preserva y persiste tanto el `SourceType` como el `SourceId` sin restablecer el origen a Manual.
-
-### Requirement: Visualización de orígenes en listados
-La tabla principal de movimientos contables debe mostrar información consolidada e inteligible para el usuario sobre de dónde provino o hacia dónde fue el movimiento.
-
-#### Scenario: Usuario visualiza la grilla de movimientos
-- **WHEN** el usuario ingresa a la sección de Movimientos Contables
-- **THEN** observa una columna "Origen" que contiene una etiqueta del tipo de origen y el identificador de negocio de la entidad asociada (ej. "Orden de Servicio - OS-00123" o "Compra de Activo - Camioneta Hilux").

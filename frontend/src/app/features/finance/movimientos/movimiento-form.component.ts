@@ -53,7 +53,7 @@ import { environment } from '../../../../environments/environment';
             <mat-option value="Manual">Manual</mat-option>
             <mat-option value="ServiceOrderIncome" *ngIf="isIncomeCtrl.value">Ingreso por OS</mat-option>
             <mat-option value="DirectCost" *ngIf="!isIncomeCtrl.value">Costo Directo</mat-option>
-            <mat-option value="FixedCostPayment" *ngIf="!isIncomeCtrl.value">Pago de Costo Fijo</mat-option>
+            <mat-option value="FixedCostPayment" *ngIf="!isIncomeCtrl.value">Pago de Gasto Fijo</mat-option>
             <mat-option value="AssetPurchase" *ngIf="!isIncomeCtrl.value">Compra de Activo</mat-option>
           </mat-select>
         </mat-form-field>
@@ -218,7 +218,13 @@ export class MovimientoFormComponent implements OnInit {
     
     if (type === 'ServiceOrderIncome') endpoint = '/service-orders';
     else if (type === 'DirectCost') endpoint = '/direct-costs';
-    else if (type === 'FixedCostPayment') endpoint = '/fixed-cost-payments';
+    else if (type === 'FixedCostPayment') {
+      endpoint = '/fixed-cost-items';
+      mapFn = (x: any) => ({
+        id: x.id,
+        name: x.name + (x.category?.name ? ` (${x.category.name})` : '')
+      });
+    }
     else if (type === 'AssetPurchase') endpoint = '/assets';
     
     if (endpoint) {
