@@ -8,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { SparklineCardComponent } from '../../../shared/components/charts/sparkline-card.component';
 import { DonutChartComponent, DonutSlice } from '../../../shared/components/charts/donut-chart.component';
 import { 
@@ -37,6 +38,7 @@ export enum CheckStatusEnum {
     MatSelectModule,
     MatInputModule,
     MatTabsModule,
+    MatTooltipModule,
     SparklineCardComponent,
     DonutChartComponent
   ],
@@ -50,6 +52,19 @@ export class FinancialSummaryComponent implements OnInit {
   loading = false;
   error: string | null = null;
   lastUpdated: Date = new Date();
+
+  // Textos explicativos para los reportes y tarjetas
+  infoTexts = {
+    saldoConsolidado: 'Suma de todos los saldos actuales en cuentas bancarias, billeteras virtuales y cajas de efectivo de la empresa.',
+    cuentasActivas: 'Cantidad de cuentas financieras actualmente habilitadas y operativas sobre el total de cuentas registradas.',
+    chequesCartera: 'Cheques físicos recibidos de clientes que se encuentran en custodia en la empresa a la espera de ser depositados o cobrados.',
+    chequesDepositados: 'Cheques que ya fueron entregados o remitidos al banco pero aún están en proceso de compensación/clearing.',
+    chequesAcreditados: 'Cheques que ya fueron compensados favorablemente y cuyos fondos están acreditados en la cuenta bancaria.',
+    chequesRechazados: 'Cheques devueltos por el banco debido a falta de fondos, defectos formales u orden de no pago.',
+    distribucionCheques: 'Muestra la proporción porcentual y montos de los cheques según su estado operativo actual.',
+    tablaCuentas: 'Detalle de cada cuenta financiera registrada, su tipo, moneda y saldo calculado en base a todos sus movimientos.',
+    tablaCheques: 'Listado completo de cheques recibidos con número, emisor, banco, cliente de origen, fecha de emisión y vencimiento.'
+  };
 
   // Filters
   accountTypeFilter: string = 'ALL';

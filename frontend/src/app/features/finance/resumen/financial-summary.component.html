@@ -41,6 +41,7 @@
       iconBgColor="#e0f2fe"
       badgeText="Total Cuentas"
       semanticState="neutral"
+      [helpText]="infoTexts.saldoConsolidado"
     ></app-sparkline-card>
 
     <app-sparkline-card
@@ -52,6 +53,7 @@
       iconBgColor="#dcfce7"
       badgeText="Operativas"
       semanticState="positive"
+      [helpText]="infoTexts.cuentasActivas"
     ></app-sparkline-card>
 
     <app-sparkline-card
@@ -63,6 +65,7 @@
       iconBgColor="#fef3c7"
       [badgeText]="quickSummary.checksInPortfolio.count + ' cheques'"
       semanticState="warning"
+      [helpText]="infoTexts.chequesCartera"
     ></app-sparkline-card>
 
     <app-sparkline-card
@@ -74,19 +77,23 @@
       iconBgColor="#e0f2fe"
       [badgeText]="quickSummary.checksDeposited.count + ' cheques'"
       semanticState="neutral"
+      [helpText]="infoTexts.chequesDepositados"
     ></app-sparkline-card>
   </div>
 
   <!-- Row 2: Más detalles rápidos de cheques y Gráfico -->
   <div class="row-2-grid" *ngIf="quickSummary">
     <!-- Donut de Cheques -->
-    <div class="chart-box">
+    <div class="chart-box" style="position: relative;">
       <app-donut-chart
         title="Distribución de Cheques por Estado"
         centerSubtitle="Monto Cheques"
         [slices]="checkSlices"
         [isCurrency]="true"
       ></app-donut-chart>
+      <button mat-icon-button class="widget-help-btn" [matTooltip]="infoTexts.distribucionCheques" matTooltipPosition="above" matTooltipClass="custom-help-tooltip">
+        <mat-icon>help_outline</mat-icon>
+      </button>
     </div>
 
     <!-- Tarjetas de Acreditados vs Rechazados -->
@@ -100,6 +107,7 @@
         iconBgColor="#dcfce7"
         [badgeText]="quickSummary.checksAccredited.count + ' cobrados'"
         semanticState="positive"
+        [helpText]="infoTexts.chequesAcreditados"
       ></app-sparkline-card>
 
       <app-sparkline-card
@@ -111,12 +119,16 @@
         iconBgColor="#fee2e2"
         [badgeText]="quickSummary.checksRejected.count + ' rechazados'"
         semanticState="negative"
+        [helpText]="infoTexts.chequesRechazados"
       ></app-sparkline-card>
     </div>
   </div>
 
   <!-- Tabs para Cuentas y Cheques -->
-  <mat-card class="data-tabs-card">
+  <mat-card class="data-tabs-card" style="position: relative;">
+    <button mat-icon-button class="tabs-help-btn" [matTooltip]="infoTexts.tablaCuentas" matTooltipPosition="above" matTooltipClass="custom-help-tooltip">
+      <mat-icon>help_outline</mat-icon>
+    </button>
     <mat-tab-group animationDuration="200ms">
       
       <!-- TAB 1: CUENTAS BANCARIAS -->
