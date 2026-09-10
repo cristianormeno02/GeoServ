@@ -1,14 +1,23 @@
 export interface ServiceOrderListItem {
   id: string;
   orderNumber: string;
+  clientId?: string;
   clientName: string;
+  projectId?: string;
   projectName?: string;
+  statusId?: string;
   statusName: string;
   priority: number;
   createdAt: string;
+  estimatedStartDate?: string;
   estimatedEndDate?: string;
+  actualStartDate?: string;
+  actualEndDate?: string;
   budgetedAmount: number;
+  totalAmount?: number;
   collectedAmount: number;
+  hasInconsistencies?: boolean;
+  inconsistencyReasons?: string[];
 }
 
 export interface Currency {

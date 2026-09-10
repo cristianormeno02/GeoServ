@@ -1,6 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
@@ -8,6 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -22,6 +24,7 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
   imports: [
     CommonModule,
     RouterModule,
+    FormsModule,
     MatTableModule,
     MatPaginatorModule,
     MatSortModule,
@@ -29,6 +32,7 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
     MatIconModule,
     MatInputModule,
     MatFormFieldModule,
+    MatSelectModule,
     MatTooltipModule,
     MatDialogModule,
     MatSnackBarModule
@@ -38,6 +42,7 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
 })
 export class ServiceOrderListComponent implements OnInit {
   displayedColumns: string[] = [
+    'alerts',
     'orderNumber',
     'clientName',
     'projectName',
@@ -48,6 +53,14 @@ export class ServiceOrderListComponent implements OnInit {
     'actions'
   ];
   dataSource = new MatTableDataSource<ServiceOrderListItem>();
+
+  // Filtros
+  searchTerm: string = '';
+  selectedProjectId: string = '';
+  selectedStatusName: string = 'Iniciada';
+
+  projects: any[] = [];
+  statuses: any[] = [];
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
@@ -60,20 +73,98 @@ export class ServiceOrderListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.setupFilterPredicate();
+    this.loadCatalogs();
     this.loadOrders();
+  }
+
+  loadCatalogs(): void {
+    this.serviceOrderService.getProjects().subscribe({
+      next: (projects) => {
+        this.projects = projects || [];
+      },
+      error: (err) => console.error('Error al cargar proyectos', err)
+    });
+
+    this.serviceOrderService.getStatuses().subscribe({
+      next: (statuses) => {
+        this.statuses = statuses || [];
+      },
+      error: (err) => console.error('Error al cargar estados', err)
+    });
+  }
+
+  setupFilterPredicate(): void {
+    this.dataSource.filterPredicate = (data: ServiceOrderListItem, filterJson: string) => {
+      let filter = { text: '', projectId: '', statusName: '' };
+      try {
+        filter = JSON.parse(filterJson);
+      } catch {
+        return true;
+      }
+
+      // 1. Filtro por Estado
+      if (filter.statusName) {
+        if (!data.statusName || data.statusName.toLowerCase() !== filter.statusName.toLowerCase()) {
+          return false;
+        }
+      }
+
+      // 2. Filtro por Proyecto
+      if (filter.projectId) {
+        if (data.projectId !== filter.projectId) {
+          return false;
+        }
+      }
+
+      // 3. Filtro de búsqueda libre
+      if (filter.text) {
+        const text = filter.text;
+        const match =
+          (data.orderNumber && data.orderNumber.toLowerCase().includes(text)) ||
+          (data.clientName && data.clientName.toLowerCase().includes(text)) ||
+          (data.projectName && data.projectName.toLowerCase().includes(text)) ||
+          (data.statusName && data.statusName.toLowerCase().includes(text));
+        if (!match) {
+          return false;
+        }
+      }
+
+      return true;
+    };
   }
 
   loadOrders(): void {
     this.serviceOrderService.getServiceOrders().subscribe({
       next: (data) => {
+        // Orden inicial ascendente por orderNumber
+        data.sort((a, b) => (a.orderNumber || '').localeCompare(b.orderNumber || '', undefined, { numeric: true, sensitivity: 'base' }));
         this.dataSource.data = data;
         this.dataSource.paginator = this.paginator;
         this.dataSource.sort = this.sort;
+        if (this.sort) {
+          this.sort.active = 'orderNumber';
+          this.sort.direction = 'asc';
+        }
+        this.applyCombinedFilter();
       },
       error: (err) => {
         console.error('Error al cargar órdenes de servicio', err);
       }
     });
+  }
+
+  applyCombinedFilter(): void {
+    const filterObj = {
+      text: this.searchTerm.trim().toLowerCase(),
+      projectId: this.selectedProjectId,
+      statusName: this.selectedStatusName
+    };
+    this.dataSource.filter = JSON.stringify(filterObj);
+
+    if (this.dataSource.paginator) {
+      this.dataSource.paginator.firstPage();
+    }
   }
 
   getStatusClass(status: string): string {
@@ -91,13 +182,11 @@ export class ServiceOrderListComponent implements OnInit {
     return 'bg-info';
   }
 
-  applyFilter(event: Event): void {
-    const filterValue = (event.target as HTMLInputElement).value;
-    this.dataSource.filter = filterValue.trim().toLowerCase();
-
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.firstPage();
+  getInconsistencyTooltip(row: ServiceOrderListItem): string {
+    if (row.inconsistencyReasons && row.inconsistencyReasons.length > 0) {
+      return 'Información mal cargada:\n• ' + row.inconsistencyReasons.join('\n• ');
     }
+    return 'Alerta: Existe información mal cargada o incompleta en esta orden.';
   }
 
   createOrder(): void {

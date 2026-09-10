@@ -17,7 +17,13 @@
 
         <mat-tab-group>
           <!-- Datos Principales -->
-          <mat-tab label="Datos Principales">
+          <mat-tab>
+            <ng-template mat-tab-label>
+              Datos Principales
+              <span class="status-badge bg-error" *ngIf="isDatosPrincipalesInvalid()" style="margin-left: 8px;">
+                <mat-icon style="font-size: 16px; width: 16px; height: 16px; line-height: 16px;">error</mat-icon> Incompleto
+              </span>
+            </ng-template>
             <div style="padding-top: 16px;">
               <div class="row">
                 <mat-form-field appearance="outline">

@@ -332,12 +332,56 @@ export class ServiceOrderFormComponent implements OnInit {
     return this.distributions.controls.reduce((sum, ctrl) => sum + (Number(ctrl.get('actualAmount')?.value) || 0), 0);
   }
 
+  private getDayTimestamp(val: any): number {
+    if (!val) return 0;
+    const d = val instanceof Date ? val : new Date(val);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  }
+
+  isDatosPrincipalesInvalid(): boolean {
+    const num = this.orderForm.get('orderNumber');
+    const client = this.orderForm.get('clientId');
+    const serviceType = this.orderForm.get('serviceTypeId');
+    const status = this.orderForm.get('statusId');
+    const priority = this.orderForm.get('priority');
+    const project = this.orderForm.get('projectId');
+
+    const selectedStatus = this.statuses.find(s => s.id === status?.value);
+    const isEntregada = selectedStatus && selectedStatus.name.toLowerCase() === 'entregada';
+    const missingProject = isEntregada && !project?.value;
+
+    const isInvalid = !!(num?.invalid || client?.invalid || serviceType?.invalid || status?.invalid || priority?.invalid || missingProject);
+    const isTouched = !!(num?.touched || client?.touched || serviceType?.touched || status?.touched || priority?.touched || project?.touched || this.orderForm.touched);
+    return isInvalid && isTouched;
+  }
+
   isFechasInvalid(): boolean {
     const req = this.orderForm.get('requestDate');
     const start = this.orderForm.get('estimatedStartDate');
     const end = this.orderForm.get('estimatedEndDate');
-    const isInvalid = !!(req?.invalid || start?.invalid || end?.invalid);
-    const isTouched = !!(req?.touched || start?.touched || end?.touched || this.orderForm.touched);
+    const actualStart = this.orderForm.get('actualStartDate');
+    const actualEnd = this.orderForm.get('actualEndDate');
+
+    const statusId = this.orderForm.get('statusId')?.value;
+    const selectedStatus = this.statuses.find(s => s.id === statusId);
+    const isEntregada = selectedStatus && selectedStatus.name.toLowerCase() === 'entregada';
+
+    let dateError = false;
+    if (start?.value && end?.value && this.getDayTimestamp(end.value) < this.getDayTimestamp(start.value)) {
+      dateError = true;
+    }
+    if (actualStart?.value && actualEnd?.value && this.getDayTimestamp(actualEnd.value) < this.getDayTimestamp(actualStart.value)) {
+      dateError = true;
+    }
+    if (actualEnd?.value && !isEntregada) {
+      dateError = true;
+    }
+    if (isEntregada && (!req?.value || !start?.value || !end?.value || !actualStart?.value || !actualEnd?.value)) {
+      dateError = true;
+    }
+
+    const isInvalid = !!(req?.invalid || start?.invalid || end?.invalid || dateError);
+    const isTouched = !!(req?.touched || start?.touched || end?.touched || actualStart?.touched || actualEnd?.touched || this.orderForm.touched);
     return isInvalid && isTouched;
   }
 
@@ -345,20 +389,51 @@ export class ServiceOrderFormComponent implements OnInit {
     const req = this.orderForm.get('requestDate');
     const start = this.orderForm.get('estimatedStartDate');
     const end = this.orderForm.get('estimatedEndDate');
+    const actualStart = this.orderForm.get('actualStartDate');
+    const actualEnd = this.orderForm.get('actualEndDate');
+
+    const statusId = this.orderForm.get('statusId')?.value;
+    const selectedStatus = this.statuses.find(s => s.id === statusId);
+    const isEntregada = selectedStatus && selectedStatus.name.toLowerCase() === 'entregada';
+
+    if (start?.value && end?.value && this.getDayTimestamp(end.value) < this.getDayTimestamp(start.value)) return false;
+    if (actualStart?.value && actualEnd?.value && this.getDayTimestamp(actualEnd.value) < this.getDayTimestamp(actualStart.value)) return false;
+    if (actualEnd?.value && !isEntregada) return false;
+
+    if (isEntregada) {
+      return !!(req?.value && start?.value && end?.value && actualStart?.value && actualEnd?.value);
+    }
+
     return !!(req?.valid && start?.valid && end?.valid);
   }
 
   isFinanzasInvalid(): boolean {
     const budget = this.orderForm.get('budgetedAmount');
     const currency = this.orderForm.get('currencyId');
-    const isInvalid = !!(budget?.invalid || currency?.invalid || (this.distributions.length > 0 && this.totalDistributionPercentage !== 100));
-    const isTouched = !!(budget?.touched || currency?.touched || this.orderForm.touched);
+    const total = this.orderForm.get('totalAmount');
+    const statusId = this.orderForm.get('statusId')?.value;
+
+    const selectedStatus = this.statuses.find(s => s.id === statusId);
+    const isEntregada = selectedStatus && selectedStatus.name.toLowerCase() === 'entregada';
+    const missingAmounts = isEntregada && ((Number(budget?.value) || 0) <= 0 || (Number(total?.value) || 0) <= 0);
+
+    const isInvalid = !!(budget?.invalid || currency?.invalid || missingAmounts || (this.distributions.length > 0 && this.totalDistributionPercentage !== 100));
+    const isTouched = !!(budget?.touched || currency?.touched || total?.touched || this.orderForm.touched);
     return isInvalid && isTouched;
   }
 
   isFinanzasComplete(): boolean {
     const budget = this.orderForm.get('budgetedAmount');
     const currency = this.orderForm.get('currencyId');
+    const total = this.orderForm.get('totalAmount');
+    const statusId = this.orderForm.get('statusId')?.value;
+
+    const selectedStatus = this.statuses.find(s => s.id === statusId);
+    const isEntregada = selectedStatus && selectedStatus.name.toLowerCase() === 'entregada';
+    if (isEntregada && ((Number(budget?.value) || 0) <= 0 || (Number(total?.value) || 0) <= 0)) {
+      return false;
+    }
+
     const validFields = !!(budget?.valid && currency?.valid);
     const validDist = this.distributions.length === 0 || this.totalDistributionPercentage === 100;
     return validFields && validDist;
@@ -538,12 +613,11 @@ export class ServiceOrderFormComponent implements OnInit {
       formValue.projectId = null;
     }
 
+    const selectedStatus = this.statuses.find(s => s.id === formValue.statusId);
+    const isEntregada = selectedStatus && selectedStatus.name.toLowerCase() === 'entregada';
+
     // Validación de Actividades Operativas
     if (formValue.activities && formValue.activities.length > 0) {
-      const statusId = formValue.statusId;
-      const selectedStatus = this.statuses.find(s => s.id === statusId);
-      const isEntregada = selectedStatus && selectedStatus.name.toLowerCase() === 'entregada';
-
       for (const a of formValue.activities) {
         const prog = Number(a.progressPercentage) || 0;
         if ((a.status === 'Pendiente' || a.status === 'Cancelado') && prog !== 0) {
@@ -608,6 +682,49 @@ export class ServiceOrderFormComponent implements OnInit {
       const totalPercentage = formValue.distributions.reduce((acc: number, curr: any) => acc + (Number(curr.percentage) || 0), 0);
       if (totalPercentage !== 100) {
         this.snackBar.open('La suma de los porcentajes de distribución debe ser exactamente 100.', 'Cerrar', { duration: 4000, panelClass: ['snackbar-warning'] });
+        return;
+      }
+    }
+
+    // Validaciones de fechas y reglas de negocio
+    if (formValue.estimatedStartDate && formValue.estimatedEndDate) {
+      if (this.getDayTimestamp(formValue.estimatedEndDate) < this.getDayTimestamp(formValue.estimatedStartDate)) {
+        this.snackBar.open('La fecha de fin presupuestado no puede ser anterior a la de inicio presupuestado.', 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
+        return;
+      }
+    }
+
+    if (formValue.actualStartDate && formValue.actualEndDate) {
+      if (this.getDayTimestamp(formValue.actualEndDate) < this.getDayTimestamp(formValue.actualStartDate)) {
+        this.snackBar.open('La fecha de fin real no puede ser anterior a la de inicio real.', 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
+        return;
+      }
+    }
+
+    if (formValue.actualEndDate && !isEntregada) {
+      this.snackBar.open('Si se coloca una fecha de entrega / fin real, el estado de la orden debe ser "Entregada".', 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
+      return;
+    }
+
+    if (isEntregada) {
+      if (!formValue.projectId) {
+        this.snackBar.open('Para guardar la orden en estado Entregada, debe asignar un proyecto.', 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
+        return;
+      }
+      if (!formValue.clientId) {
+        this.snackBar.open('Para guardar la orden en estado Entregada, debe asignar un cliente.', 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
+        return;
+      }
+      if (!formValue.requestDate || !formValue.estimatedStartDate || !formValue.estimatedEndDate || !formValue.actualStartDate || !formValue.actualEndDate) {
+        this.snackBar.open('Para guardar la orden en estado Entregada, deben completarse todas las fechas (Fecha de Solicitud, Inicio/Fin Presupuestado e Inicio/Fin Real).', 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
+        return;
+      }
+      if (formValue.budgetedAmount <= 0 || formValue.totalAmount <= 0) {
+        this.snackBar.open('Para guardar la orden en estado Entregada, los montos presupuestado y total deben ser mayores a 0.', 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
+        return;
+      }
+      if (!formValue.responsibleIds || formValue.responsibleIds.length === 0) {
+        this.snackBar.open('Para guardar la orden en estado Entregada, debe asignar al menos un responsable al equipo de trabajo.', 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
         return;
       }
     }

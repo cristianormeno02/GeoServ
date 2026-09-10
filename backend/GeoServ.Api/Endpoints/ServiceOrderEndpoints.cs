@@ -17,25 +17,94 @@ public static class ServiceOrderEndpoints
         // 1. Obtener todas las órdenes de servicio
         group.MapGet("/", async (GeoServDbContext context) =>
         {
-            var orders = await context.ServiceOrders
+            var rawOrders = await context.ServiceOrders
                 .Include(o => o.Client)
                 .Include(o => o.Project)
                 .Include(o => o.Status)
-                .OrderByDescending(o => o.CreatedAt)
+                .Include(o => o.Responsibles)
+                .OrderBy(o => o.OrderNumber)
                 .Select(o => new
                 {
                     o.Id,
                     o.OrderNumber,
-                    ClientName = o.Client.CompanyName,
+                    o.ClientId,
+                    ClientName = o.Client != null ? o.Client.CompanyName : "",
+                    o.ProjectId,
                     ProjectName = o.Project != null ? o.Project.Name : null,
-                    StatusName = o.Status.Name,
+                    o.StatusId,
+                    StatusName = o.Status != null ? o.Status.Name : "",
                     o.Priority,
                     o.CreatedAt,
+                    o.RequestDate,
+                    o.EstimatedStartDate,
                     o.EstimatedEndDate,
+                    o.ActualStartDate,
+                    o.ActualEndDate,
                     o.BudgetedAmount,
-                    o.CollectedAmount
+                    o.TotalAmount,
+                    o.CollectedAmount,
+                    ResponsiblesCount = o.Responsibles.Count
                 })
                 .ToListAsync();
+
+            var orders = rawOrders.Select(o =>
+            {
+                var issues = new List<string>();
+
+                if (o.EstimatedStartDate.HasValue && o.EstimatedEndDate.HasValue && o.EstimatedEndDate.Value.Date < o.EstimatedStartDate.Value.Date)
+                {
+                    issues.Add("Fin presupuestado anterior a inicio presupuestado.");
+                }
+
+                if (o.ActualStartDate.HasValue && o.ActualEndDate.HasValue && o.ActualEndDate.Value.Date < o.ActualStartDate.Value.Date)
+                {
+                    issues.Add("Fin real anterior a inicio real.");
+                }
+
+                var isEntregada = string.Equals(o.StatusName, "Entregada", StringComparison.OrdinalIgnoreCase);
+
+                if (o.ActualEndDate.HasValue && !isEntregada)
+                {
+                    issues.Add("Posee fecha de entrega pero el estado no es 'Entregada'.");
+                }
+
+                if (isEntregada)
+                {
+                    if (!o.ProjectId.HasValue || o.ProjectId == Guid.Empty)
+                        issues.Add("Orden en estado Entregada sin proyecto asignado.");
+                    if (o.ClientId == Guid.Empty)
+                        issues.Add("Orden en estado Entregada sin cliente asignado.");
+                    if (!o.RequestDate.HasValue || !o.EstimatedStartDate.HasValue || !o.EstimatedEndDate.HasValue || !o.ActualStartDate.HasValue || !o.ActualEndDate.HasValue)
+                        issues.Add("Orden en estado Entregada con fechas obligatorias incompletas.");
+                    if (o.BudgetedAmount <= 0 || o.TotalAmount <= 0)
+                        issues.Add("Orden en estado Entregada sin montos presupuestado/total.");
+                    if (o.ResponsiblesCount == 0)
+                        issues.Add("Orden en estado Entregada sin equipo de trabajo.");
+                }
+
+                return new
+                {
+                    o.Id,
+                    o.OrderNumber,
+                    o.ClientId,
+                    o.ClientName,
+                    o.ProjectId,
+                    o.ProjectName,
+                    o.StatusId,
+                    o.StatusName,
+                    o.Priority,
+                    o.CreatedAt,
+                    o.EstimatedStartDate,
+                    o.EstimatedEndDate,
+                    o.ActualStartDate,
+                    o.ActualEndDate,
+                    o.BudgetedAmount,
+                    o.TotalAmount,
+                    o.CollectedAmount,
+                    HasInconsistencies = issues.Count > 0,
+                    InconsistencyReasons = issues
+                };
+            }).ToList();
 
             return Results.Ok(orders);
         })
@@ -219,6 +288,29 @@ public static class ServiceOrderEndpoints
                         return Results.BadRequest(new { message = "No se puede repetir el mismo concepto de distribución en una orden." });
                 }
 
+                // Validar existencia de estado y reglas de negocio
+                var status = await context.ServiceOrderStatuses.FirstOrDefaultAsync(s => s.Id == request.StatusId);
+                if (status == null)
+                    return Results.BadRequest(new { message = "El estado seleccionado no es válido." });
+
+                var validationError = ValidateServiceOrderRules(
+                    status.Name,
+                    request.ClientId,
+                    request.ProjectId,
+                    request.RequestDate,
+                    request.EstimatedStartDate,
+                    request.EstimatedEndDate,
+                    request.ActualStartDate,
+                    request.ActualEndDate,
+                    request.BudgetedAmount,
+                    request.TotalAmount,
+                    request.ResponsibleIds
+                );
+                if (validationError != null)
+                {
+                    return Results.BadRequest(new { message = validationError });
+                }
+
                 var order = new ServiceOrder
                 {
                     Id = Guid.NewGuid(),
@@ -240,7 +332,10 @@ public static class ServiceOrderEndpoints
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow,
                     EstimatedStartDate = request.EstimatedStartDate,
-                    EstimatedEndDate = request.EstimatedEndDate
+                    EstimatedEndDate = request.EstimatedEndDate,
+                    ActualStartDate = request.ActualStartDate,
+                    ActualEndDate = request.ActualEndDate,
+                    CollectionDate = request.CollectionDate
                 };
 
                 // Añadir distribuciones
@@ -431,6 +526,29 @@ public static class ServiceOrderEndpoints
                     var duplicates = request.Distributions.GroupBy(d => d.DistributionConceptId).Any(g => g.Count() > 1);
                     if (duplicates)
                         return Results.BadRequest(new { message = "No se puede repetir el mismo concepto de distribución." });
+                }
+
+                // Validar existencia de estado y reglas de negocio
+                var status = await context.ServiceOrderStatuses.FirstOrDefaultAsync(s => s.Id == request.StatusId);
+                if (status == null)
+                    return Results.BadRequest(new { message = "El estado seleccionado no es válido." });
+
+                var validationError = ValidateServiceOrderRules(
+                    status.Name,
+                    request.ClientId,
+                    request.ProjectId,
+                    request.RequestDate,
+                    request.EstimatedStartDate,
+                    request.EstimatedEndDate,
+                    request.ActualStartDate,
+                    request.ActualEndDate,
+                    request.BudgetedAmount,
+                    request.TotalAmount,
+                    request.ResponsibleIds
+                );
+                if (validationError != null)
+                {
+                    return Results.BadRequest(new { message = validationError });
                 }
 
                 // Actualizar campos básicos
@@ -631,6 +749,67 @@ public static class ServiceOrderEndpoints
         .WithName("DeleteServiceOrderObservation")
         .WithOpenApi();
     }
+
+    private static string? ValidateServiceOrderRules(
+        string? statusName,
+        Guid clientId,
+        Guid? projectId,
+        DateTime? requestDate,
+        DateTime? estimatedStartDate,
+        DateTime? estimatedEndDate,
+        DateTime? actualStartDate,
+        DateTime? actualEndDate,
+        decimal budgetedAmount,
+        decimal totalAmount,
+        List<Guid>? responsibleIds)
+    {
+        var isEntregada = string.Equals(statusName, "Entregada", StringComparison.OrdinalIgnoreCase);
+
+        // a- Si se coloca una fecha de entrega, el estado debe "entregada"
+        if (actualEndDate.HasValue && !isEntregada)
+        {
+            return "Si se define una fecha de entrega / fin real, el estado de la orden debe ser 'Entregada'.";
+        }
+
+        // b- fin presupuestado, no puede ser anterior a inicio presupuestado.
+        if (estimatedStartDate.HasValue && estimatedEndDate.HasValue && estimatedEndDate.Value.Date < estimatedStartDate.Value.Date)
+        {
+            return "La fecha de fin presupuestado no puede ser anterior a la de inicio presupuestado.";
+        }
+
+        // c- fin real (cuando se carga), no debe ser anterior a inicio real
+        if (actualStartDate.HasValue && actualEndDate.HasValue && actualEndDate.Value.Date < actualStartDate.Value.Date)
+        {
+            return "La fecha de fin real no puede ser anterior a la de inicio real.";
+        }
+
+        // d- Si una orden se cambia el estado a entregada, debe validar que tenga cargado el proyecto, cliente, todas las fechas excepto fecha de cobro, todos los montos excepto monto cobrado y descuento, equipo de trabajo.
+        if (isEntregada)
+        {
+            if (!projectId.HasValue || projectId == Guid.Empty)
+            {
+                return "Para guardar la orden en estado Entregada, debe asignar un proyecto.";
+            }
+            if (clientId == Guid.Empty)
+            {
+                return "Para guardar la orden en estado Entregada, debe asignar un cliente.";
+            }
+            if (!requestDate.HasValue || !estimatedStartDate.HasValue || !estimatedEndDate.HasValue || !actualStartDate.HasValue || !actualEndDate.HasValue)
+            {
+                return "Para guardar la orden en estado Entregada, deben cargarse todas las fechas (Fecha de Solicitud, Inicio Presupuestado, Fin Presupuestado, Inicio Real y Fin Real).";
+            }
+            if (budgetedAmount <= 0 || totalAmount <= 0)
+            {
+                return "Para guardar la orden en estado Entregada, los montos presupuestado y total deben ser mayores a 0.";
+            }
+            if (responsibleIds == null || !responsibleIds.Any())
+            {
+                return "Para guardar la orden en estado Entregada, debe asignar al menos un responsable al equipo de trabajo.";
+            }
+        }
+
+        return null;
+    }
 }
 
 // DTOs
@@ -653,9 +832,12 @@ public record CreateServiceOrderRequest(
     DateTime? RequestDate,
     DateTime? EstimatedStartDate,
     DateTime? EstimatedEndDate,
-    List<DistributionDto>? Distributions,
-    List<ActivityDto>? Activities,
-    List<Guid>? ResponsibleIds
+    DateTime? ActualStartDate = null,
+    DateTime? ActualEndDate = null,
+    DateTime? CollectionDate = null,
+    List<DistributionDto>? Distributions = null,
+    List<ActivityDto>? Activities = null,
+    List<Guid>? ResponsibleIds = null
 );
 
 public record UpdateServiceOrderRequest(
