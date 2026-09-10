@@ -105,6 +105,7 @@ export class ServiceOrderFormComponent implements OnInit {
   isEditMode = false;
   orderId: string | null = null;
   isSaving = false;
+  maxDate = new Date();
 
   get selectedClientName(): string {
     const clientId = this.orderForm?.get('clientId')?.value;
@@ -368,7 +369,7 @@ export class ServiceOrderFormComponent implements OnInit {
     if (actualStart?.value && actualEnd?.value && this.getDayTimestamp(actualEnd.value) < this.getDayTimestamp(actualStart.value)) {
       dateError = true;
     }
-    if (actualEnd?.value && !isEntregada) {
+    if (actualEnd?.value && this.getDayTimestamp(actualEnd.value) > this.getDayTimestamp(new Date())) {
       dateError = true;
     }
     if (isEntregada && (!req?.value || !start?.value || !end?.value || !actualStart?.value || !actualEnd?.value)) {
@@ -393,7 +394,7 @@ export class ServiceOrderFormComponent implements OnInit {
 
     if (start?.value && end?.value && this.getDayTimestamp(end.value) < this.getDayTimestamp(start.value)) return false;
     if (actualStart?.value && actualEnd?.value && this.getDayTimestamp(actualEnd.value) < this.getDayTimestamp(actualStart.value)) return false;
-    if (actualEnd?.value && !isEntregada) return false;
+    if (actualEnd?.value && this.getDayTimestamp(actualEnd.value) > this.getDayTimestamp(new Date())) return false;
 
     if (isEntregada) {
       return !!(req?.value && start?.value && end?.value && actualStart?.value && actualEnd?.value);
@@ -611,6 +612,12 @@ export class ServiceOrderFormComponent implements OnInit {
     const selectedStatus = this.statuses.find(s => s.id === formValue.statusId);
     const isEntregada = selectedStatus && selectedStatus.name.toLowerCase() === 'entregada';
 
+    // Regla: Si la orden no está entregada, eliminar fecha fin real al guardar
+    if (!isEntregada) {
+      formValue.actualEndDate = null;
+      this.orderForm.get('actualEndDate')?.setValue(null, { emitEvent: false });
+    }
+
     // Validación de Actividades Operativas
     if (formValue.activities && formValue.activities.length > 0) {
       for (const a of formValue.activities) {
@@ -696,8 +703,9 @@ export class ServiceOrderFormComponent implements OnInit {
       }
     }
 
-    if (formValue.actualEndDate && !isEntregada) {
-      this.snackBar.open('Si se coloca una fecha de entrega / fin real, el estado de la orden debe ser "Entregada".', 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
+    // Si se carga fecha fin real, no puede ser posterior a la fecha actual
+    if (formValue.actualEndDate && this.getDayTimestamp(formValue.actualEndDate) > this.getDayTimestamp(new Date())) {
+      this.snackBar.open('La fecha de fin real no puede ser posterior a la fecha actual.', 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
       return;
     }
 

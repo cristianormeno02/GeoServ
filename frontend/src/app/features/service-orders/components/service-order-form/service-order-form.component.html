@@ -141,7 +141,7 @@
 
           <mat-form-field appearance="outline">
             <mat-label>Fin Real</mat-label>
-            <input matInput [matDatepicker]="picker4" formControlName="actualEndDate">
+            <input matInput [matDatepicker]="picker4" [max]="maxDate" formControlName="actualEndDate">
             <mat-datepicker-toggle matSuffix [for]="picker4"></mat-datepicker-toggle>
             <mat-datepicker #picker4></mat-datepicker>
           </mat-form-field>

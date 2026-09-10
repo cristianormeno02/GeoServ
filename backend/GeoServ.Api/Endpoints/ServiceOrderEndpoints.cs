@@ -61,6 +61,11 @@ public static class ServiceOrderEndpoints
                     issues.Add("Fin real anterior a inicio real.");
                 }
 
+                if (o.ActualEndDate.HasValue && o.ActualEndDate.Value.Date > DateTime.UtcNow.Date)
+                {
+                    issues.Add("Fin real posterior a la fecha actual.");
+                }
+
                 var isEntregada = string.Equals(o.StatusName, "Entregada", StringComparison.OrdinalIgnoreCase);
 
                 if (o.ActualEndDate.HasValue && !isEntregada)
@@ -293,6 +298,9 @@ public static class ServiceOrderEndpoints
                 if (status == null)
                     return Results.BadRequest(new { message = "El estado seleccionado no es válido." });
 
+                var isEntregada = string.Equals(status.Name, "Entregada", StringComparison.OrdinalIgnoreCase);
+                DateTime? finalActualEndDate = isEntregada ? request.ActualEndDate : null;
+
                 var validationError = ValidateServiceOrderRules(
                     status.Name,
                     request.ClientId,
@@ -301,7 +309,7 @@ public static class ServiceOrderEndpoints
                     request.EstimatedStartDate,
                     request.EstimatedEndDate,
                     request.ActualStartDate,
-                    request.ActualEndDate,
+                    finalActualEndDate,
                     request.BudgetedAmount,
                     request.TotalAmount,
                     request.ResponsibleIds
@@ -334,7 +342,7 @@ public static class ServiceOrderEndpoints
                     EstimatedStartDate = request.EstimatedStartDate,
                     EstimatedEndDate = request.EstimatedEndDate,
                     ActualStartDate = request.ActualStartDate,
-                    ActualEndDate = request.ActualEndDate,
+                    ActualEndDate = finalActualEndDate,
                     CollectionDate = request.CollectionDate
                 };
 
@@ -533,6 +541,9 @@ public static class ServiceOrderEndpoints
                 if (status == null)
                     return Results.BadRequest(new { message = "El estado seleccionado no es válido." });
 
+                var isEntregada = string.Equals(status.Name, "Entregada", StringComparison.OrdinalIgnoreCase);
+                DateTime? finalActualEndDate = isEntregada ? request.ActualEndDate : null;
+
                 var validationError = ValidateServiceOrderRules(
                     status.Name,
                     request.ClientId,
@@ -541,7 +552,7 @@ public static class ServiceOrderEndpoints
                     request.EstimatedStartDate,
                     request.EstimatedEndDate,
                     request.ActualStartDate,
-                    request.ActualEndDate,
+                    finalActualEndDate,
                     request.BudgetedAmount,
                     request.TotalAmount,
                     request.ResponsibleIds
@@ -573,7 +584,7 @@ public static class ServiceOrderEndpoints
                 order.EstimatedStartDate = request.EstimatedStartDate;
                 order.EstimatedEndDate = request.EstimatedEndDate;
                 order.ActualStartDate = request.ActualStartDate;
-                order.ActualEndDate = request.ActualEndDate;
+                order.ActualEndDate = finalActualEndDate;
                 order.CollectionDate = request.CollectionDate;
 
                 // Sincronizar Distribuciones: DELETE directo con SQL para evitar doble-tracking de EF Core
@@ -781,6 +792,12 @@ public static class ServiceOrderEndpoints
         if (actualStartDate.HasValue && actualEndDate.HasValue && actualEndDate.Value.Date < actualStartDate.Value.Date)
         {
             return "La fecha de fin real no puede ser anterior a la de inicio real.";
+        }
+
+        // fin real (cuando se carga), no debe ser posterior a la fecha actual
+        if (actualEndDate.HasValue && actualEndDate.Value.Date > DateTime.UtcNow.Date)
+        {
+            return "La fecha de fin real no puede ser posterior a la fecha actual.";
         }
 
         // d- Si una orden se cambia el estado a entregada, debe validar que tenga cargado el proyecto, cliente, todas las fechas excepto fecha de cobro, todos los montos excepto monto cobrado y descuento, equipo de trabajo.
