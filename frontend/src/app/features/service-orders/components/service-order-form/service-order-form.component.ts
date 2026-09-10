@@ -235,15 +235,10 @@ export class ServiceOrderFormComponent implements OnInit {
     this.orderForm.get('budgetedAmount')?.valueChanges.subscribe(() => this.calculateTotal());
     this.orderForm.get('discount')?.valueChanges.subscribe(() => this.calculateTotal());
 
-    // Auto-copy fechas presupuestadas → reales
+    // Auto-copy fecha de inicio presupuestada → real
     this.orderForm.get('estimatedStartDate')?.valueChanges.subscribe(val => {
       if (val) {
         this.orderForm.get('actualStartDate')?.setValue(val, { emitEvent: false });
-      }
-    });
-    this.orderForm.get('estimatedEndDate')?.valueChanges.subscribe(val => {
-      if (val) {
-        this.orderForm.get('actualEndDate')?.setValue(val, { emitEvent: false });
       }
     });
   }
