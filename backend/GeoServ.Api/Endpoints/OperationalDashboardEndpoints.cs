@@ -9,6 +9,42 @@ using System.Linq;
 
 namespace GeoServ.Api.Endpoints;
 
+public class UpcomingDeliveryBucketDto
+{
+    public string Range { get; set; } = string.Empty;
+    public string Key { get; set; } = string.Empty;
+    public int Count { get; set; }
+    public decimal TotalBudgetedAmount { get; set; }
+    public string Color { get; set; } = string.Empty;
+}
+
+public class UpcomingDeliveriesResult
+{
+    public List<UpcomingDeliveryBucketDto> Buckets { get; set; } = new();
+    public int TotalCount { get; set; }
+    public decimal TotalBudgetedAmount { get; set; }
+}
+
+public class UpcomingDeliveryDetailItemDto
+{
+    public Guid Id { get; set; }
+    public string OrderNumber { get; set; } = string.Empty;
+    public string ClientName { get; set; } = string.Empty;
+    public string ServiceTypeName { get; set; } = string.Empty;
+    public string StatusName { get; set; } = string.Empty;
+    public DateTime? EstimatedEndDate { get; set; }
+    public int DaysRemaining { get; set; }
+    public decimal TotalAmount { get; set; }
+}
+
+public class UpcomingDeliveriesDetailsResult
+{
+    public List<UpcomingDeliveryDetailItemDto> Items { get; set; } = new();
+    public int TotalCount { get; set; }
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+}
+
 public static class OperationalDashboardEndpoints
 {
     public static IQueryable<ServiceOrder> GetUncollectedDeliveredOrdersQuery(GeoServDbContext context)
@@ -17,6 +53,124 @@ public static class OperationalDashboardEndpoints
             .AsNoTracking()
             .Include(o => o.Status)
             .Where(o => o.Status != null && o.Status.Name == "Entregada" && o.TotalAmount > o.CollectedAmount);
+    }
+
+    public static IQueryable<ServiceOrder> GetUpcomingDeliveriesQuery(GeoServDbContext context)
+    {
+        return context.ServiceOrders
+            .AsNoTracking()
+            .Include(o => o.Status)
+            .Where(o => o.Status != null 
+                     && o.Status.Name != "Entregada" 
+                     && o.Status.Name != "Cobrada" 
+                     && o.Status.Name != "Cancelada" 
+                     && o.EstimatedEndDate.HasValue);
+    }
+
+    public static async Task<UpcomingDeliveriesResult> GetUpcomingDeliveriesBuckets(GeoServDbContext context, DateTime? referenceDate = null)
+    {
+        var today = (referenceDate ?? DateTime.UtcNow).Date;
+        var orders = await GetUpcomingDeliveriesQuery(context).ToListAsync();
+
+        var b7 = orders.Where(o => (o.EstimatedEndDate!.Value.Date - today).TotalDays <= 7).ToList();
+        var b14 = orders.Where(o => (o.EstimatedEndDate!.Value.Date - today).TotalDays > 7 && (o.EstimatedEndDate!.Value.Date - today).TotalDays <= 14).ToList();
+        var b30 = orders.Where(o => (o.EstimatedEndDate!.Value.Date - today).TotalDays > 14 && (o.EstimatedEndDate!.Value.Date - today).TotalDays <= 30).ToList();
+        var bOver30 = orders.Where(o => (o.EstimatedEndDate!.Value.Date - today).TotalDays > 30).ToList();
+
+        var buckets = new List<UpcomingDeliveryBucketDto>
+        {
+            new UpcomingDeliveryBucketDto
+            {
+                Range = "≤ 7 días",
+                Key = "0_7",
+                Count = b7.Count,
+                TotalBudgetedAmount = b7.Sum(o => o.TotalAmount),
+                Color = "#ef4444"
+            },
+            new UpcomingDeliveryBucketDto
+            {
+                Range = "8-14 días",
+                Key = "8_14",
+                Count = b14.Count,
+                TotalBudgetedAmount = b14.Sum(o => o.TotalAmount),
+                Color = "#f59e0b"
+            },
+            new UpcomingDeliveryBucketDto
+            {
+                Range = "15-30 días",
+                Key = "15_30",
+                Count = b30.Count,
+                TotalBudgetedAmount = b30.Sum(o => o.TotalAmount),
+                Color = "#10b981"
+            },
+            new UpcomingDeliveryBucketDto
+            {
+                Range = "> 30 días",
+                Key = "over_30",
+                Count = bOver30.Count,
+                TotalBudgetedAmount = bOver30.Sum(o => o.TotalAmount),
+                Color = "#64748b"
+            }
+        };
+
+        return new UpcomingDeliveriesResult
+        {
+            Buckets = buckets,
+            TotalCount = orders.Count,
+            TotalBudgetedAmount = orders.Sum(o => o.TotalAmount)
+        };
+    }
+
+    public static async Task<UpcomingDeliveriesDetailsResult> GetUpcomingDeliveriesDetails(
+        GeoServDbContext context, 
+        string? rangeKey, 
+        int page = 1, 
+        int pageSize = 10, 
+        DateTime? referenceDate = null)
+    {
+        var today = (referenceDate ?? DateTime.UtcNow).Date;
+        var actualPage = page <= 0 ? 1 : page;
+        var actualPageSize = pageSize <= 0 ? 10 : pageSize;
+
+        var all = await GetUpcomingDeliveriesQuery(context)
+            .Include(o => o.Client)
+            .Include(o => o.ServiceType)
+            .ToListAsync();
+
+        IEnumerable<ServiceOrder> filtered = rangeKey switch
+        {
+            "0_7" or "7" or "≤ 7 días" => all.Where(o => (o.EstimatedEndDate!.Value.Date - today).TotalDays <= 7),
+            "8_14" or "14" or "8-14 días" => all.Where(o => (o.EstimatedEndDate!.Value.Date - today).TotalDays > 7 && (o.EstimatedEndDate!.Value.Date - today).TotalDays <= 14),
+            "15_30" or "30" or "15-30 días" => all.Where(o => (o.EstimatedEndDate!.Value.Date - today).TotalDays > 14 && (o.EstimatedEndDate!.Value.Date - today).TotalDays <= 30),
+            "over_30" or ">30" or "> 30 días" => all.Where(o => (o.EstimatedEndDate!.Value.Date - today).TotalDays > 30),
+            _ => all
+        };
+
+        var ordered = filtered.OrderBy(o => o.EstimatedEndDate!.Value);
+        var totalCount = ordered.Count();
+        var items = ordered
+            .Skip((actualPage - 1) * actualPageSize)
+            .Take(actualPageSize)
+            .Select(o => new UpcomingDeliveryDetailItemDto
+            {
+                Id = o.Id,
+                OrderNumber = o.OrderNumber,
+                ClientName = o.Client != null ? o.Client.CompanyName : "Sin cliente",
+                ServiceTypeName = o.ServiceType != null ? o.ServiceType.Name : "Sin tipo",
+                StatusName = o.Status != null ? o.Status.Name : "Pendiente",
+                EstimatedEndDate = o.EstimatedEndDate,
+                DaysRemaining = (int)(o.EstimatedEndDate!.Value.Date - today).TotalDays,
+                TotalAmount = o.TotalAmount
+            })
+            .ToList();
+
+        return new UpcomingDeliveriesDetailsResult
+        {
+            Items = items,
+            TotalCount = totalCount,
+            Page = actualPage,
+            PageSize = actualPageSize
+        };
     }
 
     public static void MapOperationalDashboardEndpoints(this IEndpointRouteBuilder app)
@@ -387,7 +541,20 @@ public static class OperationalDashboardEndpoints
             return Results.Ok(items);
         });
 
-        // 10. Detalle de KPIs
+        // 10. Próximas Entregas (Aging Preventivo)
+        group.MapGet("/upcoming-deliveries", async (GeoServDbContext context) =>
+        {
+            var result = await GetUpcomingDeliveriesBuckets(context);
+            return Results.Ok(result);
+        });
+
+        group.MapGet("/upcoming-deliveries/details", async (string? rangeKey, int? page, int? pageSize, GeoServDbContext context) =>
+        {
+            var result = await GetUpcomingDeliveriesDetails(context, rangeKey, page ?? 1, pageSize ?? 10);
+            return Results.Ok(result);
+        });
+
+        // 11. Detalle de KPIs
         group.MapGet("/kpis/{kpi_id}/details", async (string kpi_id, int? page, int? pageSize, GeoServDbContext context) =>
         {
             var now = DateTime.UtcNow;

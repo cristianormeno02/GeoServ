@@ -1,4 +1,4 @@
-﻿export interface KpiMetric {
+export interface KpiMetric {
   value: number;
   trend: number[];
 }
@@ -110,3 +110,36 @@ export interface UpcomingFixedCost {
   dueDate: string;
   daysRemaining: number;
 }
+
+export interface UpcomingDeliveryBucket {
+  range: string;
+  key: string;
+  count: number;
+  totalBudgetedAmount: number;
+  color: string;
+}
+
+export interface UpcomingDeliveriesResponse {
+  buckets: UpcomingDeliveryBucket[];
+  totalCount: number;
+  totalBudgetedAmount: number;
+}
+
+export interface UpcomingDeliveryOrder {
+  id: string;
+  orderNumber: string;
+  clientName: string;
+  serviceTypeName: string;
+  statusName: string;
+  estimatedEndDate: string;
+  daysRemaining: number;
+  totalAmount: number;
+}
+
+export interface UpcomingDeliveriesDetailsResponse {
+  items: UpcomingDeliveryOrder[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}
+

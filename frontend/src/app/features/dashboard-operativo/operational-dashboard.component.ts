@@ -16,6 +16,7 @@ import { DonutChartComponent, DonutSlice } from '../../shared/components/charts/
 import { AgingBarChartComponent, AgingBucket } from '../../shared/components/charts/aging-bar-chart.component';
 import { HorizontalBarChartComponent, HorizontalBarItem } from '../../shared/components/charts/horizontal-bar-chart.component';
 import { KpiDetailModal } from '../../shared/components/kpi-detail-modal/kpi-detail-modal';
+import { UpcomingDeliveriesModalComponent } from './components/upcoming-deliveries-modal.component';
 
 import { OperationalDashboardService } from './services/operational-dashboard.service';
 import {
@@ -72,6 +73,8 @@ export class OperationalDashboardComponent implements OnInit {
   workloadItems: HorizontalBarItem[] = [];
   agingBuckets: AgingBucket[] = [];
   totalUncollectedAmountText: string = '';
+  upcomingDeliveryBuckets: AgingBucket[] = [];
+  totalUpcomingDeliveriesText: string = '';
 
   // Tables
   stagnantOrdersData: StagnantOrdersResponse | null = null;
@@ -163,6 +166,7 @@ export class OperationalDashboardComponent implements OnInit {
     });
 
     this.loadAgingAndUncollected();
+    this.loadUpcomingDeliveries();
     this.loadStagnantOrders();
 
     this.dashboardService.getInventoryAlerts().subscribe({
@@ -283,6 +287,36 @@ export class OperationalDashboardComponent implements OnInit {
     this.uncollectedPage = event.pageIndex + 1;
     this.uncollectedPageSize = event.pageSize;
     this.loadAgingAndUncollected();
+  }
+
+  loadUpcomingDeliveries(): void {
+    this.dashboardService.getUpcomingDeliveries().subscribe({
+      next: res => {
+        this.upcomingDeliveryBuckets = res.buckets.map(b => ({
+          range: b.range,
+          count: b.count,
+          color: b.color,
+          key: b.key,
+          totalPendingAmount: b.totalBudgetedAmount > 0 ? b.totalBudgetedAmount : undefined
+        }));
+        this.totalUpcomingDeliveriesText = `${res.totalCount} por entregar`;
+        this.cdr.detectChanges();
+      },
+      error: err => {
+        console.error('Error fetching upcoming deliveries', err);
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  openUpcomingDeliveriesModal(bucket: AgingBucket): void {
+    this.dialog.open(UpcomingDeliveriesModalComponent, {
+      width: '850px',
+      data: {
+        range: bucket.range,
+        rangeKey: bucket.key || '0_7'
+      }
+    });
   }
 
   formatCurrency(val: number): string {

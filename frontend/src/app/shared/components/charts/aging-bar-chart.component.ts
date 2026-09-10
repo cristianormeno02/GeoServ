@@ -1,4 +1,4 @@
-﻿import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 
@@ -7,6 +7,7 @@ export interface AgingBucket {
   count: number;
   totalPendingAmount?: number;
   color?: string;
+  key?: string;
 }
 
 @Component({
@@ -21,7 +22,12 @@ export interface AgingBucket {
       </div>
 
       <div class="aging-bars-container" *ngIf="buckets.length > 0; else emptyState">
-        <div *ngFor="let bucket of buckets; let i = index" class="aging-row">
+        <div 
+          *ngFor="let bucket of buckets; let i = index" 
+          class="aging-row"
+          [class.clickable]="isClickable && bucket.count > 0"
+          (click)="onBucketClick(bucket)"
+        >
           <div class="aging-label-col">
             <span class="range-name">{{ bucket.range }}</span>
             <span class="range-amount" *ngIf="bucket.totalPendingAmount !== undefined">
@@ -45,7 +51,7 @@ export interface AgingBucket {
 
       <ng-template #emptyState>
         <div class="empty-state">
-          <span>No hay registros pendientes de antigüedad</span>
+          <span>No hay registros pendientes</span>
         </div>
       </ng-template>
     </mat-card>
@@ -93,6 +99,16 @@ export interface AgingBucket {
       display: flex;
       align-items: center;
       gap: 12px;
+      border-radius: 6px;
+      padding: 2px 4px;
+      transition: background-color 0.2s ease, transform 0.15s ease;
+    }
+    .aging-row.clickable {
+      cursor: pointer;
+    }
+    .aging-row.clickable:hover {
+      background-color: #f8fafc;
+      transform: translateX(3px);
     }
     .aging-label-col {
       width: 100px;
@@ -143,6 +159,9 @@ export class AgingBarChartComponent {
   @Input() title: string = '';
   @Input() totalAmountText?: string;
   @Input() buckets: AgingBucket[] = [];
+  @Input() isClickable: boolean = false;
+
+  @Output() bucketClick = new EventEmitter<AgingBucket>();
 
   private riskColors = ['#10b981', '#f59e0b', '#f97316', '#ef4444'];
 
@@ -164,4 +183,11 @@ export class AgingBarChartComponent {
   formatCurrency(amount: number): string {
     return '$ ' + amount.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
   }
+
+  onBucketClick(bucket: AgingBucket) {
+    if (this.isClickable && bucket.count > 0) {
+      this.bucketClick.emit(bucket);
+    }
+  }
 }
+

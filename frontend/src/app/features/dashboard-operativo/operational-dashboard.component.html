@@ -134,6 +134,19 @@
   <div class="bottom-charts-grid">
     <div style="position: relative;">
       <app-aging-bar-chart
+        title="Próximas Entregas (Compromisos pactados)"
+        [totalAmountText]="totalUpcomingDeliveriesText"
+        [buckets]="upcomingDeliveryBuckets"
+        [isClickable]="true"
+        (bucketClick)="openUpcomingDeliveriesModal($event)"
+      ></app-aging-bar-chart>
+      <button mat-icon-button class="widget-help-btn" matTooltip="Órdenes pendientes de entrega clasificadas según la cercanía a su fecha presupuestada: ≤ 7 días (rojo/crítico), 8-14 días (amarillo), 15-30 días (verde) y > 30 días. Haz clic en una barra para ver el detalle." matTooltipPosition="above" matTooltipClass="custom-help-tooltip">
+        <mat-icon>help_outline</mat-icon>
+      </button>
+    </div>
+
+    <div style="position: relative;">
+      <app-aging-bar-chart
         title="Antigüedad de Cobranza (Entregadas sin cobrar)"
         [totalAmountText]="totalUncollectedAmountText"
         [buckets]="agingBuckets"
