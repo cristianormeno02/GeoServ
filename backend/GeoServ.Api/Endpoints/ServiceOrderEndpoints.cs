@@ -67,24 +67,26 @@ public static class ServiceOrderEndpoints
                 }
 
                 var isEntregada = string.Equals(o.StatusName, "Entregada", StringComparison.OrdinalIgnoreCase);
+                var isCobrada = string.Equals(o.StatusName, "Cobrada", StringComparison.OrdinalIgnoreCase);
 
-                if (o.ActualEndDate.HasValue && !isEntregada)
+                if (o.ActualEndDate.HasValue && !isEntregada && !isCobrada)
                 {
-                    issues.Add("Posee fecha de entrega pero el estado no es 'Entregada'.");
+                    issues.Add("Posee fecha de entrega pero el estado no es 'Entregada' ni 'Cobrada'.");
                 }
 
-                if (isEntregada)
+                if (isEntregada || isCobrada)
                 {
+                    var statusLabel = isCobrada ? "Cobrada" : "Entregada";
                     if (!o.ProjectId.HasValue || o.ProjectId == Guid.Empty)
-                        issues.Add("Orden en estado Entregada sin proyecto asignado.");
+                        issues.Add($"Orden en estado {statusLabel} sin proyecto asignado.");
                     if (o.ClientId == Guid.Empty)
-                        issues.Add("Orden en estado Entregada sin cliente asignado.");
+                        issues.Add($"Orden en estado {statusLabel} sin cliente asignado.");
                     if (!o.RequestDate.HasValue || !o.EstimatedStartDate.HasValue || !o.EstimatedEndDate.HasValue || !o.ActualStartDate.HasValue || !o.ActualEndDate.HasValue)
-                        issues.Add("Orden en estado Entregada con fechas obligatorias incompletas.");
+                        issues.Add($"Orden en estado {statusLabel} con fechas obligatorias incompletas.");
                     if (o.BudgetedAmount <= 0 || o.TotalAmount <= 0)
-                        issues.Add("Orden en estado Entregada sin montos presupuestado/total.");
+                        issues.Add($"Orden en estado {statusLabel} sin montos presupuestado/total.");
                     if (o.ResponsiblesCount == 0)
-                        issues.Add("Orden en estado Entregada sin equipo de trabajo.");
+                        issues.Add($"Orden en estado {statusLabel} sin equipo de trabajo.");
                 }
 
                 return new
@@ -299,7 +301,8 @@ public static class ServiceOrderEndpoints
                     return Results.BadRequest(new { message = "El estado seleccionado no es válido." });
 
                 var isEntregada = string.Equals(status.Name, "Entregada", StringComparison.OrdinalIgnoreCase);
-                DateTime? finalActualEndDate = isEntregada ? request.ActualEndDate : null;
+                var isCobrada = string.Equals(status.Name, "Cobrada", StringComparison.OrdinalIgnoreCase);
+                DateTime? finalActualEndDate = (isEntregada || isCobrada) ? request.ActualEndDate : null;
 
                 var validationError = ValidateServiceOrderRules(
                     status.Name,
@@ -542,7 +545,8 @@ public static class ServiceOrderEndpoints
                     return Results.BadRequest(new { message = "El estado seleccionado no es válido." });
 
                 var isEntregada = string.Equals(status.Name, "Entregada", StringComparison.OrdinalIgnoreCase);
-                DateTime? finalActualEndDate = isEntregada ? request.ActualEndDate : null;
+                var isCobrada = string.Equals(status.Name, "Cobrada", StringComparison.OrdinalIgnoreCase);
+                DateTime? finalActualEndDate = (isEntregada || isCobrada) ? request.ActualEndDate : null;
 
                 var validationError = ValidateServiceOrderRules(
                     status.Name,
@@ -761,7 +765,7 @@ public static class ServiceOrderEndpoints
         .WithOpenApi();
     }
 
-    private static string? ValidateServiceOrderRules(
+    public static string? ValidateServiceOrderRules(
         string? statusName,
         Guid clientId,
         Guid? projectId,
@@ -775,11 +779,12 @@ public static class ServiceOrderEndpoints
         List<Guid>? responsibleIds)
     {
         var isEntregada = string.Equals(statusName, "Entregada", StringComparison.OrdinalIgnoreCase);
+        var isCobrada = string.Equals(statusName, "Cobrada", StringComparison.OrdinalIgnoreCase);
 
-        // a- Si se coloca una fecha de entrega, el estado debe "entregada"
-        if (actualEndDate.HasValue && !isEntregada)
+        // a- Si se coloca una fecha de entrega, el estado debe ser "Entregada" o "Cobrada"
+        if (actualEndDate.HasValue && !isEntregada && !isCobrada)
         {
-            return "Si se define una fecha de entrega / fin real, el estado de la orden debe ser 'Entregada'.";
+            return "Si se define una fecha de entrega / fin real, el estado de la orden debe ser 'Entregada' o 'Cobrada'.";
         }
 
         // b- fin presupuestado, no puede ser anterior a inicio presupuestado.
@@ -800,28 +805,29 @@ public static class ServiceOrderEndpoints
             return "La fecha de fin real no puede ser posterior a la fecha actual.";
         }
 
-        // d- Si una orden se cambia el estado a entregada, debe validar que tenga cargado el proyecto, cliente, todas las fechas excepto fecha de cobro, todos los montos excepto monto cobrado y descuento, equipo de trabajo.
-        if (isEntregada)
+        // d- Si una orden se cambia el estado a entregada o cobrada, debe validar que tenga cargado el proyecto, cliente, todas las fechas excepto fecha de cobro, todos los montos excepto monto cobrado y descuento, equipo de trabajo.
+        if (isEntregada || isCobrada)
         {
+            var statusLabel = isCobrada ? "Cobrada" : "Entregada";
             if (!projectId.HasValue || projectId == Guid.Empty)
             {
-                return "Para guardar la orden en estado Entregada, debe asignar un proyecto.";
+                return $"Para guardar la orden en estado {statusLabel}, debe asignar un proyecto.";
             }
             if (clientId == Guid.Empty)
             {
-                return "Para guardar la orden en estado Entregada, debe asignar un cliente.";
+                return $"Para guardar la orden en estado {statusLabel}, debe asignar un cliente.";
             }
             if (!requestDate.HasValue || !estimatedStartDate.HasValue || !estimatedEndDate.HasValue || !actualStartDate.HasValue || !actualEndDate.HasValue)
             {
-                return "Para guardar la orden en estado Entregada, deben cargarse todas las fechas (Fecha de Solicitud, Inicio Presupuestado, Fin Presupuestado, Inicio Real y Fin Real).";
+                return $"Para guardar la orden en estado {statusLabel}, deben cargarse todas las fechas (Fecha de Solicitud, Inicio Presupuestado, Fin Presupuestado, Inicio Real y Fin Real).";
             }
             if (budgetedAmount <= 0 || totalAmount <= 0)
             {
-                return "Para guardar la orden en estado Entregada, los montos presupuestado y total deben ser mayores a 0.";
+                return $"Para guardar la orden en estado {statusLabel}, los montos presupuestado y total deben ser mayores a 0.";
             }
             if (responsibleIds == null || !responsibleIds.Any())
             {
-                return "Para guardar la orden en estado Entregada, debe asignar al menos un responsable al equipo de trabajo.";
+                return $"Para guardar la orden en estado {statusLabel}, debe asignar al menos un responsable al equipo de trabajo.";
             }
         }
 

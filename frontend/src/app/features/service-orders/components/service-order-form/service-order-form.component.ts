@@ -343,7 +343,7 @@ export class ServiceOrderFormComponent implements OnInit {
     const project = this.orderForm.get('projectId');
 
     const selectedStatus = this.statuses.find(s => s.id === status?.value);
-    const isEntregada = selectedStatus && selectedStatus.name.toLowerCase() === 'entregada';
+    const isEntregada = selectedStatus && (selectedStatus.name.toLowerCase() === 'entregada' || selectedStatus.name.toLowerCase() === 'cobrada');
     const missingProject = isEntregada && !project?.value;
 
     const isInvalid = !!(num?.invalid || client?.invalid || serviceType?.invalid || status?.invalid || priority?.invalid || missingProject);
@@ -360,7 +360,7 @@ export class ServiceOrderFormComponent implements OnInit {
 
     const statusId = this.orderForm.get('statusId')?.value;
     const selectedStatus = this.statuses.find(s => s.id === statusId);
-    const isEntregada = selectedStatus && selectedStatus.name.toLowerCase() === 'entregada';
+    const isEntregada = selectedStatus && (selectedStatus.name.toLowerCase() === 'entregada' || selectedStatus.name.toLowerCase() === 'cobrada');
 
     let dateError = false;
     if (start?.value && end?.value && this.getDayTimestamp(end.value) < this.getDayTimestamp(start.value)) {
@@ -390,7 +390,7 @@ export class ServiceOrderFormComponent implements OnInit {
 
     const statusId = this.orderForm.get('statusId')?.value;
     const selectedStatus = this.statuses.find(s => s.id === statusId);
-    const isEntregada = selectedStatus && selectedStatus.name.toLowerCase() === 'entregada';
+    const isEntregada = selectedStatus && (selectedStatus.name.toLowerCase() === 'entregada' || selectedStatus.name.toLowerCase() === 'cobrada');
 
     if (start?.value && end?.value && this.getDayTimestamp(end.value) < this.getDayTimestamp(start.value)) return false;
     if (actualStart?.value && actualEnd?.value && this.getDayTimestamp(actualEnd.value) < this.getDayTimestamp(actualStart.value)) return false;
@@ -410,7 +410,7 @@ export class ServiceOrderFormComponent implements OnInit {
     const statusId = this.orderForm.get('statusId')?.value;
 
     const selectedStatus = this.statuses.find(s => s.id === statusId);
-    const isEntregada = selectedStatus && selectedStatus.name.toLowerCase() === 'entregada';
+    const isEntregada = selectedStatus && (selectedStatus.name.toLowerCase() === 'entregada' || selectedStatus.name.toLowerCase() === 'cobrada');
     const missingAmounts = isEntregada && ((Number(budget?.value) || 0) <= 0 || (Number(total?.value) || 0) <= 0);
 
     const isInvalid = !!(budget?.invalid || currency?.invalid || missingAmounts || (this.distributions.length > 0 && this.totalDistributionPercentage !== 100));
@@ -425,7 +425,7 @@ export class ServiceOrderFormComponent implements OnInit {
     const statusId = this.orderForm.get('statusId')?.value;
 
     const selectedStatus = this.statuses.find(s => s.id === statusId);
-    const isEntregada = selectedStatus && selectedStatus.name.toLowerCase() === 'entregada';
+    const isEntregada = selectedStatus && (selectedStatus.name.toLowerCase() === 'entregada' || selectedStatus.name.toLowerCase() === 'cobrada');
     if (isEntregada && ((Number(budget?.value) || 0) <= 0 || (Number(total?.value) || 0) <= 0)) {
       return false;
     }
@@ -610,9 +610,9 @@ export class ServiceOrderFormComponent implements OnInit {
     }
 
     const selectedStatus = this.statuses.find(s => s.id === formValue.statusId);
-    const isEntregada = selectedStatus && selectedStatus.name.toLowerCase() === 'entregada';
+    const isEntregada = selectedStatus && (selectedStatus.name.toLowerCase() === 'entregada' || selectedStatus.name.toLowerCase() === 'cobrada');
 
-    // Regla: Si la orden no está entregada, eliminar fecha fin real al guardar
+    // Regla: Si la orden no está entregada ni cobrada, eliminar fecha fin real al guardar
     if (!isEntregada) {
       formValue.actualEndDate = null;
       this.orderForm.get('actualEndDate')?.setValue(null, { emitEvent: false });
@@ -635,7 +635,8 @@ export class ServiceOrderFormComponent implements OnInit {
           return;
         }
         if (isEntregada && (a.status !== 'Finalizado' && a.status !== 'Cancelado')) {
-          this.snackBar.open('Para guardar la orden en estado Entregada, todas las actividades operativas deben estar Finalizadas o Canceladas.', 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
+          const statusLabel = selectedStatus?.name || 'Entregada';
+          this.snackBar.open(`Para guardar la orden en estado ${statusLabel}, todas las actividades operativas deben estar Finalizadas o Canceladas.`, 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
           return;
         }
       }
@@ -710,24 +711,25 @@ export class ServiceOrderFormComponent implements OnInit {
     }
 
     if (isEntregada) {
+      const statusLabel = selectedStatus?.name || 'Entregada';
       if (!formValue.projectId) {
-        this.snackBar.open('Para guardar la orden en estado Entregada, debe asignar un proyecto.', 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
+        this.snackBar.open(`Para guardar la orden en estado ${statusLabel}, debe asignar un proyecto.`, 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
         return;
       }
       if (!formValue.clientId) {
-        this.snackBar.open('Para guardar la orden en estado Entregada, debe asignar un cliente.', 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
+        this.snackBar.open(`Para guardar la orden en estado ${statusLabel}, debe asignar un cliente.`, 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
         return;
       }
       if (!formValue.requestDate || !formValue.estimatedStartDate || !formValue.estimatedEndDate || !formValue.actualStartDate || !formValue.actualEndDate) {
-        this.snackBar.open('Para guardar la orden en estado Entregada, deben completarse todas las fechas (Fecha de Solicitud, Inicio/Fin Presupuestado e Inicio/Fin Real).', 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
+        this.snackBar.open(`Para guardar la orden en estado ${statusLabel}, deben completarse todas las fechas (Fecha de Solicitud, Inicio/Fin Presupuestado e Inicio/Fin Real).`, 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
         return;
       }
       if (formValue.budgetedAmount <= 0 || formValue.totalAmount <= 0) {
-        this.snackBar.open('Para guardar la orden en estado Entregada, los montos presupuestado y total deben ser mayores a 0.', 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
+        this.snackBar.open(`Para guardar la orden en estado ${statusLabel}, los montos presupuestado y total deben ser mayores a 0.`, 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
         return;
       }
       if (!formValue.responsibleIds || formValue.responsibleIds.length === 0) {
-        this.snackBar.open('Para guardar la orden en estado Entregada, debe asignar al menos un responsable al equipo de trabajo.', 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
+        this.snackBar.open(`Para guardar la orden en estado ${statusLabel}, debe asignar al menos un responsable al equipo de trabajo.`, 'Cerrar', { duration: 5000, panelClass: ['snackbar-error'] });
         return;
       }
     }
