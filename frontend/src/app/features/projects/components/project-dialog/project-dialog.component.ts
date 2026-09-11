@@ -113,7 +113,7 @@ export class ProjectDialogComponent implements OnInit {
   projectForm: FormGroup;
   isEdit = false;
 
-  mapOptions: google.maps.MapOptions = { mapTypeId: 'satellite' };
+  mapOptions: google.maps.MapOptions = { mapTypeId: 'hybrid' };
   mapCenter: google.maps.LatLngLiteral = { lat: -34.6037, lng: -58.3816 }; // Buenos Aires default
   mapZoom = 10;
   markerPosition: google.maps.LatLngLiteral | null = null;

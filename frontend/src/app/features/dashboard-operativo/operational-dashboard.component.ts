@@ -192,7 +192,7 @@ export class OperationalDashboardComponent implements OnInit {
 
   // --- Project Map properties ---
   @ViewChild(GoogleMap) googleMap!: GoogleMap;
-  mapOptions: google.maps.MapOptions = { mapTypeId: 'satellite' };
+  mapOptions: google.maps.MapOptions = { mapTypeId: 'hybrid' };
   mapCenter: google.maps.LatLngLiteral = { lat: -34.6037, lng: -58.3816 };
   mapZoom = 10;
   mapMarkers: any[] = [];
