@@ -17,6 +17,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ServiceOrderService } from '../../services/service-order.service';
 import { ServiceOrderListItem } from '../../models/service-order.model';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { getOrderDateInfo, getOrderDateTimestamp, OrderDateInfo } from './service-order-date.util';
 
 @Component({
   selector: 'app-service-order-list',
@@ -74,8 +75,29 @@ export class ServiceOrderListComponent implements OnInit {
 
   ngOnInit(): void {
     this.setupFilterPredicate();
+    this.setupSortingDataAccessor();
     this.loadCatalogs();
     this.loadOrders();
+  }
+
+  setupSortingDataAccessor(): void {
+    this.dataSource.sortingDataAccessor = (item: ServiceOrderListItem, property: string) => {
+      switch (property) {
+        case 'createdAt':
+          return getOrderDateTimestamp(item);
+        case 'budgetedAmount':
+          return item.budgetedAmount ?? 0;
+        case 'collectedAmount':
+          return item.collectedAmount ?? 0;
+        default:
+          const value = (item as any)[property];
+          return typeof value === 'string' ? value.toLowerCase() : value;
+      }
+    };
+  }
+
+  getOrderDateInfo(row: ServiceOrderListItem): OrderDateInfo {
+    return getOrderDateInfo(row);
   }
 
   loadCatalogs(): void {

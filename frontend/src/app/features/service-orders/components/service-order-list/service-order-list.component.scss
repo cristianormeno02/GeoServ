@@ -54,6 +54,32 @@ table {
   background-color: #f5f5f5;
 }
 
+.date-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: default;
+
+  .date-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+
+    &.date-icon-actual {
+      color: #2e7d32;
+    }
+
+    &.date-icon-estimated {
+      color: #1976d2;
+    }
+
+    &.date-icon-created {
+      color: #757575;
+    }
+  }
+}
+
 
 
 
