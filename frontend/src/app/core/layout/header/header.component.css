@@ -3,6 +3,20 @@
   color: var(--text-primary);
 }
 
+.menu-toggle-btn {
+  --mat-icon-button-icon-color: #ffffff;
+  color: #ffffff !important;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.menu-toggle-btn mat-icon {
+  color: #ffffff !important;
+}
+
+.menu-toggle-btn:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
 .logo-container {
   display: flex;
   align-items: center;

@@ -1,4 +1,4 @@
-﻿## Purpose
+## Purpose
 
 Establece la estructura, el orden, las agrupaciones visuales y los permisos de acceso para la barra de navegación lateral principal de la aplicación.
 
@@ -28,3 +28,18 @@ El sistema MUST renderizar el ícono de colapsar/desplegar el menú con un color
 #### Scenario: Visibilidad del ícono
 - **WHEN** el sidebar es renderizado en pantalla
 - **THEN** el botón para colapsar/desplegar es claramente visible y respeta la paleta de colores del sistema.
+
+### Requirement: Descripción de ítems de menú como tooltip
+El sistema SHALL asociar una descripción de hasta 100 caracteres a cada ítem del menú lateral. Esta descripción SHALL mostrarse como tooltip al pasar el mouse por encima del ítem en el menú, tanto en el estado expandido como colapsado del sidebar.
+
+#### Scenario: Visualización del tooltip en menú expandido
+- **WHEN** el usuario posiciona el mouse sobre un ítem del menú lateral estando el sidebar en estado expandido
+- **THEN** se muestra un tooltip con la descripción del ítem (máximo 100 caracteres)
+
+#### Scenario: Visualización del tooltip en menú colapsado
+- **WHEN** el usuario posiciona el mouse sobre un ítem del menú lateral estando el sidebar en estado colapsado (solo íconos)
+- **THEN** se muestra un tooltip con el nombre y la descripción del ítem
+
+#### Scenario: Ítem sin descripción configurada
+- **WHEN** un ítem de menú no tiene descripción definida y el usuario pasa el mouse por encima
+- **THEN** no se muestra ningún tooltip (el comportamiento es equivalente al estado actual)

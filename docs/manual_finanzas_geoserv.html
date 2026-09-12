@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Manual Ejecutivo de Finanzas — GeoServ</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 12mm 14mm 12mm 14mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: #0f172a;
+      background: #ffffff;
+      line-height: 1.4;
+      font-size: 9.8pt;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    .no-print {
+      display: none;
+    }
+
+    @media screen {
+      body {
+        background-color: #cbd5e1;
+        padding: 20px;
+      }
+      .no-print {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 210mm;
+        margin: 0 auto 15px auto;
+        background: #0f172a;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+      }
+      .btn-print {
+        background: #0284c7;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .page {
+        max-width: 210mm;
+        margin: 0 auto 20px auto;
+        background: white;
+        padding: 14mm;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+      }
+      .page.cover {
+        padding: 35mm 20mm;
+      }
+    }
+
+    @media print {
+      .page {
+        width: 100%;
+        page-break-after: always;
+        break-after: page;
+        height: 100%;
+      }
+      .page:last-child {
+        page-break-after: avoid;
+        break-after: avoid;
+      }
+    }
+
+    /* Portada */
+    .cover {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 65%, #0369a1 100%);
+      color: white;
+      padding: 35mm 15mm 25mm 15mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 260mm;
+    }
+
+    .cover-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand-box {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-icon {
+      width: 48px;
+      height: 48px;
+      background: #0284c7;
+      border-radius: 10px;
+      font-size: 24px;
+      font-weight: 800;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .brand-title {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+
+    .brand-subtitle {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #38bdf8;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .cover-badge {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 5px 12px;
+      border-radius: 16px;
+      font-size: 9.5pt;
+      font-weight: 700;
+      color: #e0f2fe;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .cover-center {
+      margin: 30px 0;
+    }
+
+    .cover-pretitle {
+      color: #38bdf8;
+      font-size: 12pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+    }
+
+    .cover-h1 {
+      font-size: 30pt;
+      line-height: 1.15;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 16px;
+      letter-spacing: -0.5px;
+    }
+
+    .cover-lead {
+      font-size: 12.5pt;
+      line-height: 1.55;
+      color: #cbd5e1;
+      max-width: 95%;
+    }
+
+    .cover-bottom {
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      padding-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+    }
+
+    .meta-box .lbl {
+      font-size: 8.5pt;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #94a3b8;
+      margin-bottom: 3px;
+    }
+
+    .meta-box .val {
+      font-size: 10.5pt;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    /* Headers */
+    h2 {
+      font-size: 13.5pt;
+      color: #0f172a;
+      font-weight: 800;
+      margin: 12px 0 6px 0;
+      padding-bottom: 4px;
+      border-bottom: 2px solid #0284c7;
+    }
+
+    h2 .num {
+      background: #0284c7;
+      color: white;
+      font-size: 9pt;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 800;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    h2 .route-tag {
+      font-size: 9.5pt;
+      font-weight: 600;
+      color: #0284c7;
+      font-family: monospace;
+      margin-left: 6px;
+    }
+
+    h3 {
+      font-size: 11pt;
+      color: #0369a1;
+      font-weight: 700;
+      margin: 10px 0 5px 0;
+    }
+
+    p {
+      margin-bottom: 7px;
+      color: #1e293b;
+    }
+
+    ul, ol {
+      margin: 4px 0 8px 18px;
+      color: #1e293b;
+    }
+
+    li {
+      margin-bottom: 3px;
+    }
+
+    /* Grids */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 7px 0;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 7px;
+      margin: 7px 0;
+    }
+
+    /* Cards */
+    .card {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      padding: 7px 9px;
+    }
+
+    .card.blue { border-left: 3.5px solid #0284c7; }
+    .card.green { border-left: 3.5px solid #10b981; }
+    .card.red { border-left: 3.5px solid #ef4444; }
+    .card.amber { border-left: 3.5px solid #f59e0b; }
+    .card.purple { border-left: 3.5px solid #8b5cf6; }
+
+    .card-title {
+      font-size: 9.5pt;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 2px;
+    }
+
+    .card-desc {
+      font-size: 8.8pt;
+      color: #334155;
+      line-height: 1.35;
+      margin-bottom: 0;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 7px 0 10px 0;
+      font-size: 9pt;
+    }
+
+    th {
+      background: #f1f5f9;
+      color: #0f172a;
+      font-weight: 700;
+      text-align: left;
+      padding: 5px 8px;
+      border-top: 1px solid #94a3b8;
+      border-bottom: 1.5px solid #0284c7;
+    }
+
+    td {
+      padding: 5px 8px;
+      border-bottom: 1px solid #e2e8f0;
+      color: #1e293b;
+      vertical-align: top;
+      line-height: 1.35;
+    }
+
+    tr:nth-child(even) td {
+      background-color: #f8fafc;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 8.2pt;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .badge-blue { background: #e0f2fe; color: #0369a1; }
+    .badge-green { background: #dcfce7; color: #15803d; }
+    .badge-red { background: #fee2e2; color: #b91c1c; }
+    .badge-amber { background: #fef3c7; color: #b45309; }
+    .badge-purple { background: #ede9fe; color: #6d28d9; }
+    .badge-gray { background: #e2e8f0; color: #334155; }
+
+    /* Callouts */
+    .callout {
+      border-radius: 5px;
+      padding: 7px 11px;
+      margin: 8px 0;
+      border-left: 3.5px solid;
+      font-size: 9pt;
+      line-height: 1.35;
+    }
+
+    .callout-info {
+      background: #f0f9ff;
+      border-color: #0284c7;
+      color: #0c4a6e;
+    }
+
+    .callout-warning {
+      background: #fffbeb;
+      border-color: #f59e0b;
+      color: #78350f;
+    }
+
+    .callout-success {
+      background: #f0fdf4;
+      border-color: #10b981;
+      color: #14532d;
+    }
+
+    /* Steps */
+    .step-box {
+      display: flex;
+      gap: 10px;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      padding: 6px 9px;
+      margin-bottom: 5px;
+      align-items: flex-start;
+    }
+
+    .step-badge {
+      width: 22px;
+      height: 22px;
+      background: #0284c7;
+      color: white;
+      font-weight: 800;
+      font-size: 9.5pt;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .step-content {
+      flex: 1;
+    }
+
+    .step-title {
+      font-weight: 700;
+      color: #0f172a;
+      font-size: 9.5pt;
+      margin-bottom: 1px;
+    }
+
+    .step-desc {
+      font-size: 8.8pt;
+      color: #334155;
+      margin-bottom: 0;
+      line-height: 1.35;
+    }
+
+    /* Running Header & Footer */
+    .running-header {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid #cbd5e1;
+      padding-bottom: 3px;
+      margin-bottom: 8px;
+      font-size: 8pt;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .running-footer {
+      display: flex;
+      justify-content: space-between;
+      border-top: 1px solid #cbd5e1;
+      padding-top: 4px;
+      margin-top: 10px;
+      font-size: 8pt;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Screen Top Bar -->
+  <div class="no-print">
+    <div style="font-weight:700;">GeoServ — Manual Ejecutivo de Finanzas</div>
+    <button class="btn-print" onclick="window.print()">Imprimir / Guardar en PDF</button>
+  </div>
+
+  <!-- PÁGINA 1: PORTADA -->
+  <div class="page cover">
+    <div class="cover-top">
+      <div class="brand-box">
+        <div class="brand-icon">GS</div>
+        <div>
+          <div class="brand-title">GeoServ</div>
+          <div class="brand-subtitle">Servicios Geológicos, Mineros y Topografía</div>
+        </div>
+      </div>
+      <div class="cover-badge">Manual Oficial de Inducción</div>
+    </div>
+
+    <div class="cover-center">
+      <div class="cover-pretitle">Guía Operativa para Nuevos Usuarios</div>
+      <h1 class="cover-h1">Manual de Gestión y Registro de Movimientos Financieros</h1>
+      <p class="cover-lead">
+        Instructivo integral para el responsable de finanzas: parametrización de cuentas y categorías, registro de cobranzas y pagos, trazabilidad con órdenes de servicio e interpretación ejecutiva del Dashboard Financiero.
+      </p>
+    </div>
+
+    <div class="cover-bottom">
+      <div class="meta-box">
+        <div class="lbl">Módulo</div>
+        <div class="val">Finanzas & Control</div>
+      </div>
+      <div class="meta-box">
+        <div class="lbl">Destinatario</div>
+        <div class="val">Encargado de Finanzas</div>
+      </div>
+      <div class="meta-box">
+        <div class="lbl">Versión</div>
+        <div class="val">1.3 Ejecutivo</div>
+      </div>
+      <div class="meta-box">
+        <div class="lbl">Emisión</div>
+        <div class="val">Septiembre 2026</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PÁGINA 2: BIENVENIDA Y PROCEDIMIENTO DE CARGA -->
+  <div class="page">
+    <div class="running-header">
+      <span>GeoServ — Manual Operativo de Finanzas</span>
+      <span>Módulo de Registro Diario</span>
+    </div>
+
+    <h2><span class="num">01</span> Bienvenida y Configuración Base</h2>
+    <p>
+      Bienvenido a <strong>GeoServ</strong>. Tu rol en finanzas es asegurar que el flujo de dinero (cobranzas de clientes, pagos de servicios y gastos fijos) esté fielmente registrado y conectado con las operaciones. Antes de registrar movimientos diarios, deben existir en el sistema:
+    </p>
+
+    <div class="grid-2">
+      <div class="card blue">
+        <div class="card-title">🏦 Cuentas Bancarias / Financieras (/cuentas-financieras)</div>
+        <p class="card-desc">
+          Define las cajas reales de la empresa: <strong>Cuentas Bancarias</strong> (Galicia, Macro), <strong>Cajas Chicas en Efectivo</strong> y <strong>Billeteras Virtuales</strong> (MercadoPago). Cada una con su moneda (ARS, USD, CLP) y CBU/N° de cuenta. Cada movimiento sumará o restará saldo a una cuenta específica.
+        </p>
+      </div>
+      <div class="card purple">
+        <div class="card-title">🏷️ Categorías de Movimiento (/categorias-movimiento)</div>
+        <p class="card-desc">
+          Son las etiquetas contables. Cada categoría se define como de <strong>Ingreso</strong> (Cobranza por Servicios, Anticipos) o de <strong>Egreso</strong> (Combustibles, Insumos de Laboratorio, Sueldos, Alquileres). Alimentan los gráficos de distribución y reportes gerenciales.
+        </p>
+      </div>
+    </div>
+
+    <h2><span class="num">02</span> Procedimiento de Carga de Movimientos <span class="route-tag">/movimientos</span></h2>
+    <p>
+      Esta es tu pantalla principal de trabajo diario. Para asentar una cobranza o un desembolso, haz clic en el botón azul superior <strong>`+ Nuevo Movimiento`</strong> y completa los siguientes pasos:
+    </p>
+
+    <div class="step-box">
+      <div class="step-badge">1</div>
+      <div class="step-content">
+        <div class="step-title">Definir el Flujo: ¿Ingreso o Egreso?</div>
+        <div class="step-desc">Usa el interruptor superior. Si marcas <strong style="color:#15803d;">Ingreso (Verde)</strong> sumará dinero al saldo de la cuenta. Si marcas <strong style="color:#b91c1c;">Egreso (Rojo)</strong> restará fondos de la cuenta seleccionada.</div>
+      </div>
+    </div>
+
+    <div class="step-box">
+      <div class="step-badge">2</div>
+      <div class="step-content">
+        <div class="step-title">Seleccionar la Categoría</div>
+        <div class="step-desc">El desplegable se filtra automáticamente mostrando únicamente las categorías activas que corresponden al flujo elegido (ingreso o egreso).</div>
+      </div>
+    </div>
+
+    <div class="step-box">
+      <div class="step-badge">3</div>
+      <div class="step-content">
+        <div class="step-title">Indicar el Tipo de Origen y Origen Específico (Clave para la integración)</div>
+        <div class="step-desc">Elige entre <strong>Manual</strong> (ajustes/gastos generales) o vincúlalo con una <strong>Orden de Servicio</strong>, un <strong>Costo Directo</strong>, un <strong>Gasto Fijo</strong> o un <strong>Activo</strong>. Al elegir una opción no manual, aparecerá un buscador para seleccionar el comprobante puntual.</div>
+      </div>
+    </div>
+
+    <div class="step-box">
+      <div class="step-badge">4</div>
+      <div class="step-content">
+        <div class="step-title">Cargar Descripción, Monto, Fecha y Cuenta Financiera</div>
+        <div class="step-desc">Escribe una descripción clara para auditoría, el importe exacto (el campo formatea automáticamente miles y decimales), la fecha real de la transacción bancaria y la cuenta de origen/destino.</div>
+      </div>
+    </div>
+
+    <div class="callout callout-info">
+      <strong>💡 Regla de Oro:</strong> Siempre que un movimiento corresponda a un trabajo para un cliente o al pago de un gasto fijo, selecciónalo en el campo <em>Tipo de Origen</em>. Esto garantiza que la Orden de Servicio se marque como cobrada y que las deudas programadas disminuyan automáticamente.
+    </div>
+
+    <div class="running-footer">
+      <span>GeoServ — Sistema de Gestión y Servicios</span>
+      <span>Página 2</span>
+    </div>
+  </div>
+
+  <!-- PÁGINA 3: MATRIZ DE IMPACTO Y RESUMEN -->
+  <div class="page">
+    <div class="running-header">
+      <span>GeoServ — Manual Operativo de Finanzas</span>
+      <span>Integración y Trazabilidad</span>
+    </div>
+
+    <h2><span class="num">03</span> Matriz de Impacto por Tipo de Origen</h2>
+    <p>
+      El valor seleccionado en <strong>Tipo de Origen (`sourceType`)</strong> le indica al sistema cómo conectar la transacción con los demás módulos del negocio:
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 22%;">Tipo de Origen</th>
+          <th style="width: 26%;">¿Cuándo seleccionarlo?</th>
+          <th style="width: 24%;">Módulos donde Impacta</th>
+          <th style="width: 28%;">Efecto en el Negocio</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge badge-gray">Manual</span></td>
+          <td>Ajustes de saldo, retiros de socios, comisiones bancarias o gastos generales no atados a proyectos.</td>
+          <td>• Cuentas Financieras<br>• Resumen Financiero</td>
+          <td>Modifica el saldo disponible de la cuenta sin alterar las órdenes de trabajo.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-green">Ingreso por OS</span></td>
+          <td>Cobranza de anticipos, avances o facturas finales de una Orden de Servicio de un cliente.</td>
+          <td>• Cuenta Bancaria<br>• Órdenes de Servicio<br>• Dashboard Financiero</td>
+          <td>Incrementa el monto cobrado de la orden, calcula su ganancia real y suma a la <strong>Cobertura del Mes</strong>.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-red">Costo Directo</span></td>
+          <td>Pago de insumos, viáticos, combustible o subcontratistas afectados exclusivamente a un servicio.</td>
+          <td>• Cuenta Bancaria<br>• Costos de la OS<br>• Dashboard Financiero</td>
+          <td>Descuenta del banco y resta del margen de esa orden para reflejar su rentabilidad neta exacta.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-amber">Pago Gasto Fijo</span></td>
+          <td>Pago de alquiler de galpón u oficinas, seguros de vehículos, abonos de software o servicios públicos.</td>
+          <td>• Cuenta Bancaria<br>• Aging de Deuda<br>• Proyección de Egresos</td>
+          <td>Cancela la obligación pendiente y reduce la deuda en las proyecciones a 30, 60 y 90 días.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-purple">Compra de Activo</span></td>
+          <td>Adquisición de equipamiento duradero (camionetas, estaciones totales, instrumental técnico).</td>
+          <td>• Cuenta Bancaria<br>• Módulo de Activos<br>• Patrimonio Empresa</td>
+          <td>Registra la salida de fondos pero suma el bien al patrimonio histórico de activos de la empresa.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2><span class="num">04</span> Resumen Financiero y Cartera de Cheques <span class="route-tag">/finanzas/resumen</span></h2>
+    <p>
+      Esta pantalla te ofrece una radiografía inmediata de la liquidez de la empresa y la custodia de valores:
+    </p>
+
+    <div class="grid-2">
+      <div class="card blue">
+        <div class="card-title">💵 Disponibilidad y Saldos Consolidados</div>
+        <p class="card-desc">
+          Visualiza el total consolidado en pesos sumando todos los bancos y cajas, junto con el desglose individual por cuenta y su porcentaje de participación sobre el total de fondos disponibles.
+        </p>
+      </div>
+      <div class="card amber">
+        <div class="card-title">📑 Gestión de Cheques en Cartera</div>
+        <p class="card-desc">
+          Control de cheques recibidos según su estado: <strong>En Cartera</strong> (físicamente en la oficina), <strong>Depositado</strong> (en proceso de compensación bancaria), <strong>Acreditado</strong> (fondos ya en cuenta) o <strong>Rechazado</strong> (devuelto por el banco).
+        </p>
+      </div>
+    </div>
+
+    <div class="running-footer">
+      <span>GeoServ — Sistema de Gestión y Servicios</span>
+      <span>Página 3</span>
+    </div>
+  </div>
+
+  <!-- PÁGINA 4: DASHBOARD FINANCIERO -->
+  <div class="page">
+    <div class="running-header">
+      <span>GeoServ — Manual Operativo de Finanzas</span>
+      <span>Control Gerencial e Interpretación</span>
+    </div>
+
+    <h2><span class="num">05</span> Interpretación del Dashboard Financiero <span class="route-tag">/dashboard/financiero</span></h2>
+    <p>
+      El Dashboard Financiero es la herramienta de control gerencial en tiempo real. Dispone de un selector superior para analizar períodos de <strong>3, 6 o 12 meses</strong>. Aquí te explicamos cómo interpretar cada sección:
+    </p>
+
+    <h3>A. Tarjetas KPI Principales (Fila Superior)</h3>
+    <div class="grid-4">
+      <div class="card blue">
+        <div class="card-title">Saldo en Cuentas</div>
+        <p class="card-desc">Total consolidado disponible hoy sumando todas las cuentas activas (Bancos + Cajas + Billeteras).</p>
+      </div>
+      <div class="card green">
+        <div class="card-title">Ingresos del Mes</div>
+        <p class="card-desc">Cobros percibidos en el mes en curso con mini-gráfico de tendencia de los últimos 6 meses.</p>
+      </div>
+      <div class="card blue">
+        <div class="card-title">Resultado del Mes</div>
+        <p class="card-desc">Ingresos del mes menos Egresos totales. Verde = Superávit; Rojo = Déficit operativo del mes.</p>
+      </div>
+      <div class="card amber">
+        <div class="card-title">Saldo Cobertura</div>
+        <p class="card-desc">Arrastre histórico acumulado. Muestra <em>"Cubierto"</em> (verde) o <em>"Déficit Pendiente"</em> (rojo).</p>
+      </div>
+    </div>
+
+    <h3>B. Medidores de Aguja (Gauges Operativos)</h3>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">🎯 Cobertura del Mes Actual</div>
+        <p class="card-desc">
+          Compara los ingresos del mes contra la suma de <strong>Gastos Fijos + Costos Directos + Honorarios</strong>.<br>
+          • <span class="badge badge-green">≥ 100% (Verde)</span>: Punto de equilibrio superado. Los ingresos cubren todos los costos del mes.<br>
+          • <span class="badge badge-red">&lt; 100% (Rojo)</span>: Alerta de déficit. Los cobros aún no alcanzan para pagar los costos del mes.
+        </p>
+      </div>
+      <div class="card">
+        <div class="card-title">📐 Margen Promedio por Orden</div>
+        <p class="card-desc">
+          Porcentaje promedio de rentabilidad de los servicios cobrados en los últimos 3 meses.<br>
+          • <span class="badge badge-green">≥ 50% (Normal)</span>: Operación de campo y laboratorio con margen saludable.<br>
+          • <span class="badge badge-amber">&lt; 50% (Alerta)</span>: Costos directos elevados en relación con el precio cotizado.
+        </p>
+      </div>
+    </div>
+
+    <h3>C. Widget Principal: Informe de Cobertura Mensual (Combo Chart)</h3>
+    <p>
+      Gráfico histórico en un único eje en pesos que muestra la evolución mes a mes:
+    </p>
+    <ul>
+      <li><strong>Barras verticales</strong>: Ingresos percibidos mes a mes por cobranzas reales.</li>
+      <li><strong>Línea roja continua</strong>: Costos totales devengados (gastos fijos + costos directos + honorarios).</li>
+      <li><strong>Área sombreada</strong>: Saldo acumulado arrastrado. Si la curva se mantiene sobre cero, indica solvencia acumulada; si cae bajo cero, advierte arrastre de deuda histórica que debe ser compensada.</li>
+    </ul>
+
+    <div class="running-footer">
+      <span>GeoServ — Sistema de Gestión y Servicios</span>
+      <span>Página 4</span>
+    </div>
+  </div>
+
+  <!-- PÁGINA 5: PREVISIBILIDAD, RENTABILIDAD Y CHECKLIST -->
+  <div class="page">
+    <div class="running-header">
+      <span>GeoServ — Manual Operativo de Finanzas</span>
+      <span>Previsibilidad, Rentabilidad y Buenas Prácticas</span>
+    </div>
+
+    <h3>D. Liquidez Futura, Deudas y Previsibilidad</h3>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 32%;">Sección del Dashboard</th>
+          <th style="width: 34%;">¿Qué datos presenta?</th>
+          <th>¿Cómo utilizarlo para tomar decisiones?</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Vencimientos de Gastos Fijos (Aging)</strong></td>
+          <td>Semáforo de pagos pendientes por vencer:<br>🔴 Vencido | 🟠 0 a 7 días | 🟡 8 a 15 días | 🔵 16 a 30 días</td>
+          <td>Priorizar los pagos urgentes para evitar cortes de suministros esenciales, seguros caídos o intereses por mora.</td>
+        </tr>
+        <tr>
+          <td><strong>Proyección de Egresos Comprometidos</strong></td>
+          <td>Compromisos de pago ya asumidos organizados en:<br>• Próximos 30 días<br>• 31 a 60 días<br>• 61 a 90 días</td>
+          <td>Conocer de antemano el flujo de fondos necesario para los próximos 3 meses y anticipar necesidades de cobro.</td>
+        </tr>
+        <tr>
+          <td><strong>Costos Directos por Categoría (Dona)</strong></td>
+          <td>Distribución porcentual de los costos directos de las órdenes (combustibles, repuestos, viáticos, etc.).</td>
+          <td>Detectar qué rubros absorben más recursos y planificar compras por volumen o renegociaciones con proveedores.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>E. Rentabilidad por Órdenes de Servicio y Patrimonio</h3>
+    <div class="grid-2">
+      <div class="card green">
+        <div class="card-title">📈 Top 10 Órdenes Más Rentables</div>
+        <p class="card-desc">Lista las órdenes con mayor beneficio neto (Ingreso menos Costos directos). Identifica qué clientes y tipologías de servicio dejan mayor ganancia a la empresa.</p>
+      </div>
+      <div class="card red">
+        <div class="card-title">📉 Top 10 Órdenes Menos Rentables</div>
+        <p class="card-desc">Identifica servicios con margen estrecho o pérdida debido a sobrecostos de campo, permitiendo recalibrar futuros presupuestos comerciales.</p>
+      </div>
+    </div>
+
+    <h2><span class="num">06</span> Checklist Diario del Encargado de Finanzas</h2>
+
+    <div class="callout callout-success">
+      <strong>✅ Rutina Diaria Recomendada:</strong>
+      <ol style="margin-top: 4px;">
+        <li><strong>Inicio del día</strong>: Ingresar al home banking, identificar transferencias y acreditaciones de clientes, y cargarlas en <em>Movimientos</em> vinculándolas a su correspondiente <strong>Orden de Servicio</strong>.</li>
+        <li><strong>Durante la jornada</strong>: Cargar los comprobantes de pago a proveedores asociándolos a su <strong>Costo Directo</strong> o <strong>Gasto Fijo</strong>.</li>
+        <li><strong>Control de vencimientos</strong>: Mirar en el Dashboard el bloque de <em>Vencimientos de Gastos Fijos (Aging)</em> para cancelar a tiempo los compromisos que vencen en la semana.</li>
+        <li><strong>Cierre del día</strong>: Verificar en <em>Resumen Financiero</em> que el <strong>Saldo Consolidado</strong> coincida exactamente con los extractos bancarios reales.</li>
+      </ol>
+    </div>
+
+    <div class="callout callout-warning">
+      <strong>⚠️ Errores Críticos que Debes Evitar:</strong>
+      <ul style="margin-top: 4px;">
+        <li><strong>Cargar como "Manual" el cobro de un cliente</strong>: El dinero entrará al banco pero la Orden de Servicio seguirá figurando impaga en el sistema.</li>
+        <li><strong>No asociar los insumos al Costo Directo</strong>: Si compras combustible para una campaña y lo cargas como gasto general, el margen de esa orden parecerá irrealmente alto.</li>
+      </ul>
+    </div>
+
+    <div class="running-footer">
+      <span>GeoServ — Confidencial — Uso Interno Exclusivo</span>
+      <span>Página 5</span>
+    </div>
+  </div>
+
+</body>
+</html>
