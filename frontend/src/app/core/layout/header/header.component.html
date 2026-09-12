@@ -6,7 +6,7 @@
     <div class="logo-circle">
       <!-- Si hay SVG dinámico de la base de datos lo mostramos aquí -->
       <img *ngIf="safeLogoSvg()" [src]="safeLogoSvg()" alt="Logo de la Empresa" />
-      
+
       <!-- Fallback si no hay logo dinámico -->
       <img *ngIf="!safeLogoSvg()" src="assets/geoserv-logo.svg" alt="GeoServ Logo" onerror="this.style.display='none'; this.parentElement.innerHTML='<mat-icon style=\'font-size: 30px; width: 30px; height: 30px; color: #0284c7;\'>business</mat-icon>';" />
     </div>
@@ -15,4 +15,52 @@
     <span class="company-name">{{ empresaConfig.empresaActual()?.nombre || 'GeoServ' }}</span>
   </div>
   <span class="spacer"></span>
+
+  <!-- Botón de Favoritos con dropdown -->
+  <button
+    mat-button
+    class="favorites-btn"
+    [matMenuTriggerFor]="favoritesMenu"
+    aria-label="Abrir favoritos"
+    matTooltip="Mis favoritos"
+  >
+    <mat-icon>star</mat-icon>
+    <span class="favorites-label">Favoritos</span>
+  </button>
+
+  <!-- Panel de favoritos (dropdown) -->
+  <mat-menu #favoritesMenu="matMenu" class="favorites-panel" xPosition="before">
+    <ng-container *ngIf="favorites$ | async as favorites">
+      <!-- Lista de ítems favoritos -->
+      <ng-container *ngIf="favorites.length > 0; else emptyFavorites">
+        <button
+          *ngFor="let item of favorites"
+          mat-menu-item
+          class="favorite-menu-item"
+          (click)="navigateTo(item)"
+        >
+          <mat-icon>{{ item.icon }}</mat-icon>
+          <span class="favorite-item-name">{{ item.name }}</span>
+          <button
+            mat-icon-button
+            class="remove-favorite-btn"
+            (click)="$event.stopPropagation(); removeFavorite(item)"
+            aria-label="Quitar de favoritos"
+            matTooltip="Quitar de favoritos"
+          >
+            <mat-icon>star</mat-icon>
+          </button>
+        </button>
+      </ng-container>
+
+      <!-- Estado vacío -->
+      <ng-template #emptyFavorites>
+        <div class="empty-favorites">
+          <mat-icon>star_border</mat-icon>
+          <p>Aún no tienes favoritos seleccionados</p>
+          <small>Usa el ícono <mat-icon class="inline-icon">star_border</mat-icon> en el menú lateral para agregar.</small>
+        </div>
+      </ng-template>
+    </ng-container>
+  </mat-menu>
 </mat-toolbar>

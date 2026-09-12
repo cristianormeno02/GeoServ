@@ -1,11 +1,37 @@
+<!-- Perfil del usuario -->
 <div class="user-profile">
   <mat-icon class="user-avatar">account_circle</mat-icon>
   <div class="user-name">{{ userName }}</div>
 </div>
 
+<!-- Campo de búsqueda en el menú -->
+<div class="search-container">
+  <div class="search-box">
+    <mat-icon class="search-icon">search</mat-icon>
+    <input
+      type="text"
+      class="search-input"
+      placeholder="Buscar..."
+      [ngModel]="searchText()"
+      (ngModelChange)="searchText.set($event)"
+      aria-label="Buscar opción de menú"
+    />
+    <button
+      *ngIf="searchText()"
+      type="button"
+      class="clear-btn"
+      (click)="clearSearch()"
+      aria-label="Limpiar búsqueda"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+</div>
+
 <mat-nav-list class="nested-menu-list">
+  <!-- Resultados de la búsqueda -->
   <mat-accordion displayMode="flat" multi="false">
-    <ng-container *ngFor="let group of menuGroups">
+    <ng-container *ngFor="let group of filteredGroups()">
       <mat-expansion-panel *ngIf="hasVisibleChildren(group)" class="menu-group-panel">
         <mat-expansion-panel-header>
           <mat-panel-title>
@@ -13,19 +39,47 @@
             <span>{{ group.name }}</span>
           </mat-panel-title>
         </mat-expansion-panel-header>
-        
+
         <div class="menu-group-items">
           <ng-container *ngFor="let child of getFilteredChildren(group.children)">
             <mat-divider *ngIf="child.isSeparator" class="menu-divider"></mat-divider>
-            <a mat-list-item *ngIf="!child.isSeparator" [routerLink]="child.path" routerLinkActive="active-link" class="child-item">
+            <a
+              *ngIf="!child.isSeparator"
+              mat-list-item
+              [routerLink]="child.path"
+              routerLinkActive="active-link"
+              class="child-item"
+              [matTooltip]="child.description || ''"
+              [matTooltipDisabled]="!child.description"
+              matTooltipPosition="right"
+              matTooltipShowDelay="400"
+            >
               <mat-icon matListItemIcon>{{ child.icon }}</mat-icon>
               <div matListItemTitle>{{ child.name }}</div>
+              <!-- Botón de favorito -->
+              <button
+                mat-icon-button
+                class="favorite-btn"
+                [class.is-favorite]="isFavorite(child)"
+                (click)="toggleFavorite($event, child)"
+                [attr.aria-label]="isFavorite(child) ? 'Quitar de favoritos' : 'Marcar como favorito'"
+                matTooltip="{{ isFavorite(child) ? 'Quitar de favoritos' : 'Agregar a favoritos' }}"
+                matTooltipPosition="right"
+              >
+                <mat-icon>{{ isFavorite(child) ? 'star' : 'star_border' }}</mat-icon>
+              </button>
             </a>
           </ng-container>
         </div>
       </mat-expansion-panel>
     </ng-container>
   </mat-accordion>
+
+  <!-- Mensaje sin resultados -->
+  <div *ngIf="noSearchResults()" class="no-results-message">
+    <mat-icon>search_off</mat-icon>
+    <span>Sin resultados para "{{ searchText() }}"</span>
+  </div>
 
   <mat-divider class="menu-divider"></mat-divider>
 

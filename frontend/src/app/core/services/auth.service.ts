@@ -130,6 +130,20 @@ export class AuthService {
     return localStorage.getItem(this.REMEMBER_ME_KEY) === 'true';
   }
 
+  /** Extrae el ID del usuario autenticado desde el token JWT */
+  getUserId(): string {
+    const token = this.getToken();
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const id = payload.sub || payload.nameid || payload.id ||
+          payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
+        if (id) return String(id);
+      } catch (e) {}
+    }
+    return 'anonymous';
+  }
+
   getUserName(): string {
     const storedName = localStorage.getItem(this.USER_NAME_KEY) || sessionStorage.getItem(this.USER_NAME_KEY);
     if (storedName) {

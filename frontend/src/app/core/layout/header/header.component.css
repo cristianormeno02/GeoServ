@@ -41,3 +41,92 @@
 .spacer {
   flex: 1 1 auto;
 }
+
+/* ── Botón de Favoritos en el header ───────────────────────────────────────── */
+.favorites-btn {
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.favorites-btn mat-icon {
+  color: var(--color-accent, #f59e0b);
+}
+
+.favorites-label {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+}
+
+/* ── Panel de favoritos ─────────────────────────────────────────────────────── */
+.favorite-menu-item {
+  display: flex;
+  align-items: center;
+  min-width: 260px;
+}
+
+.favorite-item-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.remove-favorite-btn {
+  color: var(--color-accent, #f59e0b);
+  width: 28px !important;
+  height: 28px !important;
+  line-height: 28px !important;
+}
+
+.remove-favorite-btn mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+/* Estado vacío del panel */
+.empty-favorites {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 20px;
+  gap: 8px;
+  color: #6b7280;
+  text-align: center;
+  min-width: 260px;
+  max-width: 320px;
+}
+
+.empty-favorites mat-icon {
+  font-size: 36px;
+  width: 36px;
+  height: 36px;
+  color: #d1d5db;
+}
+
+.empty-favorites p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.empty-favorites small {
+  font-size: 12px;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.inline-icon {
+  font-size: 14px !important;
+  width: 14px !important;
+  height: 14px !important;
+  vertical-align: middle;
+}

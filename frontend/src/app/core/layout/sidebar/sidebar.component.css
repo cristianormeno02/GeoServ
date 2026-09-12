@@ -108,3 +108,127 @@ mat-panel-title {
 ::ng-deep .mat-expansion-indicator::after {
   color: var(--text-primary) !important;
 }
+
+/* ── Campo de búsqueda ─────────────────────────────────────────────────────── */
+.search-container {
+  padding: 10px 14px 2px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 4px 8px;
+  height: 32px;
+  box-sizing: border-box;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.search-box:focus-within {
+  border-color: rgba(255, 255, 255, 0.4);
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.search-icon {
+  font-size: 16px !important;
+  width: 16px !important;
+  height: 16px !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 12px;
+  color: var(--text-primary);
+  min-width: 0;
+}
+
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.clear-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.5);
+  margin-left: 4px;
+}
+
+.clear-btn:hover {
+  color: var(--text-primary);
+}
+
+.clear-btn mat-icon {
+  font-size: 14px !important;
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* ── Mensaje sin resultados ────────────────────────────────────────────────── */
+.no-results-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 16px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  text-align: center;
+}
+
+.no-results-message mat-icon {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+  color: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* ── Botón de favorito ─────────────────────────────────────────────────────── */
+.child-item {
+  position: relative;
+}
+
+.favorite-btn {
+  position: absolute;
+  right: 4px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  color: rgba(255, 255, 255, 0.4) !important;
+  width: 28px !important;
+  height: 28px !important;
+  line-height: 28px !important;
+}
+
+.favorite-btn mat-icon {
+  font-size: 18px !important;
+  width: 18px !important;
+  height: 18px !important;
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* El botón se hace visible al hacer hover sobre el ítem */
+.child-item:hover .favorite-btn {
+  opacity: 1;
+}
+
+/* Cuando es favorito, el ícono siempre visible y con color acento */
+.favorite-btn.is-favorite {
+  opacity: 1;
+}
+
+.favorite-btn.is-favorite mat-icon {
+  color: var(--color-accent, #f59e0b) !important;
+}
+
