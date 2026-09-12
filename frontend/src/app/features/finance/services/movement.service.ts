@@ -8,7 +8,8 @@ export enum MovementSourceType {
   DirectCost = 'DirectCost',
   FixedCostPayment = 'FixedCostPayment',
   AssetPurchase = 'AssetPurchase',
-  ServiceOrderIncome = 'ServiceOrderIncome'
+  ServiceOrderIncome = 'ServiceOrderIncome',
+  InternalTransfer = 'InternalTransfer'
 }
 
 export interface Movement {
@@ -34,6 +35,7 @@ export interface Movement {
   sourceType?: MovementSourceType;
   sourceId?: string | null;
   sourceReference?: string | null;
+  transferGroupId?: string | null;
 }
 
 export interface PagedMovementResponse {
@@ -41,6 +43,14 @@ export interface PagedMovementResponse {
   totalCount: number;
   page: number;
   pageSize: number;
+}
+
+export interface CreateTransferRequest {
+  fromAccountId: string;
+  toAccountId: string;
+  amount: number;
+  date: string;
+  description?: string | null;
 }
 
 @Injectable({
@@ -84,5 +94,13 @@ export class MovementService {
 
   deleteMovement(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  createTransfer(request: CreateTransferRequest): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/transfer`, request);
+  }
+
+  deleteTransfer(transferGroupId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/transfer/${transferGroupId}`);
   }
 }

@@ -111,6 +111,9 @@ public class GeoServDbContext : DbContext
         modelBuilder.Entity<AccountingMovement>()
             .HasIndex(a => new { a.SourceType, a.SourceId });
 
+        modelBuilder.Entity<AccountingMovement>()
+            .HasIndex(a => a.TransferGroupId);
+
         modelBuilder.Entity<AccountingMovementDetail>()
             .HasNoKey()
             .ToView("vw_AccountingMovementDetail");

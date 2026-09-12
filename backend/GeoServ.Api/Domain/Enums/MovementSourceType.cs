@@ -6,5 +6,6 @@ public enum MovementSourceType
     DirectCost,
     FixedCostPayment,
     AssetPurchase,
-    ServiceOrderIncome
+    ServiceOrderIncome,
+    InternalTransfer
 }

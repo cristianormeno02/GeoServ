@@ -47,12 +47,22 @@ export class Movimientos implements OnInit {
     DirectCost: 'Costo Directo',
     FixedCostPayment: 'Pago de Gasto Fijo',
     AssetPurchase: 'Compra de Activo',
+    InternalTransfer: 'Transferencia Interna',
   };
 
   getSourceLabel(sourceType?: string): string {
     return sourceType ? (this.sourceTypeLabels[sourceType] ?? sourceType) : 'Manual';
   }
-  
+
+  getSourceReference(movement: Movement): string | null {
+    if (movement.sourceType === 'InternalTransfer' && movement.sourceId) {
+      const otherAccount = this.accounts.find(a => a.id === movement.sourceId);
+      const otherName = otherAccount?.name || 'otra cuenta';
+      return movement.isIncome ? `Desde ${otherName}` : `Hacia ${otherName}`;
+    }
+    return movement.sourceReference || movement.serviceOrderNumber || null;
+  }
+
   totalCount = 0;
   pageSize = 10;
   pageIndex = 0;
@@ -156,9 +166,19 @@ export class Movimientos implements OnInit {
   }
 
   deleteMovement(movement: Movement) {
-    if (confirm(`Â¿EstÃ¡s seguro de eliminar este movimiento por $${movement.amount}?`)) {
+    if (movement.transferGroupId) {
+      if (confirm(`¿Estás seguro de eliminar esta Transferencia Interna por $${movement.amount}? Se eliminarán ambos movimientos (origen y destino).`)) {
+        this.movementService.deleteTransfer(movement.transferGroupId).subscribe({
+          next: () => { this.snackBar.open('Transferencia eliminada con éxito', 'Cerrar'); this.loadMovements(); },
+          error: (err) => { console.error(err); this.snackBar.open(err.error?.message || 'Error al eliminar la transferencia', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] }); }
+        });
+      }
+      return;
+    }
+
+    if (confirm(`¿Estás seguro de eliminar este movimiento por $${movement.amount}?`)) {
       this.movementService.deleteMovement(movement.id!).subscribe({
-        next: () => { this.snackBar.open('Eliminado con Ã©xito', 'Cerrar'); this.loadMovements(); },
+        next: () => { this.snackBar.open('Eliminado con éxito', 'Cerrar'); this.loadMovements(); },
         error: (err) => { console.error(err); this.snackBar.open(err.error?.message || 'Error al eliminar', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] }); }
       });
     }

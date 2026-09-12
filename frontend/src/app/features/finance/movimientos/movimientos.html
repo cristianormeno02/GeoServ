@@ -86,8 +86,8 @@
           <th mat-header-cell *matHeaderCellDef> Origen </th>
           <td mat-cell *matCellDef="let element">
             <span class="source-badge">{{getSourceLabel(element.sourceType)}}</span><br>
-            <small *ngIf="element.sourceReference || element.serviceOrderNumber">
-              {{element.sourceReference || element.serviceOrderNumber}}
+            <small *ngIf="getSourceReference(element)">
+              {{getSourceReference(element)}}
             </small>
           </td>
         </ng-container>
@@ -112,10 +112,10 @@
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef> Acciones </th>
           <td mat-cell *matCellDef="let element">
-            <button mat-icon-button color="primary" (click)="openEditDialog(element)" title="Editar">
+            <button mat-icon-button color="primary" *ngIf="!element.transferGroupId" (click)="openEditDialog(element)" title="Editar">
               <mat-icon>edit</mat-icon>
             </button>
-            <button mat-icon-button color="warn" (click)="deleteMovement(element)" title="Eliminar">
+            <button mat-icon-button color="warn" (click)="deleteMovement(element)" [title]="element.transferGroupId ? 'Eliminar transferencia completa' : 'Eliminar'">
               <mat-icon>delete</mat-icon>
             </button>
           </td>

@@ -64,9 +64,11 @@ public static class FinancialDashboardEndpoints
             }
 
             // Ingresos mes actual + serie de 6 meses
+            // Se excluyen las Transferencias Internas para no inflar la cifra bruta con fondos
+            // que solo se movieron entre cuentas propias (el saldo por cuenta sí las incluye, arriba).
             var incomeCurrentMonth = await context.AccountingMovements
                 .AsNoTracking()
-                .Where(m => m.IsIncome && m.Date.Month == currentMonth && m.Date.Year == currentYear)
+                .Where(m => m.IsIncome && m.SourceType != MovementSourceType.InternalTransfer && m.Date.Month == currentMonth && m.Date.Year == currentYear)
                 .SumAsync(m => (decimal?)m.Amount) ?? 0;
 
             var incomeTrend = new List<decimal>();
@@ -75,7 +77,7 @@ public static class FinancialDashboardEndpoints
                 var pDate = now.AddMonths(-i);
                 var inc = await context.AccountingMovements
                     .AsNoTracking()
-                    .Where(m => m.IsIncome && m.Date.Month == pDate.Month && m.Date.Year == pDate.Year)
+                    .Where(m => m.IsIncome && m.SourceType != MovementSourceType.InternalTransfer && m.Date.Month == pDate.Month && m.Date.Year == pDate.Year)
                     .SumAsync(m => (decimal?)m.Amount) ?? 0;
                 incomeTrend.Add(inc);
             }
@@ -83,19 +85,19 @@ public static class FinancialDashboardEndpoints
             // Resultado neto del mes (Ingresos - Egresos) y variación vs mes anterior
             var expensesCurrentMonth = await context.AccountingMovements
                 .AsNoTracking()
-                .Where(m => !m.IsIncome && m.Date.Month == currentMonth && m.Date.Year == currentYear)
+                .Where(m => !m.IsIncome && m.SourceType != MovementSourceType.InternalTransfer && m.Date.Month == currentMonth && m.Date.Year == currentYear)
                 .SumAsync(m => (decimal?)m.Amount) ?? 0;
 
             var netResultCurrentMonth = incomeCurrentMonth - expensesCurrentMonth;
 
             var incomeLastMonth = await context.AccountingMovements
                 .AsNoTracking()
-                .Where(m => m.IsIncome && m.Date.Month == lastMonthDate.Month && m.Date.Year == lastMonthDate.Year)
+                .Where(m => m.IsIncome && m.SourceType != MovementSourceType.InternalTransfer && m.Date.Month == lastMonthDate.Month && m.Date.Year == lastMonthDate.Year)
                 .SumAsync(m => (decimal?)m.Amount) ?? 0;
 
             var expensesLastMonth = await context.AccountingMovements
                 .AsNoTracking()
-                .Where(m => !m.IsIncome && m.Date.Month == lastMonthDate.Month && m.Date.Year == lastMonthDate.Year)
+                .Where(m => !m.IsIncome && m.SourceType != MovementSourceType.InternalTransfer && m.Date.Month == lastMonthDate.Month && m.Date.Year == lastMonthDate.Year)
                 .SumAsync(m => (decimal?)m.Amount) ?? 0;
 
             var netResultLastMonth = incomeLastMonth - expensesLastMonth;

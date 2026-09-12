@@ -31,45 +31,76 @@ import { environment } from '../../../../environments/environment';
     <h2 mat-dialog-title>{{ isEditMode ? 'Editar Movimiento' : 'Nuevo Movimiento' }}</h2>
     <mat-dialog-content>
       <form [formGroup]="movementForm" class="form-container">
-        
-        <div class="toggle-container">
+
+        <mat-form-field appearance="outline" class="full-width" *ngIf="!isEditMode">
+          <mat-label>Tipo de Movimiento</mat-label>
+          <mat-select formControlName="movementMode">
+            <mat-option value="Ingreso">Ingreso</mat-option>
+            <mat-option value="Egreso">Egreso</mat-option>
+            <mat-option value="Transferencia">Transferencia entre Cuentas</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div class="toggle-container" *ngIf="isEditMode">
           <mat-slide-toggle formControlName="isIncome" [color]="isIncomeCtrl.value ? 'primary' : 'warn'">
             {{ isIncomeCtrl.value ? 'Ingreso' : 'Egreso' }}
           </mat-slide-toggle>
         </div>
 
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Categoría</mat-label>
-          <mat-select formControlName="categoryId" [compareWith]="compareIds" required>
-            <mat-option *ngFor="let cat of filteredCategories" [value]="cat.id">
-              {{ cat.name }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
+        <ng-container *ngIf="movementModeCtrl.value !== 'Transferencia'; else transferFields">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Categoría</mat-label>
+            <mat-select formControlName="categoryId" [compareWith]="compareIds" required>
+              <mat-option *ngFor="let cat of filteredCategories" [value]="cat.id">
+                {{ cat.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
 
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Tipo de Origen</mat-label>
-          <mat-select formControlName="sourceType" required>
-            <mat-option value="Manual">Manual</mat-option>
-            <mat-option value="ServiceOrderIncome" *ngIf="isIncomeCtrl.value">Ingreso por OS</mat-option>
-            <mat-option value="DirectCost" *ngIf="!isIncomeCtrl.value">Costo Directo</mat-option>
-            <mat-option value="FixedCostPayment" *ngIf="!isIncomeCtrl.value">Pago de Gasto Fijo</mat-option>
-            <mat-option value="AssetPurchase" *ngIf="!isIncomeCtrl.value">Compra de Activo</mat-option>
-          </mat-select>
-        </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Tipo de Origen</mat-label>
+            <mat-select formControlName="sourceType" required>
+              <mat-option value="Manual">Manual</mat-option>
+              <mat-option value="ServiceOrderIncome" *ngIf="isIncomeCtrl.value">Ingreso por OS</mat-option>
+              <mat-option value="DirectCost" *ngIf="!isIncomeCtrl.value">Costo Directo</mat-option>
+              <mat-option value="FixedCostPayment" *ngIf="!isIncomeCtrl.value">Pago de Gasto Fijo</mat-option>
+              <mat-option value="AssetPurchase" *ngIf="!isIncomeCtrl.value">Compra de Activo</mat-option>
+            </mat-select>
+          </mat-form-field>
 
-        <mat-form-field appearance="outline" class="full-width" *ngIf="sourceTypeCtrl.value !== 'Manual'">
-          <mat-label>Origen Específico</mat-label>
-          <mat-select formControlName="sourceId" [compareWith]="compareIds" required>
-            <mat-option *ngFor="let opt of sourceOptions" [value]="opt.id">
-              {{ opt.name }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width" *ngIf="sourceTypeCtrl.value !== 'Manual'">
+            <mat-label>Origen Específico</mat-label>
+            <mat-select formControlName="sourceId" [compareWith]="compareIds" required>
+              <mat-option *ngFor="let opt of sourceOptions" [value]="opt.id">
+                {{ opt.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </ng-container>
+
+        <ng-template #transferFields>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Cuenta Origen</mat-label>
+            <mat-select formControlName="fromAccountId" [compareWith]="compareIds" required>
+              <mat-option *ngFor="let acc of accounts" [value]="acc.id" [disabled]="acc.id === toAccountIdCtrl.value">
+                {{acc.name}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Cuenta Destino</mat-label>
+            <mat-select formControlName="toAccountId" [compareWith]="compareIds" required>
+              <mat-option *ngFor="let acc of accounts" [value]="acc.id" [disabled]="acc.id === fromAccountIdCtrl.value">
+                {{acc.name}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </ng-template>
 
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Descripción</mat-label>
-          <input matInput formControlName="description" placeholder="Ej: Pago alquiler" required>
+          <input matInput formControlName="description" placeholder="Ej: Pago alquiler" [required]="movementModeCtrl.value !== 'Transferencia'">
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width">
@@ -85,7 +116,7 @@ import { environment } from '../../../../environments/environment';
           <mat-datepicker #picker></mat-datepicker>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" class="full-width">
+        <mat-form-field appearance="outline" class="full-width" *ngIf="movementModeCtrl.value !== 'Transferencia'">
           <mat-label>Cuenta Financiera</mat-label>
           <mat-select formControlName="financialAccountId" [compareWith]="compareIds" required>
             <mat-option *ngFor="let acc of accounts" [value]="acc.id">
@@ -130,6 +161,7 @@ export class MovimientoFormComponent implements OnInit {
   ) {
     this.isEditMode = !!data?.movement;
     this.movementForm = this.fb.group({
+      movementMode: [data?.movement?.isIncome === false ? 'Egreso' : 'Ingreso'],
       isIncome: [data?.movement?.isIncome ?? true],
       categoryId: [data?.movement?.categoryId || '', Validators.required],
       sourceType: [data?.movement?.sourceType || 'Manual', Validators.required],
@@ -137,7 +169,9 @@ export class MovimientoFormComponent implements OnInit {
       description: [data?.movement?.description || '', Validators.required],
       amount: [data?.movement?.amount || '', [Validators.required, Validators.min(0.01)]],
       date: [data?.movement?.date ? new Date(data.movement.date) : new Date(), Validators.required],
-      financialAccountId: [data?.movement?.financialAccountId || '', Validators.required]
+      financialAccountId: [data?.movement?.financialAccountId || '', Validators.required],
+      fromAccountId: [''],
+      toAccountId: ['']
     });
   }
 
@@ -149,6 +183,9 @@ export class MovimientoFormComponent implements OnInit {
   ngOnInit(): void {
     this.loadAccounts();
     this.loadCategories();
+
+    this.movementModeCtrl.valueChanges.subscribe(mode => this.applyMovementMode(mode));
+    this.applyMovementMode(this.movementModeCtrl.value, { emitEvent: false });
 
     this.isIncomeCtrl.valueChanges.subscribe(() => {
       this.movementForm.get('categoryId')?.setValue('');
@@ -196,7 +233,48 @@ export class MovimientoFormComponent implements OnInit {
 
   get isIncomeCtrl() { return this.movementForm.get('isIncome')!; }
   get sourceTypeCtrl() { return this.movementForm.get('sourceType')!; }
+  get movementModeCtrl() { return this.movementForm.get('movementMode')!; }
+  get fromAccountIdCtrl() { return this.movementForm.get('fromAccountId')!; }
+  get toAccountIdCtrl() { return this.movementForm.get('toAccountId')!; }
   get filteredCategories() { return this.allCategories.filter(c => c.isIncome === this.isIncomeCtrl.value && c.isActive); }
+
+  applyMovementMode(mode: string, options: { emitEvent?: boolean } = {}) {
+    const isTransfer = mode === 'Transferencia';
+
+    const categoryId = this.movementForm.get('categoryId')!;
+    const sourceType = this.movementForm.get('sourceType')!;
+    const financialAccountId = this.movementForm.get('financialAccountId')!;
+    const fromAccountId = this.movementForm.get('fromAccountId')!;
+    const toAccountId = this.movementForm.get('toAccountId')!;
+    const description = this.movementForm.get('description')!;
+
+    if (isTransfer) {
+      this.isIncomeCtrl.setValue(false, options);
+      categoryId.clearValidators();
+      sourceType.clearValidators();
+      financialAccountId.clearValidators();
+      description.clearValidators();
+      fromAccountId.setValidators(Validators.required);
+      toAccountId.setValidators(Validators.required);
+    } else {
+      this.isIncomeCtrl.setValue(mode !== 'Egreso', options);
+      categoryId.setValidators(Validators.required);
+      sourceType.setValidators(Validators.required);
+      financialAccountId.setValidators(Validators.required);
+      description.setValidators(Validators.required);
+      fromAccountId.clearValidators();
+      toAccountId.clearValidators();
+      fromAccountId.setValue('', options);
+      toAccountId.setValue('', options);
+    }
+
+    categoryId.updateValueAndValidity(options);
+    sourceType.updateValueAndValidity(options);
+    financialAccountId.updateValueAndValidity(options);
+    fromAccountId.updateValueAndValidity(options);
+    toAccountId.updateValueAndValidity(options);
+    description.updateValueAndValidity(options);
+  }
 
   loadAccounts() { 
     this.accountService.getAccounts().subscribe(data => { 
@@ -254,10 +332,30 @@ export class MovimientoFormComponent implements OnInit {
     if (this.movementForm.invalid) return;
     this.isSubmitting = true;
     const val = this.movementForm.value;
-    
+
     let amountNumber = val.amount;
     if (typeof amountNumber === 'string') {
       amountNumber = parseFloat(amountNumber.replace(/\./g, '').replace(',', '.'));
+    }
+
+    if (val.movementMode === 'Transferencia') {
+      this.movementService.createTransfer({
+        fromAccountId: val.fromAccountId,
+        toAccountId: val.toAccountId,
+        amount: Number(amountNumber) || 0,
+        date: val.date instanceof Date ? val.date.toISOString() : new Date(val.date).toISOString(),
+        description: val.description || null
+      }).subscribe({
+        next: () => {
+          this.snackBar.open('Transferencia registrada con éxito', 'Cerrar', { duration: 3000 });
+          this.dialogRef.close(true);
+        },
+        error: (err) => {
+          this.isSubmitting = false;
+          this.snackBar.open(err.error?.message || 'Error al registrar la transferencia', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] });
+        }
+      });
+      return;
     }
 
     const payload: Movement = {

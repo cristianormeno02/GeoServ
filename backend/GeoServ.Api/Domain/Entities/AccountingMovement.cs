@@ -17,6 +17,9 @@ public class AccountingMovement
     public MovementSourceType SourceType { get; set; } = MovementSourceType.Manual;
     public string? SourceId { get; set; }
 
+    // Vincula ambas patas de una Transferencia Interna (null para todo movimiento que no sea una transferencia)
+    public Guid? TransferGroupId { get; set; }
+
     // --- ¿De dónde sale o a dónde entra la plata? ---
     public Guid FinancialAccountId { get; set; }
     public FinancialAccount FinancialAccount { get; set; } = null!;

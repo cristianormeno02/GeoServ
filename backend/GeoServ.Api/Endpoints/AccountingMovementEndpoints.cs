@@ -83,6 +83,7 @@ public static class AccountingMovementEndpoints
                     m.RegisteredByUserId,
                     SourceType = m.SourceType.ToString(),
                     m.SourceId,
+                    m.TransferGroupId,
                     SourceReference = m.SourceType == MovementSourceType.ServiceOrderIncome
                         ? (m.ServiceOrder != null ? m.ServiceOrder.OrderNumber : null)
                         : m.SourceType == MovementSourceType.DirectCost
@@ -180,74 +181,203 @@ public static class AccountingMovementEndpoints
         .WithOpenApi();
 
         group.MapPut("/{id:guid}", async (Guid id, [FromBody] UpdateMovementRequest request, GeoServDbContext context) =>
-        {
-            try
-            {
-                var movement = await context.AccountingMovements.FindAsync(id);
-                if (movement == null) return Results.NotFound();
-
-                var sourceType = request.SourceType ?? MovementSourceType.Manual;
-                var sourceId = request.SourceId;
-
-                Guid? serviceOrderId = request.ServiceOrderId;
-                Guid? directCostId = request.DirectCostId;
-                Guid? fixedCostId = request.FixedCostId;
-                Guid? assetId = request.AssetId;
-
-                if (!request.SourceType.HasValue)
-                {
-                    sourceId = request.ServiceOrderId?.ToString() ?? request.DirectCostId?.ToString() ?? request.FixedCostId?.ToString() ?? request.AssetId?.ToString();
-                    if (request.ServiceOrderId.HasValue) sourceType = MovementSourceType.ServiceOrderIncome;
-                    else if (request.DirectCostId.HasValue) sourceType = MovementSourceType.DirectCost;
-                    else if (request.FixedCostId.HasValue) sourceType = MovementSourceType.FixedCostPayment;
-                    else if (request.AssetId.HasValue) sourceType = MovementSourceType.AssetPurchase;
-                }
-                else if (Guid.TryParse(sourceId, out var parsedGuid))
-                {
-                    if (sourceType == MovementSourceType.ServiceOrderIncome) serviceOrderId = parsedGuid;
-                    else if (sourceType == MovementSourceType.DirectCost) directCostId = parsedGuid;
-                    else if (sourceType == MovementSourceType.FixedCostPayment) fixedCostId = parsedGuid;
-                    else if (sourceType == MovementSourceType.AssetPurchase) assetId = parsedGuid;
-                }
-
-                movement.IsIncome = request.IsIncome;
-                movement.CategoryId = request.CategoryId;
-                movement.Amount = request.Amount;
-                movement.Date = request.Date;
-                movement.Description = request.Description ?? string.Empty;
-                movement.FinancialAccountId = request.FinancialAccountId;
-                movement.PaymentMethodId = request.PaymentMethodId;
-                movement.ServiceOrderId = serviceOrderId;
-                movement.FixedCostId = fixedCostId;
-                movement.DirectCostId = directCostId;
-                movement.AssetId = assetId;
-                movement.CheckId = request.CheckId;
-                movement.ResponsibleId = request.ResponsibleId;
-                movement.SourceType = sourceType;
-                movement.SourceId = sourceId;
-
-                await context.SaveChangesAsync();
-                return Results.NoContent();
-            }
-            catch(Exception ex)
-            {
-                return Results.Problem(detail: ex.InnerException?.Message ?? ex.Message, statusCode: 500);
-            }
-        })
+            await UpdateMovementAsync(id, request, context))
         .WithName("UpdateMovement")
         .WithOpenApi();
 
         group.MapDelete("/{id:guid}", async (Guid id, GeoServDbContext context) =>
+            await DeleteMovementAsync(id, context))
+        .WithName("DeleteMovement")
+        .WithOpenApi();
+
+        // --- Transferencias Internas entre cuentas propias ---
+        group.MapPost("/transfer", async ([FromBody] CreateTransferRequest request, HttpContext httpContext, GeoServDbContext context) =>
+        {
+            var userIdStr = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            Guid? userId = Guid.TryParse(userIdStr, out var uid) ? uid : null;
+            return await CreateTransferAsync(request, userId, context);
+        })
+        .WithName("CreateTransfer")
+        .WithOpenApi();
+
+        group.MapDelete("/transfer/{transferGroupId:guid}", async (Guid transferGroupId, GeoServDbContext context) =>
+            await DeleteTransferAsync(transferGroupId, context))
+        .WithName("DeleteTransfer")
+        .WithOpenApi();
+    }
+
+    // Categorías semilla reutilizadas (ver GeoServDbContext.cs) para no romper la FK de movimientos históricos
+    // que ya las referencian.
+    private static readonly Guid InternalTransferIncomeCategoryId = Guid.Parse("A3333333-3333-3333-3333-333333333333");
+    private static readonly Guid InternalTransferExpenseCategoryId = Guid.Parse("AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA");
+
+    public static async Task<IResult> CreateTransferAsync(CreateTransferRequest request, Guid? userId, GeoServDbContext context)
+    {
+        try
+        {
+            if (request.FromAccountId == request.ToAccountId)
+            {
+                return Results.BadRequest(new { message = "La cuenta origen y la cuenta destino no pueden ser la misma." });
+            }
+
+            if (request.Amount <= 0)
+            {
+                return Results.BadRequest(new { message = "El monto de la transferencia debe ser mayor a cero." });
+            }
+
+            var fromAccount = await context.FinancialAccounts.FindAsync(request.FromAccountId);
+            var toAccount = await context.FinancialAccounts.FindAsync(request.ToAccountId);
+
+            if (fromAccount == null || toAccount == null)
+            {
+                return Results.BadRequest(new { message = "La cuenta origen o la cuenta destino no existe." });
+            }
+
+            if (!fromAccount.IsActive || !toAccount.IsActive)
+            {
+                return Results.BadRequest(new { message = "Ambas cuentas deben estar activas para transferir fondos." });
+            }
+
+            if (fromAccount.CurrencyId != toAccount.CurrencyId)
+            {
+                return Results.BadRequest(new { message = "No se puede transferir entre cuentas de distinta moneda." });
+            }
+
+            var resolvedUserId = userId ?? await context.Users.Select(u => u.Id).FirstOrDefaultAsync();
+
+            var transferGroupId = Guid.NewGuid();
+            var description = string.IsNullOrWhiteSpace(request.Description)
+                ? $"Transferencia interna: {fromAccount.Name} -> {toAccount.Name}"
+                : request.Description!;
+
+            var outgoing = new AccountingMovement
+            {
+                Id = Guid.NewGuid(),
+                IsIncome = false,
+                CategoryId = InternalTransferExpenseCategoryId,
+                Amount = request.Amount,
+                Date = request.Date,
+                Description = description,
+                FinancialAccountId = fromAccount.Id,
+                SourceType = MovementSourceType.InternalTransfer,
+                SourceId = toAccount.Id.ToString(),
+                TransferGroupId = transferGroupId,
+                RegisteredByUserId = resolvedUserId
+            };
+
+            var incoming = new AccountingMovement
+            {
+                Id = Guid.NewGuid(),
+                IsIncome = true,
+                CategoryId = InternalTransferIncomeCategoryId,
+                Amount = request.Amount,
+                Date = request.Date,
+                Description = description,
+                FinancialAccountId = toAccount.Id,
+                SourceType = MovementSourceType.InternalTransfer,
+                SourceId = fromAccount.Id.ToString(),
+                TransferGroupId = transferGroupId,
+                RegisteredByUserId = resolvedUserId
+            };
+
+            context.AccountingMovements.AddRange(outgoing, incoming);
+            await context.SaveChangesAsync();
+
+            return Results.Created($"/api/movements/transfer/{transferGroupId}", new { transferGroupId, outgoing, incoming });
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem(detail: ex.InnerException?.Message ?? ex.Message, statusCode: 500);
+        }
+    }
+
+    public static async Task<IResult> UpdateMovementAsync(Guid id, UpdateMovementRequest request, GeoServDbContext context)
+    {
+        try
         {
             var movement = await context.AccountingMovements.FindAsync(id);
             if (movement == null) return Results.NotFound();
 
-            context.AccountingMovements.Remove(movement);
+            if (movement.TransferGroupId.HasValue)
+            {
+                return Results.BadRequest(new { message = "Este movimiento forma parte de una Transferencia Interna y no puede editarse individualmente. Elimine la transferencia completa y vuelva a cargarla." });
+            }
+
+            var sourceType = request.SourceType ?? MovementSourceType.Manual;
+            var sourceId = request.SourceId;
+
+            Guid? serviceOrderId = request.ServiceOrderId;
+            Guid? directCostId = request.DirectCostId;
+            Guid? fixedCostId = request.FixedCostId;
+            Guid? assetId = request.AssetId;
+
+            if (!request.SourceType.HasValue)
+            {
+                sourceId = request.ServiceOrderId?.ToString() ?? request.DirectCostId?.ToString() ?? request.FixedCostId?.ToString() ?? request.AssetId?.ToString();
+                if (request.ServiceOrderId.HasValue) sourceType = MovementSourceType.ServiceOrderIncome;
+                else if (request.DirectCostId.HasValue) sourceType = MovementSourceType.DirectCost;
+                else if (request.FixedCostId.HasValue) sourceType = MovementSourceType.FixedCostPayment;
+                else if (request.AssetId.HasValue) sourceType = MovementSourceType.AssetPurchase;
+            }
+            else if (Guid.TryParse(sourceId, out var parsedGuid))
+            {
+                if (sourceType == MovementSourceType.ServiceOrderIncome) serviceOrderId = parsedGuid;
+                else if (sourceType == MovementSourceType.DirectCost) directCostId = parsedGuid;
+                else if (sourceType == MovementSourceType.FixedCostPayment) fixedCostId = parsedGuid;
+                else if (sourceType == MovementSourceType.AssetPurchase) assetId = parsedGuid;
+            }
+
+            movement.IsIncome = request.IsIncome;
+            movement.CategoryId = request.CategoryId;
+            movement.Amount = request.Amount;
+            movement.Date = request.Date;
+            movement.Description = request.Description ?? string.Empty;
+            movement.FinancialAccountId = request.FinancialAccountId;
+            movement.PaymentMethodId = request.PaymentMethodId;
+            movement.ServiceOrderId = serviceOrderId;
+            movement.FixedCostId = fixedCostId;
+            movement.DirectCostId = directCostId;
+            movement.AssetId = assetId;
+            movement.CheckId = request.CheckId;
+            movement.ResponsibleId = request.ResponsibleId;
+            movement.SourceType = sourceType;
+            movement.SourceId = sourceId;
+
             await context.SaveChangesAsync();
             return Results.NoContent();
-        })
-        .WithName("DeleteMovement")
-        .WithOpenApi();
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem(detail: ex.InnerException?.Message ?? ex.Message, statusCode: 500);
+        }
+    }
+
+    public static async Task<IResult> DeleteMovementAsync(Guid id, GeoServDbContext context)
+    {
+        var movement = await context.AccountingMovements.FindAsync(id);
+        if (movement == null) return Results.NotFound();
+
+        if (movement.TransferGroupId.HasValue)
+        {
+            return Results.BadRequest(new { message = "Este movimiento forma parte de una Transferencia Interna y no puede eliminarse individualmente. Elimine la transferencia completa." });
+        }
+
+        context.AccountingMovements.Remove(movement);
+        await context.SaveChangesAsync();
+        return Results.NoContent();
+    }
+
+    public static async Task<IResult> DeleteTransferAsync(Guid transferGroupId, GeoServDbContext context)
+    {
+        var legs = await context.AccountingMovements
+            .Where(m => m.TransferGroupId == transferGroupId)
+            .ToListAsync();
+
+        if (legs.Count == 0) return Results.NotFound();
+
+        context.AccountingMovements.RemoveRange(legs);
+        await context.SaveChangesAsync();
+        return Results.NoContent();
     }
 }
 
@@ -263,6 +393,14 @@ public record CreateMovementRequest(
     string? SourceId,
     Guid? CheckId,
     Guid? ResponsibleId
+);
+
+public record CreateTransferRequest(
+    Guid FromAccountId,
+    Guid ToAccountId,
+    decimal Amount,
+    DateTime Date,
+    string? Description
 );
 
 public record UpdateMovementRequest(
