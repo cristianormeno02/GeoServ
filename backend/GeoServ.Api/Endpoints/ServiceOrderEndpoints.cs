@@ -669,6 +669,16 @@ public static class ServiceOrderEndpoints
         .WithName("UpdateServiceOrder")
         .WithOpenApi();
 
+        // 7.1 Marcar Orden de Servicio como Entregada (POST)
+        group.MapPost("/{id:guid}/deliver", async (Guid id, HttpContext httpContext, GeoServDbContext context) =>
+        {
+            var userIdStr = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            Guid? userId = Guid.TryParse(userIdStr, out var uid) ? uid : null;
+            return await DeliverServiceOrderAsync(id, userId, context);
+        })
+        .WithName("DeliverServiceOrder")
+        .WithOpenApi();
+
         // 8. Eliminar Orden de Servicio (DELETE)
         group.MapDelete("/{id:guid}", async (Guid id, GeoServDbContext context) =>
         {
@@ -763,6 +773,106 @@ public static class ServiceOrderEndpoints
         })
         .WithName("DeleteServiceOrderObservation")
         .WithOpenApi();
+    }
+
+    public static async Task<IResult> DeliverServiceOrderAsync(Guid id, Guid? userId, GeoServDbContext context)
+    {
+        try
+        {
+            var order = await context.ServiceOrders
+                .Include(o => o.Status)
+                .Include(o => o.Responsibles)
+                .FirstOrDefaultAsync(o => o.Id == id);
+
+            if (order == null)
+            {
+                return Results.NotFound();
+            }
+
+            if (!string.Equals(order.Status?.Name, "Iniciada", StringComparison.OrdinalIgnoreCase))
+            {
+                return Results.BadRequest(new { message = "Solo se pueden marcar como entregadas las órdenes en estado 'Iniciada'." });
+            }
+
+            var entregadaStatus = await context.ServiceOrderStatuses
+                .FirstOrDefaultAsync(s => s.Name.ToLower() == "entregada");
+
+            if (entregadaStatus == null)
+            {
+                return Results.Problem("El estado 'Entregada' no está configurado en el sistema.", statusCode: 500);
+            }
+
+            // Asignación automática de fechas reales
+            var resolvedActualEndDate = order.ActualEndDate ?? DateTime.UtcNow.Date;
+            var resolvedActualStartDate = order.ActualStartDate ?? order.EstimatedStartDate ?? resolvedActualEndDate;
+
+            var responsibleIds = order.Responsibles.Select(r => r.ResponsibleId).ToList();
+
+            var validationError = ValidateServiceOrderRules(
+                entregadaStatus.Name,
+                order.ClientId,
+                order.ProjectId,
+                order.RequestDate,
+                order.EstimatedStartDate,
+                order.EstimatedEndDate,
+                resolvedActualStartDate,
+                resolvedActualEndDate,
+                order.BudgetedAmount,
+                order.TotalAmount,
+                responsibleIds
+            );
+
+            if (validationError != null)
+            {
+                return Results.BadRequest(new { message = validationError });
+            }
+
+            order.StatusId = entregadaStatus.Id;
+            order.Status = entregadaStatus;
+            order.ActualStartDate = resolvedActualStartDate;
+            order.ActualEndDate = resolvedActualEndDate;
+            order.UpdatedAt = DateTime.UtcNow;
+
+            // Registrar observación tipo Hito Clave
+            Guid finalUserId;
+            if (userId.HasValue && userId.Value != Guid.Empty)
+            {
+                finalUserId = userId.Value;
+            }
+            else
+            {
+                var fallbackUser = await context.Users.FirstOrDefaultAsync();
+                finalUserId = fallbackUser?.Id ?? Guid.NewGuid();
+            }
+
+            var observation = new ServiceOrderObservation
+            {
+                Id = Guid.NewGuid(),
+                ServiceOrderId = order.Id,
+                Text = $"Orden marcada como entregada. Fecha inicio real: {resolvedActualStartDate:dd/MM/yyyy}, Fecha fin real: {resolvedActualEndDate:dd/MM/yyyy}.",
+                ObservationType = "Hito Clave",
+                UserId = finalUserId,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            context.ServiceOrderObservations.Add(observation);
+            await context.SaveChangesAsync();
+
+            return Results.Ok(new
+            {
+                message = "Orden de servicio marcada como entregada exitosamente.",
+                order.Id,
+                order.OrderNumber,
+                StatusId = entregadaStatus.Id,
+                StatusName = entregadaStatus.Name,
+                ActualStartDate = order.ActualStartDate,
+                ActualEndDate = order.ActualEndDate
+            });
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem(detail: ex.InnerException?.Message ?? ex.Message, title: "Error al marcar orden como entregada", statusCode: 500);
+        }
     }
 
     public static string? ValidateServiceOrderRules(

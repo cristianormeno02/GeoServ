@@ -110,6 +110,14 @@
           <button mat-icon-button color="primary" matTooltip="Ver detalles" (click)="viewDetails(row.id)">
             <mat-icon>visibility</mat-icon>
           </button>
+          <button 
+            *ngIf="row.statusName === 'Iniciada'" 
+            mat-icon-button 
+            class="btn-deliver" 
+            matTooltip="Marcar como entregada" 
+            (click)="deliverOrder(row)">
+            <mat-icon>task_alt</mat-icon>
+          </button>
           <button mat-icon-button color="warn" matTooltip="Eliminar" (click)="deleteOrder(row.id)">
             <mat-icon>delete</mat-icon>
           </button>

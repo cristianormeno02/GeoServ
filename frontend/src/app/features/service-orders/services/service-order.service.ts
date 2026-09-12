@@ -48,6 +48,11 @@ export class ServiceOrderService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
+  // 5.1 Marcar una orden como entregada
+  markAsDelivered(id: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/${id}/deliver`, {});
+  }
+
   // Catálogos
   getStatuses(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/catalogs/statuses`);

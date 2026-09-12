@@ -219,6 +219,40 @@ export class ServiceOrderListComponent implements OnInit {
     this.router.navigate(['/ordenes-servicio', id]);
   }
 
+  deliverOrder(row: ServiceOrderListItem): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '450px',
+      data: {
+        title: 'Marcar como Entregada',
+        message: `¿Estás seguro de marcar la orden ${row.orderNumber} como Entregada? Se registrará la entrega en el sistema y se completarán automáticamente las fechas reales si no están definidas.`,
+        isDestructive: false,
+        confirmText: 'Confirmar Entrega'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.serviceOrderService.markAsDelivered(row.id).subscribe({
+          next: () => {
+            this.snackBar.open(`Orden ${row.orderNumber} marcada como entregada exitosamente`, 'Cerrar', { 
+              duration: 3000, 
+              panelClass: ['snackbar-success'] 
+            });
+            this.loadOrders();
+          },
+          error: (err) => {
+            console.error('Error al marcar la orden como entregada', err);
+            const errorMsg = err?.error?.message || 'Hubo un error al marcar la orden como entregada.';
+            this.snackBar.open(errorMsg, 'Cerrar', { 
+              duration: 5000, 
+              panelClass: ['snackbar-error'] 
+            });
+          }
+        });
+      }
+    });
+  }
+
   deleteOrder(id: string): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       width: '450px',
