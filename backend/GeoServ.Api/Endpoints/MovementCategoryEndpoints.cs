@@ -38,7 +38,8 @@ public static class MovementCategoryEndpoints
                 Name = request.Name,
                 Description = request.Description ?? string.Empty,
                 IsIncome = request.IsIncome,
-                IsActive = request.IsActive
+                IsActive = request.IsActive,
+                IsSystemDefault = false
             };
 
             context.MovementCategories.Add(category);
@@ -53,6 +54,11 @@ public static class MovementCategoryEndpoints
         {
             var category = await context.MovementCategories.FindAsync(id);
             if (category == null) return Results.NotFound();
+
+            if (category.IsSystemDefault)
+            {
+                return Results.BadRequest(new { message = "Esta categoría es reservada por el sistema (Transferencias Internas) y no puede modificarse." });
+            }
 
             category.Name = request.Name;
             category.Description = request.Description ?? string.Empty;
@@ -69,6 +75,11 @@ public static class MovementCategoryEndpoints
         {
             var category = await context.MovementCategories.FindAsync(id);
             if (category == null) return Results.NotFound();
+
+            if (category.IsSystemDefault)
+            {
+                return Results.BadRequest(new { message = "Esta categoría es reservada por el sistema (Transferencias Internas) y no puede eliminarse." });
+            }
 
             // Lógica de eliminación suave o validación si está en uso
             var inUse = await context.AccountingMovements.AnyAsync(m => m.CategoryId == id);

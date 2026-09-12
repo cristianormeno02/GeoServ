@@ -13,7 +13,10 @@
         
         <ng-container matColumnDef="name">
           <th mat-header-cell *matHeaderCellDef> Nombre </th>
-          <td mat-cell *matCellDef="let element"> <strong>{{element.name}}</strong> </td>
+          <td mat-cell *matCellDef="let element">
+            <strong>{{element.name}}</strong>
+            <mat-chip *ngIf="element.isSystemDefault" class="system-chip" title="Categoría reservada por el sistema, usada exclusivamente por Transferencias Internas">Sistema</mat-chip>
+          </td>
         </ng-container>
 
         <ng-container matColumnDef="description">
@@ -42,12 +45,17 @@
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef> Acciones </th>
           <td mat-cell *matCellDef="let element">
-            <button mat-icon-button color="primary" (click)="openEditDialog(element)" title="Editar">
-              <mat-icon>edit</mat-icon>
-            </button>
-            <button mat-icon-button color="warn" (click)="deleteCategory(element)" title="Eliminar">
-              <mat-icon>delete</mat-icon>
-            </button>
+            <ng-container *ngIf="!element.isSystemDefault; else systemLocked">
+              <button mat-icon-button color="primary" (click)="openEditDialog(element)" title="Editar">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" (click)="deleteCategory(element)" title="Eliminar">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </ng-container>
+            <ng-template #systemLocked>
+              <mat-icon class="lock-icon" title="Categoría reservada por el sistema: no editable ni eliminable">lock</mat-icon>
+            </ng-template>
           </td>
         </ng-container>
 

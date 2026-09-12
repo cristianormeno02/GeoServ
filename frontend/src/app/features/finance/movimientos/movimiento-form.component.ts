@@ -234,7 +234,7 @@ export class MovimientoFormComponent implements OnInit {
   get movementModeCtrl() { return this.movementForm.get('movementMode')!; }
   get fromAccountIdCtrl() { return this.movementForm.get('fromAccountId')!; }
   get toAccountIdCtrl() { return this.movementForm.get('toAccountId')!; }
-  get filteredCategories() { return this.allCategories.filter(c => c.isIncome === this.isIncomeCtrl.value && c.isActive); }
+  get filteredCategories() { return this.allCategories.filter(c => c.isIncome === this.isIncomeCtrl.value && c.isActive && !c.isSystemDefault); }
 
   applyMovementMode(mode: string, options: { emitEvent?: boolean } = {}) {
     const isTransfer = mode === 'Transferencia';

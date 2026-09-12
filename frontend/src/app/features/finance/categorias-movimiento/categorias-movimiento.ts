@@ -50,6 +50,7 @@ export class CategoriasMovimiento implements OnInit {
   }
 
   openEditDialog(category: MovementCategory) {
+    if (category.isSystemDefault) return;
     const dialogRef = this.dialog.open(CategoriaFormComponent, { width: '500px', data: { category } });
     dialogRef.afterClosed().subscribe(result => {
       if (result) this.loadCategories();
@@ -57,6 +58,7 @@ export class CategoriasMovimiento implements OnInit {
   }
 
   deleteCategory(category: MovementCategory) {
+    if (category.isSystemDefault) return;
     if (confirm(`¿Estás seguro de eliminar la categoría "${category.name}"?`)) {
       this.categoryService.deleteCategory(category.id!).subscribe({
         next: () => this.loadCategories(),

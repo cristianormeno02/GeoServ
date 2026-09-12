@@ -9,6 +9,7 @@ export interface MovementCategory {
   description?: string;
   isIncome: boolean;
   isActive: boolean;
+  isSystemDefault?: boolean;
 }
 
 @Injectable({
