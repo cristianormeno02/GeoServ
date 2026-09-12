@@ -36,3 +36,25 @@ La tabla principal de movimientos contables DEBE mostrar, para los movimientos d
 #### Scenario: Usuario visualiza una transferencia en la grilla de movimientos
 - **WHEN** el usuario ingresa a la sección de Movimientos Contables y existe una Transferencia Interna registrada
 - **THEN** observa en la columna Origen una etiqueta "Transferencia Interna" junto con la referencia "Cuenta Origen → Cuenta Destino"
+
+### Requirement: Conversión de un movimiento individual a Transferencia Interna
+El formulario de edición de un movimiento contable que NO forma parte de una Transferencia Interna (`TransferGroupId` nulo, incluyendo Ingresos o Egresos manuales que usan las categorías "Transferencia Interna" sin estar vinculados) DEBE permitir cambiar su "Tipo de Movimiento" a "Transferencia entre Cuentas". Al confirmar dicho cambio, el sistema DEBE eliminar el movimiento individual original y crear en su lugar una Transferencia Interna nueva (ambas patas, vinculadas por `TransferGroupId`) con los datos ingresados en el formulario.
+
+#### Scenario: Usuario convierte un Ingreso manual en una Transferencia Interna
+- **WHEN** el usuario edita un movimiento de Ingreso existente (categoría "Transferencia Interna (Ingreso)", sin `TransferGroupId`), cambia el "Tipo de Movimiento" a "Transferencia entre Cuentas", completa Cuenta Origen y Cuenta Destino, y confirma
+- **THEN** el sistema elimina el movimiento de Ingreso original y crea una Transferencia Interna nueva (dos movimientos vinculados) con el monto, fecha y cuentas indicados
+
+#### Scenario: Advertencia antes de convertir
+- **WHEN** el usuario selecciona "Transferencia entre Cuentas" mientras edita un movimiento existente
+- **THEN** el formulario muestra un aviso indicando que el movimiento actual se eliminará y se creará una Transferencia Interna nueva en su lugar
+
+### Requirement: Categorías reservadas del sistema para Transferencias Internas
+Las categorías "Transferencia Interna (Ingreso)" y "Transferencia Interna (Egreso)" DEBEN marcarse como reservadas del sistema (`IsSystemDefault = true`) y asignarse automáticamente por el backend al crear una transferencia. Estas categorías NO DEBEN ofrecerse como opción seleccionable en el formulario de carga manual de Ingresos o Egresos, y NO DEBEN poder editarse ni eliminarse desde la interfaz de gestión de categorías de movimiento.
+
+#### Scenario: Categorías de sistema ausentes en el selector de un movimiento manual
+- **WHEN** el usuario abre el formulario para cargar un nuevo Ingreso o Egreso manual
+- **THEN** el selector de Categoría no incluye "Transferencia Interna (Ingreso)" ni "Transferencia Interna (Egreso)"
+
+#### Scenario: Intento de editar o eliminar una categoría de sistema
+- **WHEN** el usuario intenta editar o eliminar, desde la sección de Categorías de Movimiento, una categoría marcada como `IsSystemDefault`
+- **THEN** el sistema rechaza la operación (backend) y la interfaz oculta las acciones de editar/eliminar para esa categoría, mostrando en su lugar una indicación de que es una categoría reservada del sistema
