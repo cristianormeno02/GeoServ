@@ -31,6 +31,8 @@ public static class AccountingMovementEndpoints
                 .Include(m => m.ServiceOrder)
                 .Include(m => m.DirectCost)
                     .ThenInclude(dc => dc!.ServiceOrder)
+                .Include(m => m.FixedCost)
+                .Include(m => m.Asset)
                 .AsQueryable();
 
             if (startDate.HasValue)
@@ -80,7 +82,16 @@ public static class AccountingMovementEndpoints
                     m.ResponsibleId,
                     m.RegisteredByUserId,
                     SourceType = m.SourceType.ToString(),
-                    m.SourceId
+                    m.SourceId,
+                    SourceReference = m.SourceType == MovementSourceType.ServiceOrderIncome
+                        ? (m.ServiceOrder != null ? m.ServiceOrder.OrderNumber : null)
+                        : m.SourceType == MovementSourceType.DirectCost
+                            ? (m.DirectCost != null ? m.DirectCost.Description : null)
+                            : m.SourceType == MovementSourceType.FixedCostPayment
+                                ? (m.FixedCost != null ? m.FixedCost.Description : null)
+                                : m.SourceType == MovementSourceType.AssetPurchase
+                                    ? (m.Asset != null ? m.Asset.Name : null)
+                                    : null
                 })
                 .ToListAsync();
 

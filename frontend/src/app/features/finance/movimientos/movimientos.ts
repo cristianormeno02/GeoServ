@@ -1,4 +1,4 @@
-﻿import {  Component, OnInit, ChangeDetectorRef, ViewChild  } from '@angular/core';
+import {  Component, OnInit, ChangeDetectorRef, ViewChild  } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
@@ -40,6 +40,18 @@ import { FinancialAccountService } from '../services/financial-account.service';
 export class Movimientos implements OnInit {
   movements: Movement[] = [];
   displayedColumns: string[] = ['date', 'type', 'category', 'source', 'description', 'account', 'amount', 'actions'];
+
+  readonly sourceTypeLabels: Record<string, string> = {
+    Manual: 'Manual',
+    ServiceOrderIncome: 'Ingreso por OS',
+    DirectCost: 'Costo Directo',
+    FixedCostPayment: 'Pago de Gasto Fijo',
+    AssetPurchase: 'Compra de Activo',
+  };
+
+  getSourceLabel(sourceType?: string): string {
+    return sourceType ? (this.sourceTypeLabels[sourceType] ?? sourceType) : 'Manual';
+  }
   
   totalCount = 0;
   pageSize = 10;

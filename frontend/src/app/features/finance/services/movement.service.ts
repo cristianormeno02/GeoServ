@@ -33,6 +33,7 @@ export interface Movement {
   registeredByUserId?: string;
   sourceType?: MovementSourceType;
   sourceId?: string | null;
+  sourceReference?: string | null;
 }
 
 export interface PagedMovementResponse {
