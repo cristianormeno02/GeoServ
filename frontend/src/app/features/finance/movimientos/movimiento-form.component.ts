@@ -9,7 +9,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { NgxMaskDirective } from 'ngx-mask';
 import { Movement, MovementService, MovementSourceType } from '../services/movement.service';
@@ -17,6 +16,7 @@ import { FinancialAccount, FinancialAccountService } from '../services/financial
 import { MovementCategoryService } from '../services/movement-category.service';
 import { HttpClient } from '@angular/common/http';
 import { ChangeDetectorRef } from '@angular/core';
+import { switchMap } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -25,14 +25,14 @@ import { environment } from '../../../../environments/environment';
   imports: [
     CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatDatepickerModule,
-    MatNativeDateModule, MatSlideToggleModule, MatIconModule, NgxMaskDirective
+    MatNativeDateModule, MatIconModule, NgxMaskDirective
   ],
   template: `
     <h2 mat-dialog-title>{{ isEditMode ? 'Editar Movimiento' : 'Nuevo Movimiento' }}</h2>
     <mat-dialog-content>
       <form [formGroup]="movementForm" class="form-container">
 
-        <mat-form-field appearance="outline" class="full-width" *ngIf="!isEditMode">
+        <mat-form-field appearance="outline" class="full-width">
           <mat-label>Tipo de Movimiento</mat-label>
           <mat-select formControlName="movementMode">
             <mat-option value="Ingreso">Ingreso</mat-option>
@@ -41,11 +41,9 @@ import { environment } from '../../../../environments/environment';
           </mat-select>
         </mat-form-field>
 
-        <div class="toggle-container" *ngIf="isEditMode">
-          <mat-slide-toggle formControlName="isIncome" [color]="isIncomeCtrl.value ? 'primary' : 'warn'">
-            {{ isIncomeCtrl.value ? 'Ingreso' : 'Egreso' }}
-          </mat-slide-toggle>
-        </div>
+        <p class="convert-hint" *ngIf="isEditMode && movementModeCtrl.value === 'Transferencia'">
+          Se eliminará este movimiento y se creará una Transferencia Interna nueva con los datos ingresados.
+        </p>
 
         <ng-container *ngIf="movementModeCtrl.value !== 'Transferencia'; else transferFields">
           <mat-form-field appearance="outline" class="full-width">
@@ -136,8 +134,8 @@ import { environment } from '../../../../environments/environment';
   styles: [`
     .form-container { display: flex; flex-direction: column; gap: 15px; min-width: 450px; margin-top: 10px; }
     .full-width { width: 100%; }
-    .toggle-container { margin-top: 10px; margin-bottom: 20px; }
     .text-right { text-align: right !important; }
+    .convert-hint { margin: -10px 0 0; font-size: 0.85em; color: #b26a00; }
   `]
 })
 export class MovimientoFormComponent implements OnInit {
@@ -339,13 +337,22 @@ export class MovimientoFormComponent implements OnInit {
     }
 
     if (val.movementMode === 'Transferencia') {
-      this.movementService.createTransfer({
+      const createTransfer$ = this.movementService.createTransfer({
         fromAccountId: val.fromAccountId,
         toAccountId: val.toAccountId,
         amount: Number(amountNumber) || 0,
         date: val.date instanceof Date ? val.date.toISOString() : new Date(val.date).toISOString(),
         description: val.description || null
-      }).subscribe({
+      });
+
+      // Al convertir un movimiento existente en Transferencia, se elimina el movimiento
+      // original (nunca es una pata de otra transferencia: esos no llegan a este formulario)
+      // y se crea la transferencia nueva en su lugar.
+      const request$ = this.isEditMode
+        ? this.movementService.deleteMovement(this.data.movement!.id!).pipe(switchMap(() => createTransfer$))
+        : createTransfer$;
+
+      request$.subscribe({
         next: () => {
           this.snackBar.open('Transferencia registrada con éxito', 'Cerrar', { duration: 3000 });
           this.dialogRef.close(true);

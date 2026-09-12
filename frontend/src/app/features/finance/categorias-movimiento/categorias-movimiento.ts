@@ -1,4 +1,4 @@
-import {  Component, OnInit  } from '@angular/core';
+import {  Component, OnInit, ChangeDetectorRef  } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
@@ -24,7 +24,8 @@ export class CategoriasMovimiento implements OnInit {
   constructor(
     private categoryService: MovementCategoryService,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -34,7 +35,8 @@ export class CategoriasMovimiento implements OnInit {
   loadCategories() {
     this.categoryService.getCategories().subscribe({
       next: (data) => {
-        this.categories = data;
+        this.categories = [...data];
+        this.cdr.detectChanges();
       },
       error: (err) => console.error(err)
     });
