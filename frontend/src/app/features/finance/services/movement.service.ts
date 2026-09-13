@@ -27,6 +27,7 @@ export interface Movement {
   serviceOrderId?: string;
   serviceOrderNumber?: string;
   fixedCostId?: string;
+  fixedCostPaymentId?: string;
   directCostId?: string;
   assetId?: string;
   checkId?: string;

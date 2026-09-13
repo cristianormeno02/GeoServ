@@ -7,9 +7,19 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSelectModule } from '@angular/material/select';
-import { MovementCategory, MovementCategoryService } from '../services/movement-category.service';
+import { CategoryLinkedSourceType, MovementCategory, MovementCategoryService } from '../services/movement-category.service';
 
 import { MatSnackBar } from '@angular/material/snack-bar';
+
+const INCOME_LINKED_SOURCE_TYPE_OPTIONS = [
+  { value: CategoryLinkedSourceType.ServiceOrderIncome, label: 'Cobro de Orden de Servicio' }
+];
+
+const EXPENSE_LINKED_SOURCE_TYPE_OPTIONS = [
+  { value: CategoryLinkedSourceType.AssetPurchase, label: 'Compra de Activo' },
+  { value: CategoryLinkedSourceType.FixedCostPayment, label: 'Pago de Gasto Fijo' },
+  { value: CategoryLinkedSourceType.DirectCost, label: 'Pago de Costo Directo' }
+];
 
 @Component({
   selector: 'app-categoria-form',
@@ -50,6 +60,14 @@ import { MatSnackBar } from '@angular/material/snack-bar';
             Categoría Activa
           </mat-slide-toggle>
         </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Vínculo con Origen</mat-label>
+          <mat-select formControlName="linkedSourceType">
+            <mat-option [value]="null">Sin vínculo (Manual)</mat-option>
+            <mat-option *ngFor="let opt of linkedSourceTypeOptions" [value]="opt.value">{{ opt.label }}</mat-option>
+          </mat-select>
+        </mat-form-field>
 
       </form>
     </mat-dialog-content>
@@ -94,8 +112,20 @@ export class CategoriaFormComponent {
       name: [data?.category?.name || '', Validators.required],
       description: [data?.category?.description || ''],
       isIncome: [data?.category?.isIncome ?? true],
-      isActive: [data?.category?.isActive ?? true]
+      isActive: [data?.category?.isActive ?? true],
+      linkedSourceType: [data?.category?.linkedSourceType ?? null]
     });
+
+    // Si cambia Ingreso/Egreso, el vínculo previamente elegido puede dejar de ser válido para el nuevo tipo.
+    this.categoryForm.get('isIncome')!.valueChanges.subscribe(() => {
+      this.categoryForm.get('linkedSourceType')!.setValue(null);
+    });
+  }
+
+  get linkedSourceTypeOptions() {
+    return this.categoryForm.get('isIncome')?.value
+      ? INCOME_LINKED_SOURCE_TYPE_OPTIONS
+      : EXPENSE_LINKED_SOURCE_TYPE_OPTIONS;
   }
 
   save() {

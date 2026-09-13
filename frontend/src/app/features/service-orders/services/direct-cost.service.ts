@@ -15,6 +15,11 @@ export class DirectCostService {
     return this.http.get<DirectCost[]>(this.getApiUrl(serviceOrderId));
   }
 
+  // Búsqueda global de costos directos (todas las órdenes) para el buscador modal del formulario de movimientos.
+  searchAll(query: string): Observable<any[]> {
+    return this.http.get<any[]>(`${environment.apiUrl}/direct-costs?q=${encodeURIComponent(query)}`);
+  }
+
   createCost(cost: CreateDirectCostDto): Observable<DirectCost> {
     return this.http.post<DirectCost>(this.getApiUrl(cost.serviceOrderId), cost);
   }

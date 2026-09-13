@@ -29,6 +29,34 @@ public static class AssetEndpoints
             return Results.Ok(assets);
         }).WithName("GetAssets").WithOpenApi();
 
+        // Búsqueda de activos para el buscador modal del formulario de movimientos (no carga el listado completo).
+        group.MapGet("/search", async (string? q, GeoServDbContext context) =>
+        {
+            var query = context.Assets.Include(a => a.Provider).AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                var lowerQ = q.ToLower();
+                query = query.Where(a => a.Name.ToLower().Contains(lowerQ) || a.Description.ToLower().Contains(lowerQ));
+            }
+
+            var results = await query
+                .OrderByDescending(a => a.PurchaseDate)
+                .Take(20)
+                .Select(a => new
+                {
+                    a.Id,
+                    a.Name,
+                    a.Description,
+                    a.PurchasePrice,
+                    a.PurchaseDate,
+                    ProviderName = a.Provider != null ? a.Provider.Name : null
+                })
+                .ToListAsync();
+
+            return Results.Ok(results);
+        }).WithName("SearchAssets").WithOpenApi();
+
         group.MapPost("/", async (CreateAssetRequest request, GeoServDbContext context) =>
         {
             var asset = new Asset

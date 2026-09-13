@@ -1,0 +1,144 @@
+## MODIFIED Requirements
+
+### Requirement: Interfaz de registro polimórfico
+El formulario de creación y edición de movimientos contables NO DEBE solicitar al usuario un "Tipo de Origen" (`SourceType`) de forma manual. En su lugar, el `SourceType` DEBE derivarse automáticamente de la categoría (`MovementCategory.LinkedSourceType`) seleccionada: si la categoría no tiene vínculo (`LinkedSourceType = null`), el movimiento es `Manual`; si lo tiene, el formulario DEBE abrir el buscador modal correspondiente a ese tipo de origen en lugar de un desplegable con el listado completo de la entidad relacionada.
+
+#### Scenario: Usuario selecciona una categoría vinculada a Compra de Activo
+- **WHEN** el usuario selecciona, en un movimiento de Egreso, una categoría cuyo `LinkedSourceType` es `AssetPurchase`
+- **THEN** el sistema fija `SourceType = AssetPurchase` sin mostrar un selector de "Tipo de Origen", y habilita el botón para abrir el buscador modal de Activos
+
+#### Scenario: Usuario selecciona una categoría sin vínculo de origen
+- **WHEN** el usuario selecciona una categoría cuyo `LinkedSourceType` es `null`
+- **THEN** el sistema fija `SourceType = Manual` y no muestra ningún buscador de origen específico
+
+#### Scenario: Usuario registra movimiento de compra de activo
+- **WHEN** el usuario selecciona, en un movimiento de Egreso, una categoría cuyo `LinkedSourceType` es `AssetPurchase`
+- **THEN** el sistema fija `SourceType = AssetPurchase` y muestra un buscador modal de Activos (búsqueda por texto contra el backend) para asignar el `SourceId`, sin ofrecer un desplegable con el listado completo ni un buscador de Órdenes de Servicio
+
+#### Scenario: Usuario registra o edita movimiento de pago de gasto fijo
+- **WHEN** el usuario selecciona, en un movimiento de Egreso, una categoría cuyo `LinkedSourceType` es `FixedCostPayment`
+- **THEN** el sistema fija `SourceType = FixedCostPayment` y abre el buscador modal de Gastos Fijos, que primero busca el `FixedCostItem` por texto y luego, si es recurrente, lista sus vencimientos para elegir el `SourceId`/`FixedCostPaymentId` puntual
+
+#### Scenario: Persistencia al editar un movimiento con origen polimórfico
+- **WHEN** el usuario edita y guarda un movimiento contable que tiene asignado un origen polimórfico (`SourceType` y `SourceId`)
+- **THEN** el sistema preserva y persiste tanto el `SourceType` como el `SourceId` sin restablecer el origen a Manual
+
+#### Scenario: Movimiento histórico con categoría sin `LinkedSourceType` configurado
+- **WHEN** el usuario abre para edición un movimiento histórico cuyo `SourceType` no es `Manual` pero cuya categoría actual tiene `LinkedSourceType = null` (categoría creada antes de esta funcionalidad)
+- **THEN** el sistema respeta el `SourceType`/`SourceId` ya guardados en el movimiento y permite editarlos mediante el buscador modal correspondiente, sin exigir que la categoría tenga el vínculo configurado para poder guardar sin cambios
+
+## ADDED Requirements
+
+### Requirement: Vínculo entre Categoría de Movimiento y tipo de origen
+Toda `MovementCategory` DEBE admitir un campo opcional `LinkedSourceType` que indique con qué tipo de origen polimórfico se relaciona. Las categorías de Ingreso (`IsIncome = true`) SOLO pueden tener `LinkedSourceType` en `{null, ServiceOrderIncome}`. Las categorías de Egreso (`IsIncome = false`) SOLO pueden tener `LinkedSourceType` en `{null, AssetPurchase, FixedCostPayment, DirectCost}`. El backend DEBE rechazar cualquier combinación fuera de estas reglas al crear o editar una categoría.
+
+#### Scenario: Usuario vincula una categoría de Ingreso a Cobro de Orden de Servicio
+- **WHEN** el usuario crea o edita una categoría de Ingreso y selecciona "Cobro de Orden de Servicio" como vínculo
+- **THEN** el sistema guarda `LinkedSourceType = ServiceOrderIncome` para esa categoría
+
+#### Scenario: Usuario intenta vincular una categoría de Ingreso a Compra de Activo
+- **WHEN** el usuario intenta guardar una categoría con `IsIncome = true` y `LinkedSourceType = AssetPurchase`
+- **THEN** el sistema rechaza la operación con un mensaje de validación explícito
+
+#### Scenario: Usuario vincula una categoría de Egreso a Pago de Gasto Fijo
+- **WHEN** el usuario crea o edita una categoría de Egreso y selecciona "Pago de Gasto Fijo" como vínculo
+- **THEN** el sistema guarda `LinkedSourceType = FixedCostPayment` para esa categoría
+
+#### Scenario: Usuario visualiza el vínculo en el listado de categorías
+- **WHEN** el usuario ingresa a la sección de Categorías de Movimiento
+- **THEN** observa, para cada categoría, una indicación de su vínculo con origen (o "Sin vínculo" si `LinkedSourceType` es `null`)
+
+### Requirement: Filtrado de categorías por tipo de movimiento
+El selector de Categoría en el formulario de movimientos DEBE mostrar únicamente categorías activas cuyo `IsIncome` coincida con el modo de movimiento elegido (Ingreso/Egreso) y que no sean de sistema (`IsSystemDefault`).
+
+#### Scenario: Usuario carga un Ingreso
+- **WHEN** el usuario selecciona "Ingreso" como Tipo de Movimiento
+- **THEN** el selector de Categoría muestra únicamente categorías con `IsIncome = true`, activas y no reservadas del sistema
+
+### Requirement: Buscador modal de Orden de Servicio para Cobros
+Cuando el `SourceType` derivado sea `ServiceOrderIncome`, el formulario de movimientos DEBE ofrecer un buscador modal de Órdenes de Servicio con búsqueda por texto contra el backend (no un desplegable con el listado completo), permitiendo localizar la orden por número o por cliente.
+
+#### Scenario: Usuario busca una Orden de Servicio para vincular un cobro
+- **WHEN** el usuario, con una categoría de Ingreso vinculada a `ServiceOrderIncome`, abre el buscador y escribe parte del número de orden o del nombre del cliente
+- **THEN** el sistema consulta el backend con ese texto y muestra hasta 20 resultados coincidentes, permitiendo seleccionar uno como `SourceId`
+
+### Requirement: Buscador modal de Activos para Compras
+Cuando el `SourceType` derivado sea `AssetPurchase`, el formulario de movimientos DEBE ofrecer un buscador modal de Activos con búsqueda por texto contra el backend, en vez de un desplegable con el listado completo de activos.
+
+#### Scenario: Usuario busca un Activo para vincular una compra
+- **WHEN** el usuario, con una categoría de Egreso vinculada a `AssetPurchase`, abre el buscador y escribe parte del nombre del activo
+- **THEN** el sistema consulta el backend con ese texto y muestra los activos coincidentes, permitiendo seleccionar uno como `SourceId`
+
+### Requirement: Buscador modal de Costo Directo y visualización de su Orden asociada
+Cuando el `SourceType` derivado sea `DirectCost`, el formulario de movimientos DEBE ofrecer un buscador modal de Costos Directos con búsqueda por texto (descripción, proveedor, categoría o número de orden) contra el backend. Al seleccionar un costo directo, el modal DEBE mostrar, en modo solo lectura, la Orden de Servicio a la que ese costo directo pertenece, sin permitir seleccionarla de forma independiente.
+
+#### Scenario: Usuario busca y selecciona un Costo Directo
+- **WHEN** el usuario, con una categoría de Egreso vinculada a `DirectCost`, busca por el número de una Orden de Servicio en el buscador
+- **THEN** el sistema muestra los costos directos de esa orden coincidentes con la búsqueda, y al seleccionar uno, el modal exhibe la Orden de Servicio asociada como dato de solo lectura
+
+### Requirement: Buscador modal de Gasto Fijo con selección de vencimiento
+Cuando el `SourceType` derivado sea `FixedCostPayment`, el formulario de movimientos DEBE ofrecer un buscador modal de Gastos Fijos (`FixedCostItem`) con búsqueda por texto contra el backend. Tras seleccionar un Gasto Fijo, si este es recurrente (`IsRecurring = true`), el modal DEBE listar sus vencimientos (`FixedCostPayment`) para que el usuario elija el vencimiento puntual que está pagando; si no es recurrente, el sistema DEBE usar directamente su único vencimiento sin requerir un paso adicional de selección. El listado de vencimientos SOLO DEBE ofrecer como seleccionables los que están pendientes (`IsPaid = false`), salvo el que ya está vinculado al movimiento que se está editando (que debe verse preseleccionado aunque figure como pagado).
+
+#### Scenario: Usuario paga un vencimiento de un Gasto Fijo recurrente
+- **WHEN** el usuario busca y selecciona un Gasto Fijo con `IsRecurring = true` que tiene varios vencimientos cargados
+- **THEN** el sistema muestra el listado de vencimientos de ese Gasto Fijo (fecha e importe) para que el usuario seleccione a cuál corresponde el movimiento, y guarda ese vencimiento como `SourceId`/`FixedCostPaymentId`
+
+#### Scenario: Usuario paga un Gasto Fijo no recurrente
+- **WHEN** el usuario busca y selecciona un Gasto Fijo con `IsRecurring = false` cuyo único vencimiento está pendiente (`IsPaid = false`)
+- **THEN** el sistema vincula el movimiento directamente a su único vencimiento sin mostrar un paso adicional de selección de vencimientos
+
+#### Scenario: Vencimientos ya pagados no son seleccionables
+- **WHEN** el usuario, al crear un nuevo movimiento, abre el listado de vencimientos de un Gasto Fijo recurrente
+- **THEN** el sistema muestra deshabilitados (o excluye) los vencimientos con `IsPaid = true`, permitiendo seleccionar únicamente los pendientes
+
+#### Scenario: Gasto Fijo no recurrente cuyo único vencimiento ya está pagado
+- **WHEN** el usuario busca un Gasto Fijo con `IsRecurring = false` cuyo único vencimiento ya tiene `IsPaid = true` (y no es el vinculado al movimiento que se está editando)
+- **THEN** el sistema muestra ese Gasto Fijo deshabilitado en los resultados de búsqueda con la indicación "Ya pagado", sin permitir seleccionarlo
+
+#### Scenario: El vencimiento vinculado se marca como pagado
+- **WHEN** el usuario guarda un movimiento de Egreso vinculado a un vencimiento (`FixedCostPaymentId`) de un Gasto Fijo
+- **THEN** el sistema marca ese vencimiento como `IsPaid = true`, registra `PaymentDate` con la fecha del movimiento y `PaymentMethodId` con el medio de pago del movimiento (si fue informado)
+
+#### Scenario: Eliminación de un movimiento revierte el estado del vencimiento
+- **WHEN** el usuario elimina un movimiento contable vinculado a un vencimiento de Gasto Fijo que dicho movimiento había marcado como pagado
+- **THEN** el sistema revierte ese vencimiento a `IsPaid = false` y limpia `PaymentDate`/`PaymentMethodId`, sin eliminar el vencimiento en sí
+
+#### Scenario: Edición de un movimiento reasigna el vencimiento vinculado
+- **WHEN** el usuario edita un movimiento vinculado al vencimiento A de un Gasto Fijo y, mediante el buscador, lo reasigna al vencimiento B del mismo u otro Gasto Fijo
+- **THEN** el sistema revierte el vencimiento A a `IsPaid = false` (limpiando `PaymentDate`/`PaymentMethodId`) y marca el vencimiento B como `IsPaid = true` con los datos del movimiento
+
+#### Scenario: Edición de un movimiento sin cambiar el vencimiento vinculado
+- **WHEN** el usuario edita un movimiento vinculado a un vencimiento y guarda sin cambiar el origen específico seleccionado, pero modifica la Fecha o el Medio de Pago del movimiento
+- **THEN** el sistema conserva `IsPaid = true` en el vencimiento (no lo reprocesa) pero sincroniza `PaymentDate` y `PaymentMethodId` del vencimiento con los nuevos valores del movimiento
+
+### Requirement: Obligatoriedad del origen específico para categorías vinculadas
+Si la categoría seleccionada tiene `LinkedSourceType` distinto de `null`, el formulario de movimientos NO DEBE permitir guardar el movimiento sin haber seleccionado un origen específico (`SourceId`) a través del buscador modal correspondiente. El backend DEBE rechazar con `400` cualquier intento de crear o editar un movimiento en esa condición sin `SourceId`.
+
+#### Scenario: Usuario intenta guardar sin seleccionar el origen específico
+- **WHEN** el usuario elige una categoría con `LinkedSourceType` distinto de `null` y no completa la selección en el buscador modal correspondiente
+- **THEN** el sistema impide guardar el movimiento (backend rechaza con `400`, y el frontend deshabilita el botón "Guardar" hasta que se seleccione un origen)
+
+### Requirement: Autocompletado de Monto y Descripción desde el origen seleccionado
+Al seleccionar un origen específico que tenga su propio importe y descripción (vencimiento de Gasto Fijo o Costo Directo), el formulario DEBE autocompletar los campos Monto y Descripción del movimiento con los valores de esa entidad, únicamente si el usuario no cargó previamente un valor en esos campos (Monto vacío o en 0; Descripción vacía).
+
+#### Scenario: Autocompletado al seleccionar un vencimiento de Gasto Fijo
+- **WHEN** el usuario, con el campo Monto en blanco, selecciona un vencimiento de un Gasto Fijo
+- **THEN** el formulario completa el Monto con el importe del vencimiento y sugiere una Descripción que incluye el nombre del Gasto Fijo y la fecha de vencimiento
+
+#### Scenario: No se sobrescribe un Monto ya cargado manualmente
+- **WHEN** el usuario ya escribió un Monto distinto de 0 y luego selecciona un origen específico con importe propio
+- **THEN** el formulario conserva el Monto ingresado manualmente sin sobrescribirlo
+
+### Requirement: Corrección de la referencia de origen mostrada para pagos de Gasto Fijo
+La consulta de listado de movimientos (`GET /api/movements`) DEBE construir la referencia de origen (`SourceReference`) de un movimiento con `SourceType = FixedCostPayment` a partir de `FixedCostPaymentId` (nombre del Gasto Fijo y fecha de vencimiento), en lugar del campo `FixedCostId` legado, que no resuelve a ningún registro real bajo la mecánica anterior.
+
+#### Scenario: Usuario visualiza en el listado un pago de Gasto Fijo vinculado a un vencimiento
+- **WHEN** el usuario visualiza en el listado de movimientos un Egreso con `SourceType = FixedCostPayment` y `FixedCostPaymentId` asignado
+- **THEN** la columna Origen muestra el nombre del Gasto Fijo y la fecha del vencimiento pagado, en vez de un valor vacío
+
+### Requirement: Visualización inmediata del origen al editar un movimiento
+Al abrir el formulario de edición de un movimiento con origen polimórfico asignado (`ServiceOrderIncome`, `AssetPurchase`, `DirectCost` o `FixedCostPayment`), el sistema DEBE mostrar de inmediato una referencia descriptiva del origen específico (ej. nombre del activo, número de orden, o Gasto Fijo con su vencimiento), sin requerir que el usuario abra el buscador modal para verla.
+
+#### Scenario: Usuario abre para edición un movimiento vinculado a un vencimiento de Gasto Fijo
+- **WHEN** el usuario abre el formulario de edición de un Egreso con `SourceType = FixedCostPayment` y `FixedCostPaymentId` asignado
+- **THEN** el sistema muestra de inmediato el nombre del Gasto Fijo y la fecha del vencimiento vinculado en el campo de origen específico, sin necesidad de abrir el buscador

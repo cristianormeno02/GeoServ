@@ -32,6 +32,8 @@ public static class AccountingMovementEndpoints
                 .Include(m => m.DirectCost)
                     .ThenInclude(dc => dc!.ServiceOrder)
                 .Include(m => m.FixedCost)
+                .Include(m => m.FixedCostPayment)
+                    .ThenInclude(fcp => fcp!.FixedCostItem)
                 .Include(m => m.Asset)
                 .AsQueryable();
 
@@ -76,6 +78,7 @@ public static class AccountingMovementEndpoints
                     m.ServiceOrderId,
                     ServiceOrderNumber = m.ServiceOrder != null ? m.ServiceOrder.OrderNumber : (m.DirectCost != null && m.DirectCost.ServiceOrder != null ? m.DirectCost.ServiceOrder.OrderNumber : null),
                     m.FixedCostId,
+                    m.FixedCostPaymentId,
                     m.DirectCostId,
                     m.AssetId,
                     m.CheckId,
@@ -89,7 +92,7 @@ public static class AccountingMovementEndpoints
                         : m.SourceType == MovementSourceType.DirectCost
                             ? (m.DirectCost != null ? m.DirectCost.Description : null)
                             : m.SourceType == MovementSourceType.FixedCostPayment
-                                ? (m.FixedCost != null ? m.FixedCost.Description : null)
+                                ? (m.FixedCostPayment != null ? $"{m.FixedCostPayment.FixedCostItem.Name} - Venc. {m.FixedCostPayment.DueDate:dd/MM/yyyy}" : null)
                                 : m.SourceType == MovementSourceType.AssetPurchase
                                     ? (m.Asset != null ? m.Asset.Name : null)
                                     : null
@@ -114,68 +117,47 @@ public static class AccountingMovementEndpoints
                 .Include(m => m.FinancialAccount)
                 .Include(m => m.PaymentMethod)
                 .Include(m => m.ServiceOrder)
+                .Include(m => m.DirectCost)
+                .Include(m => m.Asset)
+                .Include(m => m.FixedCostPayment)
+                    .ThenInclude(fcp => fcp!.FixedCostItem)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            return movement is not null ? Results.Ok(movement) : Results.NotFound();
+
+            if (movement is null) return Results.NotFound();
+
+            return Results.Ok(new
+            {
+                movement.Id,
+                movement.IsIncome,
+                movement.CategoryId,
+                CategoryName = movement.Category?.Name,
+                movement.Amount,
+                movement.Date,
+                movement.Description,
+                movement.FinancialAccountId,
+                movement.PaymentMethodId,
+                movement.ServiceOrderId,
+                movement.FixedCostId,
+                movement.FixedCostPaymentId,
+                movement.DirectCostId,
+                movement.AssetId,
+                movement.CheckId,
+                movement.ResponsibleId,
+                movement.RegisteredByUserId,
+                SourceType = movement.SourceType.ToString(),
+                movement.SourceId,
+                movement.TransferGroupId,
+                SourceReference = BuildSourceReference(movement)
+            });
         })
         .WithName("GetMovementById")
         .WithOpenApi();
 
         group.MapPost("/", async ([FromBody] CreateMovementRequest request, HttpContext httpContext, GeoServDbContext context) =>
         {
-            try 
-            {
-                var userIdStr = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-                if (!Guid.TryParse(userIdStr, out var userId)) 
-                {
-                    userId = await context.Users.Select(u => u.Id).FirstOrDefaultAsync();
-                }
-
-                var sourceId = request.SourceId;
-                var sourceType = request.SourceType;
-
-                Guid? serviceOrderId = null;
-                Guid? directCostId = null;
-                Guid? fixedCostId = null;
-                Guid? assetId = null;
-
-                if (Guid.TryParse(sourceId, out var parsedGuid))
-                {
-                    if (sourceType == MovementSourceType.ServiceOrderIncome) serviceOrderId = parsedGuid;
-                    else if (sourceType == MovementSourceType.DirectCost) directCostId = parsedGuid;
-                    else if (sourceType == MovementSourceType.FixedCostPayment) fixedCostId = parsedGuid;
-                    else if (sourceType == MovementSourceType.AssetPurchase) assetId = parsedGuid;
-                }
-
-                var movement = new AccountingMovement
-                {
-                    Id = Guid.NewGuid(),
-                    IsIncome = request.IsIncome,
-                    CategoryId = request.CategoryId,
-                    Amount = request.Amount,
-                    Date = request.Date,
-                    Description = request.Description ?? string.Empty,
-                    FinancialAccountId = request.FinancialAccountId,
-                    PaymentMethodId = request.PaymentMethodId,
-                    CheckId = request.CheckId,
-                    ResponsibleId = request.ResponsibleId,
-                    RegisteredByUserId = userId,
-                    SourceType = sourceType,
-                    SourceId = sourceId,
-                    ServiceOrderId = serviceOrderId,
-                    DirectCostId = directCostId,
-                    FixedCostId = fixedCostId,
-                    AssetId = assetId
-                };
-
-                context.AccountingMovements.Add(movement);
-                await context.SaveChangesAsync();
-
-                return Results.Created($"/api/movements/{movement.Id}", movement);
-            }
-            catch(Exception ex)
-            {
-                return Results.Problem(detail: ex.InnerException?.Message ?? ex.Message, statusCode: 500);
-            }
+            var userIdStr = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            Guid? userId = Guid.TryParse(userIdStr, out var uid) ? uid : null;
+            return await CreateMovementAsync(request, userId, context);
         })
         .WithName("CreateMovement")
         .WithOpenApi();
@@ -210,6 +192,165 @@ public static class AccountingMovementEndpoints
     // que ya las referencian.
     private static readonly Guid InternalTransferIncomeCategoryId = Guid.Parse("A3333333-3333-3333-3333-333333333333");
     private static readonly Guid InternalTransferExpenseCategoryId = Guid.Parse("AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA");
+
+    // Construye la referencia legible del origen específico de un movimiento (usada en el listado y en el detalle).
+    public static string? BuildSourceReference(AccountingMovement movement)
+    {
+        return movement.SourceType switch
+        {
+            MovementSourceType.ServiceOrderIncome => movement.ServiceOrder?.OrderNumber,
+            MovementSourceType.DirectCost => movement.DirectCost?.Description,
+            MovementSourceType.FixedCostPayment => movement.FixedCostPayment != null
+                ? $"{movement.FixedCostPayment.FixedCostItem.Name} - Venc. {movement.FixedCostPayment.DueDate:dd/MM/yyyy}"
+                : null,
+            MovementSourceType.AssetPurchase => movement.Asset?.Name,
+            _ => null
+        };
+    }
+
+    // Valida que el SourceType/SourceId recibidos sean coherentes con el vínculo configurado en la categoría.
+    // Si la categoría no tiene vínculo (LinkedSourceType == null) no se restringe nada (preserva Manual
+    // y los movimientos históricos cuya categoría aún no tiene vínculo configurado). Retorna un IResult de
+    // error para responder de inmediato, o null si es válido.
+    private static async Task<IResult?> ValidateCategoryCoherenceAsync(GeoServDbContext context, Guid categoryId, MovementSourceType sourceType, string? sourceId)
+    {
+        var category = await context.MovementCategories.FindAsync(categoryId);
+        // Si la categoría no existe, no es responsabilidad de esta validación: la FK de base de datos
+        // la rechazará al guardar. Aquí solo nos importa la coherencia cuando sí existe y tiene vínculo.
+        if (category == null) return null;
+
+        if (category.LinkedSourceType != null)
+        {
+            if (sourceType != category.LinkedSourceType.Value)
+            {
+                return Results.BadRequest(new { message = $"La categoría \"{category.Name}\" requiere un origen de tipo {category.LinkedSourceType}." });
+            }
+
+            if (string.IsNullOrWhiteSpace(sourceId))
+            {
+                return Results.BadRequest(new { message = $"Debe seleccionar un origen específico para la categoría \"{category.Name}\"." });
+            }
+        }
+
+        return null;
+    }
+
+    // Aplica el ciclo de vida del vínculo con un vencimiento de Gasto Fijo (FixedCostPayment) al crear/editar
+    // un movimiento: revierte el vencimiento anterior si cambió, marca el nuevo como pagado, y si no cambió
+    // pero sigue vinculado, sincroniza fecha/medio de pago. Retorna un IResult de error, o null si es válido.
+    private static async Task<IResult?> ApplyFixedCostPaymentLinkAsync(
+        GeoServDbContext context,
+        Guid? oldFixedCostPaymentId,
+        Guid? newFixedCostPaymentId,
+        DateTime movementDate,
+        Guid? paymentMethodId)
+    {
+        if (oldFixedCostPaymentId == newFixedCostPaymentId)
+        {
+            if (newFixedCostPaymentId.HasValue)
+            {
+                var currentPayment = await context.FixedCostPayments.FindAsync(newFixedCostPaymentId.Value);
+                if (currentPayment != null)
+                {
+                    currentPayment.PaymentDate = movementDate;
+                    currentPayment.PaymentMethodId = paymentMethodId;
+                }
+            }
+            return null;
+        }
+
+        if (oldFixedCostPaymentId.HasValue)
+        {
+            var oldPayment = await context.FixedCostPayments.FindAsync(oldFixedCostPaymentId.Value);
+            if (oldPayment != null)
+            {
+                oldPayment.IsPaid = false;
+                oldPayment.PaymentDate = null;
+                oldPayment.PaymentMethodId = null;
+            }
+        }
+
+        if (newFixedCostPaymentId.HasValue)
+        {
+            var newPayment = await context.FixedCostPayments.FindAsync(newFixedCostPaymentId.Value);
+            if (newPayment == null)
+            {
+                return Results.BadRequest(new { message = "El vencimiento de Gasto Fijo indicado no existe." });
+            }
+
+            if (newPayment.IsPaid)
+            {
+                return Results.BadRequest(new { message = "El vencimiento seleccionado ya se encuentra pagado." });
+            }
+
+            newPayment.IsPaid = true;
+            newPayment.PaymentDate = movementDate;
+            newPayment.PaymentMethodId = paymentMethodId;
+        }
+
+        return null;
+    }
+
+    public static async Task<IResult> CreateMovementAsync(CreateMovementRequest request, Guid? userId, GeoServDbContext context)
+    {
+        try
+        {
+            var sourceId = request.SourceId;
+            var sourceType = request.SourceType;
+
+            var coherenceError = await ValidateCategoryCoherenceAsync(context, request.CategoryId, sourceType, sourceId);
+            if (coherenceError != null) return coherenceError;
+
+            var resolvedUserId = userId ?? await context.Users.Select(u => u.Id).FirstOrDefaultAsync();
+
+            Guid? serviceOrderId = null;
+            Guid? directCostId = null;
+            Guid? fixedCostPaymentId = null;
+            Guid? assetId = null;
+
+            if (Guid.TryParse(sourceId, out var parsedGuid))
+            {
+                if (sourceType == MovementSourceType.ServiceOrderIncome) serviceOrderId = parsedGuid;
+                else if (sourceType == MovementSourceType.DirectCost) directCostId = parsedGuid;
+                else if (sourceType == MovementSourceType.FixedCostPayment) fixedCostPaymentId = parsedGuid;
+                else if (sourceType == MovementSourceType.AssetPurchase) assetId = parsedGuid;
+            }
+
+            var movement = new AccountingMovement
+            {
+                Id = Guid.NewGuid(),
+                IsIncome = request.IsIncome,
+                CategoryId = request.CategoryId,
+                Amount = request.Amount,
+                Date = request.Date,
+                Description = request.Description ?? string.Empty,
+                FinancialAccountId = request.FinancialAccountId,
+                PaymentMethodId = request.PaymentMethodId,
+                CheckId = request.CheckId,
+                ResponsibleId = request.ResponsibleId,
+                RegisteredByUserId = resolvedUserId,
+                SourceType = sourceType,
+                SourceId = sourceId,
+                ServiceOrderId = serviceOrderId,
+                DirectCostId = directCostId,
+                FixedCostPaymentId = fixedCostPaymentId,
+                AssetId = assetId
+            };
+
+            context.AccountingMovements.Add(movement);
+
+            var paymentError = await ApplyFixedCostPaymentLinkAsync(context, null, fixedCostPaymentId, movement.Date, movement.PaymentMethodId);
+            if (paymentError != null) return paymentError;
+
+            await context.SaveChangesAsync();
+
+            return Results.Created($"/api/movements/{movement.Id}", movement);
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem(detail: ex.InnerException?.Message ?? ex.Message, statusCode: 500);
+        }
+    }
 
     public static async Task<IResult> CreateTransferAsync(CreateTransferRequest request, Guid? userId, GeoServDbContext context)
     {
@@ -308,24 +449,29 @@ public static class AccountingMovementEndpoints
 
             Guid? serviceOrderId = request.ServiceOrderId;
             Guid? directCostId = request.DirectCostId;
-            Guid? fixedCostId = request.FixedCostId;
+            Guid? fixedCostPaymentId = request.FixedCostPaymentId;
             Guid? assetId = request.AssetId;
 
             if (!request.SourceType.HasValue)
             {
-                sourceId = request.ServiceOrderId?.ToString() ?? request.DirectCostId?.ToString() ?? request.FixedCostId?.ToString() ?? request.AssetId?.ToString();
+                sourceId = request.ServiceOrderId?.ToString() ?? request.DirectCostId?.ToString() ?? request.FixedCostPaymentId?.ToString() ?? request.AssetId?.ToString();
                 if (request.ServiceOrderId.HasValue) sourceType = MovementSourceType.ServiceOrderIncome;
                 else if (request.DirectCostId.HasValue) sourceType = MovementSourceType.DirectCost;
-                else if (request.FixedCostId.HasValue) sourceType = MovementSourceType.FixedCostPayment;
+                else if (request.FixedCostPaymentId.HasValue) sourceType = MovementSourceType.FixedCostPayment;
                 else if (request.AssetId.HasValue) sourceType = MovementSourceType.AssetPurchase;
             }
             else if (Guid.TryParse(sourceId, out var parsedGuid))
             {
                 if (sourceType == MovementSourceType.ServiceOrderIncome) serviceOrderId = parsedGuid;
                 else if (sourceType == MovementSourceType.DirectCost) directCostId = parsedGuid;
-                else if (sourceType == MovementSourceType.FixedCostPayment) fixedCostId = parsedGuid;
+                else if (sourceType == MovementSourceType.FixedCostPayment) fixedCostPaymentId = parsedGuid;
                 else if (sourceType == MovementSourceType.AssetPurchase) assetId = parsedGuid;
             }
+
+            var coherenceError = await ValidateCategoryCoherenceAsync(context, request.CategoryId, sourceType, sourceId);
+            if (coherenceError != null) return coherenceError;
+
+            var oldFixedCostPaymentId = movement.FixedCostPaymentId;
 
             movement.IsIncome = request.IsIncome;
             movement.CategoryId = request.CategoryId;
@@ -335,13 +481,18 @@ public static class AccountingMovementEndpoints
             movement.FinancialAccountId = request.FinancialAccountId;
             movement.PaymentMethodId = request.PaymentMethodId;
             movement.ServiceOrderId = serviceOrderId;
-            movement.FixedCostId = fixedCostId;
+            // FixedCostId legado NO se reasigna: se conserva intacto para movimientos históricos
+            // (ver design.md); los movimientos nuevos/editados usan exclusivamente FixedCostPaymentId.
+            movement.FixedCostPaymentId = fixedCostPaymentId;
             movement.DirectCostId = directCostId;
             movement.AssetId = assetId;
             movement.CheckId = request.CheckId;
             movement.ResponsibleId = request.ResponsibleId;
             movement.SourceType = sourceType;
             movement.SourceId = sourceId;
+
+            var paymentError = await ApplyFixedCostPaymentLinkAsync(context, oldFixedCostPaymentId, fixedCostPaymentId, movement.Date, movement.PaymentMethodId);
+            if (paymentError != null) return paymentError;
 
             await context.SaveChangesAsync();
             return Results.NoContent();
@@ -360,6 +511,17 @@ public static class AccountingMovementEndpoints
         if (movement.TransferGroupId.HasValue)
         {
             return Results.BadRequest(new { message = "Este movimiento forma parte de una Transferencia Interna y no puede eliminarse individualmente. Elimine la transferencia completa." });
+        }
+
+        if (movement.FixedCostPaymentId.HasValue)
+        {
+            var payment = await context.FixedCostPayments.FindAsync(movement.FixedCostPaymentId.Value);
+            if (payment != null)
+            {
+                payment.IsPaid = false;
+                payment.PaymentDate = null;
+                payment.PaymentMethodId = null;
+            }
         }
 
         context.AccountingMovements.Remove(movement);
@@ -415,6 +577,7 @@ public record UpdateMovementRequest(
     string? SourceId = null,
     Guid? ServiceOrderId = null,
     Guid? FixedCostId = null,
+    Guid? FixedCostPaymentId = null,
     Guid? DirectCostId = null,
     Guid? AssetId = null,
     Guid? CheckId = null,

@@ -42,6 +42,14 @@
           </td>
         </ng-container>
 
+        <ng-container matColumnDef="linkedSourceType">
+          <th mat-header-cell *matHeaderCellDef> Vínculo con Origen </th>
+          <td mat-cell *matCellDef="let element">
+            <span *ngIf="!element.linkedSourceType" class="text-inactive">Sin vínculo</span>
+            <mat-chip *ngIf="element.linkedSourceType" color="accent" highlighted>{{ linkedSourceTypeLabel(element.linkedSourceType) }}</mat-chip>
+          </td>
+        </ng-container>
+
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef> Acciones </th>
           <td mat-cell *matCellDef="let element">

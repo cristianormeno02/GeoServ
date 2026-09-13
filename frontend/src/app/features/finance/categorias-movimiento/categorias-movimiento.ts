@@ -10,6 +10,13 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MovementCategory, MovementCategoryService } from '../services/movement-category.service';
 import { CategoriaFormComponent } from './categoria-form.component';
 
+const LINKED_SOURCE_TYPE_LABELS: Record<string, string> = {
+  ServiceOrderIncome: 'Cobro de Orden de Servicio',
+  AssetPurchase: 'Compra de Activo',
+  FixedCostPayment: 'Pago de Gasto Fijo',
+  DirectCost: 'Pago de Costo Directo'
+};
+
 @Component({
   selector: 'app-categorias-movimiento',
   standalone: true,
@@ -19,7 +26,11 @@ import { CategoriaFormComponent } from './categoria-form.component';
 })
 export class CategoriasMovimiento implements OnInit {
   categories: MovementCategory[] = [];
-  displayedColumns: string[] = ['name', 'description', 'type', 'status', 'actions'];
+  displayedColumns: string[] = ['name', 'description', 'type', 'linkedSourceType', 'status', 'actions'];
+
+  linkedSourceTypeLabel(value: string): string {
+    return LINKED_SOURCE_TYPE_LABELS[value] || value;
+  }
 
   constructor(
     private categoryService: MovementCategoryService,

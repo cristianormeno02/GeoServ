@@ -35,8 +35,14 @@ public class AccountingMovement
     public ServiceOrder? ServiceOrder { get; set; }
 
     // 2. Gastos
+    // Legado: referenciaba a FixedCost (entidad sin uso real). No se usa para movimientos nuevos,
+    // se conserva solo por compatibilidad con movimientos históricos ya persistidos. Ver FixedCostPaymentId.
     public Guid? FixedCostId { get; set; }
     public FixedCost? FixedCost { get; set; }
+
+    // Vencimiento puntual (FixedCostPayment) de un Gasto Fijo pagado por este movimiento.
+    public Guid? FixedCostPaymentId { get; set; }
+    public FixedCostPayment? FixedCostPayment { get; set; }
 
     public Guid? DirectCostId { get; set; }
     public DirectCost? DirectCost { get; set; }

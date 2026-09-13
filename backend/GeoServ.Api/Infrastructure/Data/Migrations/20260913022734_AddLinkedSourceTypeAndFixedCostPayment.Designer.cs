@@ -3,17 +3,20 @@ using System;
 using GeoServ.Api.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace GeoServ.Api.Migrations
+namespace GeoServ.Api.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(GeoServDbContext))]
-    partial class GeoServDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260913022734_AddLinkedSourceTypeAndFixedCostPayment")]
+    partial class AddLinkedSourceTypeAndFixedCostPayment
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -116,7 +119,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasIndex("SourceType", "SourceId");
 
-                    b.ToTable("AccountingMovements", (string)null);
+                    b.ToTable("AccountingMovements");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.AccountingMovementDetail", b =>
@@ -195,7 +198,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasIndex("ProviderId");
 
-                    b.ToTable("Assets", (string)null);
+                    b.ToTable("Assets");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.Check", b =>
@@ -239,7 +242,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasIndex("ReceivedFromClientId");
 
-                    b.ToTable("Checks", (string)null);
+                    b.ToTable("Checks");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.Client", b =>
@@ -279,7 +282,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Clients", (string)null);
+                    b.ToTable("Clients");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.CompanyType", b =>
@@ -297,7 +300,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("CompanyTypes", (string)null);
+                    b.ToTable("CompanyTypes");
 
                     b.HasData(
                         new
@@ -387,7 +390,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasIndex("UnitId");
 
-                    b.ToTable("Consumables", (string)null);
+                    b.ToTable("Consumables");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.ConsumableClass", b =>
@@ -407,7 +410,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasIndex("ConsumableTypeId");
 
-                    b.ToTable("ConsumableClasses", (string)null);
+                    b.ToTable("ConsumableClasses");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.ConsumableType", b =>
@@ -422,7 +425,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ConsumableTypes", (string)null);
+                    b.ToTable("ConsumableTypes");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.Currency", b =>
@@ -448,7 +451,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Currencies", (string)null);
+                    b.ToTable("Currencies");
 
                     b.HasData(
                         new
@@ -549,7 +552,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasIndex("UnitId");
 
-                    b.ToTable("DirectCosts", (string)null);
+                    b.ToTable("DirectCosts");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.DirectCostCategory", b =>
@@ -567,7 +570,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("DirectCostCategories", (string)null);
+                    b.ToTable("DirectCostCategories");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.DistributionConcept", b =>
@@ -585,7 +588,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("DistributionConcepts", (string)null);
+                    b.ToTable("DistributionConcepts");
 
                     b.HasData(
                         new
@@ -650,7 +653,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Empresas", (string)null);
+                    b.ToTable("Empresas");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.EmpresaConfiguracion", b =>
@@ -686,7 +689,7 @@ namespace GeoServ.Api.Migrations
                     b.HasIndex("EmpresaId", "Key")
                         .IsUnique();
 
-                    b.ToTable("EmpresaConfiguraciones", (string)null);
+                    b.ToTable("EmpresaConfiguraciones");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.FinancialAccount", b =>
@@ -717,7 +720,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasIndex("CurrencyId");
 
-                    b.ToTable("FinancialAccounts", (string)null);
+                    b.ToTable("FinancialAccounts");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.FixedCost", b =>
@@ -744,7 +747,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("FixedCosts", (string)null);
+                    b.ToTable("FixedCosts");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.FixedCostCategory", b =>
@@ -762,7 +765,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("FixedCostCategories", (string)null);
+                    b.ToTable("FixedCostCategories");
 
                     b.HasData(
                         new
@@ -835,7 +838,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasIndex("ProviderId");
 
-                    b.ToTable("FixedCostItems", (string)null);
+                    b.ToTable("FixedCostItems");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.FixedCostPayment", b =>
@@ -872,7 +875,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasIndex("PaymentMethodId");
 
-                    b.ToTable("FixedCostPayments", (string)null);
+                    b.ToTable("FixedCostPayments");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.InventoryMovement", b =>
@@ -912,7 +915,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("InventoryMovements", (string)null);
+                    b.ToTable("InventoryMovements");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.MonthlyCoverageReport", b =>
@@ -972,7 +975,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("MovementCategories", (string)null);
+                    b.ToTable("MovementCategories");
 
                     b.HasData(
                         new
@@ -1086,7 +1089,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("PaymentMethods", (string)null);
+                    b.ToTable("PaymentMethods");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.Project", b =>
@@ -1113,7 +1116,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Projects", (string)null);
+                    b.ToTable("Projects");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.Provider", b =>
@@ -1131,7 +1134,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Providers", (string)null);
+                    b.ToTable("Providers");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.Responsible", b =>
@@ -1161,7 +1164,7 @@ namespace GeoServ.Api.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Responsibles", (string)null);
+                    b.ToTable("Responsibles");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.Role", b =>
@@ -1179,7 +1182,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Roles", (string)null);
+                    b.ToTable("Roles");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.ServiceOrder", b =>
@@ -1286,7 +1289,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasIndex("StatusId");
 
-                    b.ToTable("ServiceOrders", (string)null);
+                    b.ToTable("ServiceOrders");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.ServiceOrderActivity", b =>
@@ -1318,7 +1321,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasIndex("ServiceOrderId");
 
-                    b.ToTable("ServiceOrderActivities", (string)null);
+                    b.ToTable("ServiceOrderActivities");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.ServiceOrderDistribution", b =>
@@ -1354,7 +1357,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasIndex("ServiceOrderId");
 
-                    b.ToTable("ServiceOrderDistributions", (string)null);
+                    b.ToTable("ServiceOrderDistributions");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.ServiceOrderDocument", b =>
@@ -1392,7 +1395,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasIndex("UploadedById");
 
-                    b.ToTable("ServiceOrderDocuments", (string)null);
+                    b.ToTable("ServiceOrderDocuments");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.ServiceOrderObservation", b =>
@@ -1424,7 +1427,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ServiceOrderObservations", (string)null);
+                    b.ToTable("ServiceOrderObservations");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.ServiceOrderResponsible", b =>
@@ -1439,7 +1442,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasIndex("ResponsibleId");
 
-                    b.ToTable("ServiceOrderResponsibles", (string)null);
+                    b.ToTable("ServiceOrderResponsibles");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.ServiceOrderStatus", b =>
@@ -1460,7 +1463,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ServiceOrderStatuses", (string)null);
+                    b.ToTable("ServiceOrderStatuses");
 
                     b.HasData(
                         new
@@ -1529,7 +1532,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ServiceTypes", (string)null);
+                    b.ToTable("ServiceTypes");
 
                     b.HasData(
                         new
@@ -1579,7 +1582,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Units", (string)null);
+                    b.ToTable("Units");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.User", b =>
@@ -1622,7 +1625,7 @@ namespace GeoServ.Api.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("GeoServ.Api.Domain.Entities.AccountingMovement", b =>

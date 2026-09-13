@@ -25,6 +25,10 @@ export class AssetService {
     return this.http.get<Asset[]>(this.apiUrl);
   }
 
+  searchAssets(query: string): Observable<Asset[]> {
+    return this.http.get<Asset[]>(`${this.apiUrl}/search?q=${encodeURIComponent(query)}`);
+  }
+
   createAsset(asset: Asset): Observable<Asset> {
     return this.http.post<Asset>(this.apiUrl, asset);
   }

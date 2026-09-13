@@ -1,8 +1,8 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -11,13 +11,21 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { NgxMaskDirective } from 'ngx-mask';
-import { Movement, MovementService, MovementSourceType } from '../services/movement.service';
+import { switchMap } from 'rxjs/operators';
+import { Movement, MovementService } from '../services/movement.service';
 import { FinancialAccount, FinancialAccountService } from '../services/financial-account.service';
 import { MovementCategoryService } from '../services/movement-category.service';
-import { HttpClient } from '@angular/common/http';
-import { ChangeDetectorRef } from '@angular/core';
-import { switchMap } from 'rxjs/operators';
-import { environment } from '../../../../environments/environment';
+import { ServiceOrderSearchDialogComponent, SourceSearchResult } from './service-order-search-dialog.component';
+import { AssetSearchDialogComponent } from './asset-search-dialog.component';
+import { DirectCostSearchDialogComponent } from './direct-cost-search-dialog.component';
+import { FixedCostSearchDialogComponent } from './fixed-cost-search-dialog.component';
+
+const SOURCE_FIELD_LABELS: Record<string, string> = {
+  ServiceOrderIncome: 'Orden de Servicio',
+  AssetPurchase: 'Activo',
+  FixedCostPayment: 'Gasto Fijo / Vencimiento',
+  DirectCost: 'Costo Directo'
+};
 
 @Component({
   selector: 'app-movimiento-form',
@@ -55,25 +63,16 @@ import { environment } from '../../../../environments/environment';
             </mat-select>
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Tipo de Origen</mat-label>
-            <mat-select formControlName="sourceType" required>
-              <mat-option value="Manual">Manual</mat-option>
-              <mat-option value="ServiceOrderIncome" *ngIf="isIncomeCtrl.value">Ingreso por OS</mat-option>
-              <mat-option value="DirectCost" *ngIf="!isIncomeCtrl.value">Costo Directo</mat-option>
-              <mat-option value="FixedCostPayment" *ngIf="!isIncomeCtrl.value">Pago de Gasto Fijo</mat-option>
-              <mat-option value="AssetPurchase" *ngIf="!isIncomeCtrl.value">Compra de Activo</mat-option>
-            </mat-select>
-          </mat-form-field>
-
           <mat-form-field appearance="outline" class="full-width" *ngIf="sourceTypeCtrl.value !== 'Manual'">
-            <mat-label>Origen Específico</mat-label>
-            <mat-select formControlName="sourceId" [compareWith]="compareIds" required>
-              <mat-option *ngFor="let opt of sourceOptions" [value]="opt.id">
-                {{ opt.name }}
-              </mat-option>
-            </mat-select>
+            <mat-label>{{ sourceFieldLabel }}</mat-label>
+            <input matInput readonly [value]="sourceLabel || ''" (click)="openSourceSearchDialog()" placeholder="Click para buscar...">
+            <button mat-icon-button matSuffix type="button" (click)="openSourceSearchDialog()">
+              <mat-icon>search</mat-icon>
+            </button>
           </mat-form-field>
+          <p class="source-hint" *ngIf="sourceTypeCtrl.value !== 'Manual' && !sourceLabel">
+            Debe seleccionar un origen específico para esta categoría.
+          </p>
         </ng-container>
 
         <ng-template #transferFields>
@@ -136,6 +135,7 @@ import { environment } from '../../../../environments/environment';
     .full-width { width: 100%; }
     .text-right { text-align: right !important; }
     .convert-hint { margin: -10px 0 0; font-size: 0.85em; color: #b26a00; }
+    .source-hint { margin: -10px 0 0; font-size: 0.8em; color: #b26a00; }
   `]
 })
 export class MovimientoFormComponent implements OnInit {
@@ -144,7 +144,7 @@ export class MovimientoFormComponent implements OnInit {
   isSubmitting = false;
   accounts: FinancialAccount[] = [];
   allCategories: any[] = [];
-  sourceOptions: any[] = [];
+  sourceLabel: string | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -154,7 +154,7 @@ export class MovimientoFormComponent implements OnInit {
     private accountService: FinancialAccountService,
     private categoryService: MovementCategoryService,
     private snackBar: MatSnackBar,
-    private http: HttpClient,
+    private dialog: MatDialog,
     private cdr: ChangeDetectorRef
   ) {
     this.isEditMode = !!data?.movement;
@@ -171,6 +171,7 @@ export class MovimientoFormComponent implements OnInit {
       fromAccountId: [''],
       toAccountId: ['']
     });
+    this.sourceLabel = data?.movement?.sourceReference || null;
   }
 
   compareIds(id1: any, id2: any): boolean {
@@ -187,24 +188,10 @@ export class MovimientoFormComponent implements OnInit {
 
     this.isIncomeCtrl.valueChanges.subscribe(() => {
       this.movementForm.get('categoryId')?.setValue('');
-      this.movementForm.get('sourceType')?.setValue('Manual');
+      this.resetSourceSelection('Manual');
     });
 
-    this.sourceTypeCtrl.valueChanges.subscribe(val => {
-      this.sourceOptions = [];
-      if (val === 'Manual') {
-        this.movementForm.get('sourceId')?.setValue(null);
-        this.movementForm.get('sourceId')?.clearValidators();
-      } else {
-        this.movementForm.get('sourceId')?.setValidators(Validators.required);
-        this.loadSourceOptions(val);
-      }
-      this.movementForm.get('sourceId')?.updateValueAndValidity();
-    });
-
-    if (this.sourceTypeCtrl.value !== 'Manual') {
-      this.loadSourceOptions(this.sourceTypeCtrl.value);
-    }
+    this.categoryIdCtrl.valueChanges.subscribe(categoryId => this.onCategoryChanged(categoryId));
 
     if (this.isEditMode && this.data?.movement?.id) {
       this.movementService.getMovement(this.data.movement.id).subscribe({
@@ -219,9 +206,7 @@ export class MovimientoFormComponent implements OnInit {
             date: mov.date ? new Date(mov.date) : new Date(),
             financialAccountId: mov.financialAccountId
           }, { emitEvent: false });
-          if (mov.sourceType && mov.sourceType !== 'Manual') {
-            this.loadSourceOptions(mov.sourceType);
-          }
+          this.sourceLabel = mov.sourceReference || null;
           this.cdr.detectChanges();
         },
         error: (err) => console.error('Error fetching movement detail', err)
@@ -231,10 +216,71 @@ export class MovimientoFormComponent implements OnInit {
 
   get isIncomeCtrl() { return this.movementForm.get('isIncome')!; }
   get sourceTypeCtrl() { return this.movementForm.get('sourceType')!; }
+  get sourceIdCtrl() { return this.movementForm.get('sourceId')!; }
+  get categoryIdCtrl() { return this.movementForm.get('categoryId')!; }
   get movementModeCtrl() { return this.movementForm.get('movementMode')!; }
   get fromAccountIdCtrl() { return this.movementForm.get('fromAccountId')!; }
   get toAccountIdCtrl() { return this.movementForm.get('toAccountId')!; }
   get filteredCategories() { return this.allCategories.filter(c => c.isIncome === this.isIncomeCtrl.value && c.isActive && !c.isSystemDefault); }
+  get sourceFieldLabel() { return SOURCE_FIELD_LABELS[this.sourceTypeCtrl.value] || 'Origen Específico'; }
+
+  // La categoría determina el tipo de origen: ya no se elige "Tipo de Origen" a mano.
+  onCategoryChanged(categoryId: string): void {
+    const category = this.allCategories.find(c => c.id === categoryId);
+    const linkedSourceType = category?.linkedSourceType || 'Manual';
+    this.resetSourceSelection(linkedSourceType);
+  }
+
+  resetSourceSelection(sourceType: string): void {
+    this.sourceTypeCtrl.setValue(sourceType);
+    this.sourceIdCtrl.setValue(sourceType === 'Manual' ? null : '');
+    this.sourceIdCtrl.setValidators(sourceType === 'Manual' ? [] : [Validators.required]);
+    this.sourceIdCtrl.updateValueAndValidity();
+    this.sourceLabel = null;
+  }
+
+  openSourceSearchDialog(): void {
+    const type = this.sourceTypeCtrl.value;
+    let dialogRef;
+
+    if (type === 'ServiceOrderIncome') {
+      dialogRef = this.dialog.open(ServiceOrderSearchDialogComponent, { width: '500px' });
+    } else if (type === 'AssetPurchase') {
+      dialogRef = this.dialog.open(AssetSearchDialogComponent, { width: '500px' });
+    } else if (type === 'DirectCost') {
+      dialogRef = this.dialog.open(DirectCostSearchDialogComponent, { width: '550px' });
+    } else if (type === 'FixedCostPayment') {
+      dialogRef = this.dialog.open(FixedCostSearchDialogComponent, {
+        width: '500px',
+        data: { currentFixedCostPaymentId: this.sourceIdCtrl.value || null }
+      });
+    } else {
+      return;
+    }
+
+    dialogRef.afterClosed().subscribe((result: SourceSearchResult | undefined) => {
+      if (!result) return;
+      this.sourceIdCtrl.setValue(result.id);
+      this.sourceLabel = result.label;
+      this.applyAutofill(result);
+      this.cdr.detectChanges();
+    });
+  }
+
+  // Autocompleta Monto/Descripción con los datos del origen elegido (vencimiento de Gasto Fijo o
+  // Costo Directo), solo si el usuario todavía no cargó un valor propio en esos campos.
+  applyAutofill(result: SourceSearchResult): void {
+    if (result.amount != null) {
+      const amountCtrl = this.movementForm.get('amount')!;
+      const current = amountCtrl.value;
+      const isEmpty = current === '' || current === null || current === undefined || Number(current) === 0;
+      if (isEmpty) amountCtrl.setValue(result.amount);
+    }
+    if (result.description) {
+      const descriptionCtrl = this.movementForm.get('description')!;
+      if (!descriptionCtrl.value) descriptionCtrl.setValue(result.description);
+    }
+  }
 
   applyMovementMode(mode: string, options: { emitEvent?: boolean } = {}) {
     const isTransfer = mode === 'Transferencia';
@@ -274,56 +320,18 @@ export class MovimientoFormComponent implements OnInit {
     description.updateValueAndValidity(options);
   }
 
-  loadAccounts() { 
-    this.accountService.getAccounts().subscribe(data => { 
-      this.accounts = data; 
-      this.cdr.detectChanges(); 
-    }); 
-  }
-  
-  loadCategories() { 
-    this.categoryService.getCategories().subscribe(data => { 
-      this.allCategories = data; 
-      this.cdr.detectChanges(); 
-    }); 
+  loadAccounts() {
+    this.accountService.getAccounts().subscribe(data => {
+      this.accounts = data;
+      this.cdr.detectChanges();
+    });
   }
 
-  loadSourceOptions(type: string) {
-    let endpoint = '';
-    let mapFn = (x: any) => ({ id: x.id, name: x.name || x.description || x.orderNumber });
-    
-    if (type === 'ServiceOrderIncome') endpoint = '/service-orders';
-    else if (type === 'DirectCost') {
-      endpoint = '/direct-costs';
-      mapFn = (x: any) => {
-        const osPrefix = x.serviceOrderNumber ? `[OS #${x.serviceOrderNumber}] ` : '';
-        const catSuffix = x.categoryName ? ` (${x.categoryName})` : '';
-        const amountSuffix = x.totalAmount != null ? ` - $${Number(x.totalAmount).toLocaleString('es-AR')}` : '';
-        return {
-          id: x.id,
-          name: `${osPrefix}${x.description || 'Costo Directo'}${catSuffix}${amountSuffix}`
-        };
-      };
-    }
-    else if (type === 'FixedCostPayment') {
-      endpoint = '/fixed-cost-items';
-      mapFn = (x: any) => ({
-        id: x.id,
-        name: x.name + (x.category?.name ? ` (${x.category.name})` : '')
-      });
-    }
-    else if (type === 'AssetPurchase') endpoint = '/assets';
-    
-    if (endpoint) {
-      this.http.get<any[]>(environment.apiUrl + endpoint).subscribe({
-        next: (res: any) => {
-           let arr = res.items || res;
-           this.sourceOptions = arr.map(mapFn);
-           this.cdr.detectChanges();
-        },
-        error: () => this.sourceOptions = []
-      });
-    }
+  loadCategories() {
+    this.categoryService.getCategories().subscribe(data => {
+      this.allCategories = data;
+      this.cdr.detectChanges();
+    });
   }
 
   save() {
@@ -378,31 +386,26 @@ export class MovimientoFormComponent implements OnInit {
 
     if (this.isEditMode) {
       this.movementService.updateMovement(this.data.movement!.id!, payload).subscribe({
-        next: () => { 
-          this.snackBar.open('Movimiento actualizado con éxito', 'Cerrar', { duration: 3000 }); 
-          this.dialogRef.close(true); 
+        next: () => {
+          this.snackBar.open('Movimiento actualizado con éxito', 'Cerrar', { duration: 3000 });
+          this.dialogRef.close(true);
         },
-        error: (err) => { 
-          this.isSubmitting = false; 
-          this.snackBar.open(err.error?.message || 'Error al actualizar movimiento', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] }); 
+        error: (err) => {
+          this.isSubmitting = false;
+          this.snackBar.open(err.error?.message || 'Error al actualizar movimiento', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] });
         }
       });
     } else {
       this.movementService.createMovement(payload).subscribe({
-        next: () => { 
-          this.snackBar.open('Movimiento creado con éxito', 'Cerrar', { duration: 3000 }); 
-          this.dialogRef.close(true); 
+        next: () => {
+          this.snackBar.open('Movimiento creado con éxito', 'Cerrar', { duration: 3000 });
+          this.dialogRef.close(true);
         },
-        error: (err) => { 
-          this.isSubmitting = false; 
-          this.snackBar.open(err.error?.message || 'Error al crear movimiento', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] }); 
+        error: (err) => {
+          this.isSubmitting = false;
+          this.snackBar.open(err.error?.message || 'Error al crear movimiento', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] });
         }
       });
     }
   }
 }
-
-
-
-
-

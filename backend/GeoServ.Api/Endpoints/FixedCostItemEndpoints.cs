@@ -32,6 +32,47 @@ public static class FixedCostItemEndpoints
             return item is not null ? Results.Ok(item) : Results.NotFound();
         }).WithName("GetFixedCostItemById").WithOpenApi();
 
+        // Búsqueda de gastos fijos para el buscador modal del formulario de movimientos.
+        group.MapGet("/search", async (string? q, GeoServDbContext context) =>
+        {
+            var query = context.FixedCostItems
+                .Include(f => f.Category)
+                .Include(f => f.Provider)
+                .Include(f => f.Payments)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                var lowerQ = q.ToLower();
+                query = query.Where(f => f.Name.ToLower().Contains(lowerQ) ||
+                                         (f.Category != null && f.Category.Name.ToLower().Contains(lowerQ)) ||
+                                         (f.Provider != null && f.Provider.Name.ToLower().Contains(lowerQ)));
+            }
+
+            var results = await query
+                .OrderBy(f => f.Name)
+                .Take(20)
+                .Select(f => new
+                {
+                    f.Id,
+                    f.Name,
+                    f.IsRecurring,
+                    f.InitialAmount,
+                    CategoryName = f.Category != null ? f.Category.Name : null,
+                    ProviderName = f.Provider != null ? f.Provider.Name : null,
+                    Payments = f.Payments.Select(p => new
+                    {
+                        p.Id,
+                        p.DueDate,
+                        p.Amount,
+                        p.IsPaid
+                    })
+                })
+                .ToListAsync();
+
+            return Results.Ok(results);
+        }).WithName("SearchFixedCostItems").WithOpenApi();
+
         group.MapPost("/", async (CreateFixedCostItemRequest request, GeoServDbContext context) =>
         {
             var item = new FixedCostItem

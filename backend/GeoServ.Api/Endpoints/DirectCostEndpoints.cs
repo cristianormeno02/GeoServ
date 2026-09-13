@@ -12,13 +12,26 @@ public static class DirectCostEndpoints
         // --- Global Direct Costs Endpoints ---
         var globalGroup = app.MapGroup("/api/direct-costs").RequireAuthorization();
 
-        globalGroup.MapGet("/", async (GeoServDbContext context) =>
+        globalGroup.MapGet("/", async (string? q, GeoServDbContext context) =>
         {
-            var costs = await context.DirectCosts
+            var query = context.DirectCosts
                 .Include(c => c.ServiceOrder)
                 .Include(c => c.Category)
                 .Include(c => c.Provider)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                var lowerQ = q.ToLower();
+                query = query.Where(c => c.Description.ToLower().Contains(lowerQ) ||
+                                         (c.Provider != null && c.Provider.Name.ToLower().Contains(lowerQ)) ||
+                                         (c.Category != null && c.Category.Name.ToLower().Contains(lowerQ)) ||
+                                         (c.ServiceOrder != null && c.ServiceOrder.OrderNumber.ToLower().Contains(lowerQ)));
+            }
+
+            var costs = await query
                 .OrderByDescending(c => c.Date)
+                .Take(20)
                 .Select(c => new
                 {
                     c.Id,

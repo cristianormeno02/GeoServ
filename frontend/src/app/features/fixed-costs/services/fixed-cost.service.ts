@@ -38,6 +38,11 @@ export class FixedCostService {
     return this.http.get<FixedCostItem>(`${this.itemsUrl}/${id}`);
   }
 
+  // Búsqueda de gastos fijos (con sus vencimientos) para el buscador modal del formulario de movimientos.
+  searchItems(query: string): Observable<FixedCostItem[]> {
+    return this.http.get<FixedCostItem[]>(`${this.itemsUrl}/search?q=${encodeURIComponent(query)}`);
+  }
+
   createItem(data: CreateFixedCostItemRequest): Observable<FixedCostItem> {
     return this.http.post<FixedCostItem>(this.itemsUrl, data);
   }

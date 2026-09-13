@@ -3,6 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
+export enum CategoryLinkedSourceType {
+  ServiceOrderIncome = 'ServiceOrderIncome',
+  AssetPurchase = 'AssetPurchase',
+  FixedCostPayment = 'FixedCostPayment',
+  DirectCost = 'DirectCost'
+}
+
 export interface MovementCategory {
   id?: string;
   name: string;
@@ -10,6 +17,7 @@ export interface MovementCategory {
   isIncome: boolean;
   isActive: boolean;
   isSystemDefault?: boolean;
+  linkedSourceType?: CategoryLinkedSourceType | null;
 }
 
 @Injectable({

@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "backend-api",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "backend/GeoServ.Api", "--urls", "http://localhost:5271"],
+      "port": 5271
+    },
+    {
+      "name": "frontend-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "start", "--prefix", "frontend"],
+      "port": 4300
+    }
+  ]
+}
