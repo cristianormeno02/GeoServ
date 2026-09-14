@@ -9,6 +9,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatChipsModule } from '@angular/material/chips';
 import { MovementCategory, MovementCategoryService } from '../services/movement-category.service';
 import { CategoriaFormComponent } from './categoria-form.component';
+import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 const LINKED_SOURCE_TYPE_LABELS: Record<string, string> = {
   ServiceOrderIncome: 'Cobro de Orden de Servicio',
@@ -70,14 +71,29 @@ export class CategoriasMovimiento implements OnInit {
 
   deleteCategory(category: MovementCategory) {
     if (category.isSystemDefault) return;
-    if (confirm(`¿Estás seguro de eliminar la categoría "${category.name}"?`)) {
-      this.categoryService.deleteCategory(category.id!).subscribe({
-        next: () => this.loadCategories(),
-        error: (err) => {
-          console.error(err);
-          alert(err.error || 'Ocurrió un error al eliminar. Es posible que esté en uso.');
-        }
-      });
-    }
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Confirmar Eliminación',
+        message: `¿Estás seguro de eliminar la categoría "${category.name}"?`,
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar',
+        isDestructive: true
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (confirmed) {
+        this.categoryService.deleteCategory(category.id!).subscribe({
+          next: () => {
+            this.snackBar.open('Categoría eliminada con éxito', 'Cerrar', { duration: 3000 });
+            this.loadCategories();
+          },
+          error: (err) => {
+            console.error(err);
+            this.snackBar.open(err.error || 'Ocurrió un error al eliminar. Es posible que esté en uso.', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] });
+          }
+        });
+      }
+    });
   }
 }

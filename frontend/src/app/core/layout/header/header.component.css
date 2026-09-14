@@ -1,16 +1,16 @@
 .custom-header {
   background-color: var(--color-primary);
-  color: var(--text-primary);
+  color: var(--on-dark-surface);
 }
 
 .menu-toggle-btn {
-  --mat-icon-button-icon-color: #ffffff;
-  color: #ffffff !important;
+  --mat-icon-button-icon-color: var(--on-dark-surface);
+  color: var(--on-dark-surface);
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .menu-toggle-btn mat-icon {
-  color: #ffffff !important;
+  color: var(--on-dark-surface);
 }
 
 .menu-toggle-btn:hover {
@@ -58,8 +58,8 @@
 
 /* ── Botón de Favoritos en el header ───────────────────────────────────────── */
 .favorites-btn {
-  --mdc-text-button-label-text-color: #ffffff;
-  color: #ffffff !important;
+  --mdc-text-button-label-text-color: var(--on-dark-surface);
+  color: var(--on-dark-surface);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -70,7 +70,7 @@
 }
 
 .favorites-label {
-  color: #ffffff !important;
+  color: var(--on-dark-surface);
   font-size: 14px;
   font-weight: 500;
   letter-spacing: 0.2px;

@@ -14,6 +14,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { UserService } from '../../services/user.service';
 import { User } from '../../models/user.model';
 import { UserDialogComponent } from '../user-dialog/user-dialog.component';
+import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-user-list',
@@ -223,19 +224,31 @@ export class UserListComponent implements OnInit {
   }
 
   deleteUser(user: User) {
-    if (confirm(`¿Estás seguro de que deseas eliminar al usuario ${user.name}?`)) {
-      this.userService.deleteUser(user.id).subscribe({
-        next: () => {
-          this.showSuccess('Usuario eliminado exitosamente');
-          this.loadUsers();
-        },
-        error: (err) => {
-          const errorMsg = err.error?.message || err.error?.title || 'Ocurrió un error al intentar eliminar el usuario';
-          this.showError(errorMsg);
-          console.error(err);
-        }
-      });
-    }
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Confirmar Eliminación',
+        message: `¿Estás seguro de que deseas eliminar al usuario ${user.name}?`,
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar',
+        isDestructive: true
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (confirmed) {
+        this.userService.deleteUser(user.id).subscribe({
+          next: () => {
+            this.showSuccess('Usuario eliminado exitosamente');
+            this.loadUsers();
+          },
+          error: (err) => {
+            const errorMsg = err.error?.message || err.error?.title || 'Ocurrió un error al intentar eliminar el usuario';
+            this.showError(errorMsg);
+            console.error(err);
+          }
+        });
+      }
+    });
   }
 
   private showSuccess(message: string) {

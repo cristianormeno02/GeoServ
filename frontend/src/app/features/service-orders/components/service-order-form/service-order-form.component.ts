@@ -1,5 +1,8 @@
-import { Component, OnInit, Injectable, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, Injectable, ChangeDetectorRef, DestroyRef, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 
@@ -128,6 +131,8 @@ export class ServiceOrderFormComponent implements OnInit {
   directCostsDataSource = new MatTableDataSource<DirectCost>();
   directCostsColumns: string[] = ['category', 'provider', 'description', 'quantity', 'unit', 'unitPrice', 'totalAmount', 'actions'];
   isLoadingCosts = false;
+
+  private destroyRef = inject(DestroyRef);
 
   // Catálogos
   clients: any[] = [];
@@ -259,7 +264,7 @@ export class ServiceOrderFormComponent implements OnInit {
     });
 
     // Detectar cambio de moneda para setear la lógica de montos
-    this.orderForm.get('currencyId')?.valueChanges.subscribe(val => {
+    this.orderForm.get('currencyId')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(val => {
       const selected = this.currencies.find(c => c.id === val);
       if (selected) {
         this.selectedCurrencyCode = selected.code;
@@ -268,13 +273,13 @@ export class ServiceOrderFormComponent implements OnInit {
     });
 
     // Calcular Total Amount automáticamente
-    this.orderForm.get('foreignAmount')?.valueChanges.subscribe(() => this.calculateTotal());
-    this.orderForm.get('exchangeRateAtBudget')?.valueChanges.subscribe(() => this.calculateTotal());
-    this.orderForm.get('budgetedAmount')?.valueChanges.subscribe(() => this.calculateTotal());
-    this.orderForm.get('discount')?.valueChanges.subscribe(() => this.calculateTotal());
+    this.orderForm.get('foreignAmount')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.calculateTotal());
+    this.orderForm.get('exchangeRateAtBudget')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.calculateTotal());
+    this.orderForm.get('budgetedAmount')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.calculateTotal());
+    this.orderForm.get('discount')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.calculateTotal());
 
     // Auto-copy fecha de inicio presupuestada → real
-    this.orderForm.get('estimatedStartDate')?.valueChanges.subscribe(val => {
+    this.orderForm.get('estimatedStartDate')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(val => {
       if (val) {
         this.orderForm.get('actualStartDate')?.setValue(val, { emitEvent: false });
       }
@@ -324,7 +329,7 @@ export class ServiceOrderFormComponent implements OnInit {
     });
 
     // Suscribirse a cambios en porcentaje para este item
-    group.get('percentage')?.valueChanges.subscribe(() => {
+    group.get('percentage')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       const finalTotal = this.orderForm.get('totalAmount')?.value || 0;
       const budget = this.orderForm.get('budgetedAmount')?.value || 0;
       this.recalculateDistributions(finalTotal, budget);
@@ -493,7 +498,7 @@ export class ServiceOrderFormComponent implements OnInit {
       progressPercentage: [{ value: initialData?.progressPercentage || 0, disabled: true }, [Validators.min(0), Validators.max(100)]]
     });
 
-    group.get('status')?.valueChanges.subscribe(status => {
+    group.get('status')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(status => {
       const progressCtrl = group.get('progressPercentage');
       if (status === 'Pendiente' || status === 'Cancelado') {
         progressCtrl?.setValue(0, { emitEvent: false });
@@ -549,24 +554,35 @@ export class ServiceOrderFormComponent implements OnInit {
 
   // Carga de catálogos
   loadCatalogs(): void {
-    this.clientService.getClients().subscribe(res => this.clients = res);
-    this.serviceTypeService.getServiceTypes().subscribe(res => this.serviceTypes = res);
-    this.userService.getUsers().subscribe(res => this.users = res);
-    
-    this.serviceOrderService.getStatuses().subscribe(res => this.statuses = res);
-    this.serviceOrderService.getProjects().subscribe(res => this.projects = res);
-    this.serviceOrderService.getDistributionConcepts().subscribe(res => this.distributionConcepts = res);
-    
-    this.serviceOrderService.getCurrencies().subscribe(res => {
-      this.currencies = res;
+    forkJoin({
+      clients: this.clientService.getClients().pipe(catchError(() => of([]))),
+      serviceTypes: this.serviceTypeService.getServiceTypes().pipe(catchError(() => of([]))),
+      users: this.userService.getUsers().pipe(catchError(() => of([]))),
+      statuses: this.serviceOrderService.getStatuses().pipe(catchError(() => of([]))),
+      projects: this.serviceOrderService.getProjects().pipe(catchError(() => of([]))),
+      distributionConcepts: this.serviceOrderService.getDistributionConcepts().pipe(catchError(() => of([]))),
+      currencies: this.serviceOrderService.getCurrencies().pipe(catchError(() => of([]))),
+      responsiblesCatalog: this.serviceOrderService.getResponsiblesCatalog().pipe(catchError(() => of([])))
+    }).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(results => {
+      this.clients = results.clients;
+      this.serviceTypes = results.serviceTypes;
+      this.users = results.users;
+      this.statuses = results.statuses;
+      this.projects = results.projects;
+      this.distributionConcepts = results.distributionConcepts;
+      this.currencies = results.currencies;
+      this.responsiblesCatalog = results.responsiblesCatalog;
+
       if (!this.isEditMode) {
         const ars = this.currencies.find(c => c.code === 'ARS');
         if (ars) {
           this.orderForm.get('currencyId')?.setValue(ars.id);
         }
       }
+      this.cdr.detectChanges();
     });
-    this.serviceOrderService.getResponsiblesCatalog().subscribe(res => this.responsiblesCatalog = res);
   }
 
   loadOrderData(id: string): void {
@@ -919,7 +935,7 @@ export class ServiceOrderFormComponent implements OnInit {
             actualAmount: [0]
           });
           
-          group.get('percentage')?.valueChanges.subscribe(() => {
+          group.get('percentage')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             const finalTotal = this.orderForm.get('totalAmount')?.value || 0;
             const budget = this.orderForm.get('budgetedAmount')?.value || 0;
             this.recalculateDistributions(finalTotal, budget);

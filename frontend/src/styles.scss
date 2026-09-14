@@ -70,8 +70,10 @@ $theme-dark: mat.define-theme((
   --color-surface: #FFFFFF;
 
   /* Texto */
-  --text-primary: #FFFFFF;
-  --text-secondary: #1E293B;
+  --text-primary: #1E293B;
+  --text-secondary: #475569;
+  --on-dark-surface: #FFFFFF;
+  --on-dark-surface-secondary: #CBD5E1;
 
   /* Bordes */
   --border-color: #E2E8F0;
@@ -94,6 +96,8 @@ html.dark-theme,
   /* Texto */
   --text-primary: #F8FAFC;
   --text-secondary: #94A3B8;
+  --on-dark-surface: #F8FAFC;
+  --on-dark-surface-secondary: #CBD5E1;
 
   /* Bordes */
   --border-color: #334155;
@@ -112,7 +116,7 @@ html.dark-theme,
 html, body { 
   height: 100%; 
   background-color: var(--color-background); 
-  color: var(--text-secondary); 
+  color: var(--text-primary); 
 }
 
 body { 

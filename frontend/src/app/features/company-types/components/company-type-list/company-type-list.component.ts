@@ -13,6 +13,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { CompanyTypeService } from '../../services/company-type.service';
 import { CompanyType } from '../../models/company-type.model';
 import { CompanyTypeDialogComponent } from '../company-type-dialog/company-type-dialog.component';
+import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-company-type-list',
@@ -204,19 +205,31 @@ export class CompanyTypeListComponent implements OnInit {
   }
 
   deleteCompanyType(companyType: CompanyType) {
-    if (confirm(`¿Estás seguro de que deseas eliminar el tipo de compañía ${companyType.name}?`)) {
-      this.companyTypeService.deleteCompanyType(companyType.id).subscribe({
-        next: () => {
-          this.showSuccess('Tipo de compañía eliminado exitosamente');
-          this.loadCompanyTypes();
-        },
-        error: (err) => {
-          const errorMsg = err.error?.message || err.error?.title || 'Ocurrió un error al intentar eliminar el tipo de compañía';
-          this.showError(errorMsg);
-          console.error(err);
-        }
-      });
-    }
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Confirmar Eliminación',
+        message: `¿Estás seguro de que deseas eliminar el tipo de compañía ${companyType.name}?`,
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar',
+        isDestructive: true
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (confirmed) {
+        this.companyTypeService.deleteCompanyType(companyType.id).subscribe({
+          next: () => {
+            this.showSuccess('Tipo de compañía eliminado exitosamente');
+            this.loadCompanyTypes();
+          },
+          error: (err) => {
+            const errorMsg = err.error?.message || err.error?.title || 'Ocurrió un error al intentar eliminar el tipo de compañía';
+            this.showError(errorMsg);
+            console.error(err);
+          }
+        });
+      }
+    });
   }
 
   private showSuccess(message: string) {

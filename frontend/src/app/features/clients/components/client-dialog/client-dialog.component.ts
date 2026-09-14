@@ -131,9 +131,6 @@ export class ClientDialogComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    console.log('--- DEBUG DIALOG ---');
-    console.log('Client Data received from table:', this.data?.client);
-    
     this.loadCompanyTypes();
     this.loadAvailableUsers();
 

@@ -13,6 +13,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ServiceTypeService } from '../../services/service-type.service';
 import { ServiceType } from '../../models/service-type.model';
 import { ServiceTypeDialogComponent } from '../service-type-dialog/service-type-dialog.component';
+import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-service-type-list',
@@ -203,19 +204,31 @@ export class ServiceTypeListComponent implements OnInit {
   }
 
   deleteServiceType(serviceType: ServiceType) {
-    if (confirm(`¿Estás seguro de que deseas eliminar el tipo de servicio ${serviceType.name}?`)) {
-      this.serviceTypeService.deleteServiceType(serviceType.id).subscribe({
-        next: () => {
-          this.showSuccess('Tipo de servicio eliminado exitosamente');
-          this.loadServiceTypes();
-        },
-        error: (err) => {
-          const errorMsg = err.error?.message || err.error?.title || 'Ocurrió un error al intentar eliminar';
-          this.showError(errorMsg);
-          console.error(err);
-        }
-      });
-    }
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Confirmar Eliminación',
+        message: `¿Estás seguro de que deseas eliminar el tipo de servicio ${serviceType.name}?`,
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar',
+        isDestructive: true
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (confirmed) {
+        this.serviceTypeService.deleteServiceType(serviceType.id).subscribe({
+          next: () => {
+            this.showSuccess('Tipo de servicio eliminado exitosamente');
+            this.loadServiceTypes();
+          },
+          error: (err) => {
+            const errorMsg = err.error?.message || err.error?.title || 'Ocurrió un error al intentar eliminar';
+            this.showError(errorMsg);
+            console.error(err);
+          }
+        });
+      }
+    });
   }
 
   private showSuccess(message: string) {

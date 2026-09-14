@@ -20,6 +20,7 @@ import { ServiceOrder, ServiceOrderDocument } from '../../models/service-order.m
 import { DirectCostService } from '../../services/direct-cost.service';
 import { DirectCost } from '../../models/direct-cost.model';
 import { DirectCostDialogComponent } from '../direct-cost-dialog/direct-cost-dialog.component';
+import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 import { ChangeDetectorRef } from '@angular/core';
 
@@ -100,15 +101,12 @@ export class ServiceOrderDetailComponent implements OnInit {
 
   loadOrderDetails(): void {
     this.isLoading = true;
-    console.log('Iniciando carga de orden:', this.orderId);
     this.serviceOrderService.getServiceOrderById(this.orderId!).subscribe({
       next: (data) => {
-        console.log('Datos recibidos:', data);
         this.order = data;
         this.isLoading = false;
         try {
           this.cdr.detectChanges();
-          console.log('Detección de cambios manual ejecutada exitosamente.');
         } catch (e) {
           console.error('Error al renderizar la vista (Angular crash):', e);
         }
@@ -188,18 +186,30 @@ export class ServiceOrderDetailComponent implements OnInit {
   deleteDocument(docId: string): void {
     if (!this.orderId) return;
 
-    if (confirm('¿Estás seguro de que deseas eliminar este documento? Esta acción no se puede deshacer.')) {
-      this.serviceOrderService.deleteDocument(this.orderId, docId).subscribe({
-        next: () => {
-          this.snackBar.open('Documento eliminado.', 'Cerrar', { duration: 3000 });
-          this.loadOrderDetails();
-        },
-        error: (err) => {
-          console.error(err);
-          this.snackBar.open('Error al eliminar el documento (Verifica tus permisos).', 'Cerrar', { duration: 4000 });
-        }
-      });
-    }
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Confirmar Eliminación',
+        message: '¿Estás seguro de que deseas eliminar este documento? Esta acción no se puede deshacer.',
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar',
+        isDestructive: true
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (confirmed) {
+        this.serviceOrderService.deleteDocument(this.orderId!, docId).subscribe({
+          next: () => {
+            this.snackBar.open('Documento eliminado.', 'Cerrar', { duration: 3000 });
+            this.loadOrderDetails();
+          },
+          error: (err) => {
+            console.error(err);
+            this.snackBar.open('Error al eliminar el documento (Verifica tus permisos).', 'Cerrar', { duration: 4000 });
+          }
+        });
+      }
+    });
   }
 
   // --- MÉTODOS DE COSTOS DIRECTOS ---

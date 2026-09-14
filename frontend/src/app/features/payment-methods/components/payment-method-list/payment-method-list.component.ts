@@ -8,6 +8,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { PaymentMethodService } from '../../services/payment-method.service';
 import { PaymentMethod } from '../../models/payment-method.model';
 import { PaymentMethodDialogComponent } from '../payment-method-dialog/payment-method-dialog.component';
+import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-payment-method-list',
@@ -56,6 +57,21 @@ export class PaymentMethodListComponent implements OnInit {
   }
 
   deleteItem(id: string) {
-    if (confirm('Eliminar?')) this.service.deletePaymentMethod(id).subscribe(() => { this.load(); this.snack.open('Eliminado', 'OK', {duration:2000}); });
+    this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Confirmar Eliminación',
+        message: '¿Está seguro de que desea eliminar este medio de pago?',
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar',
+        isDestructive: true
+      }
+    }).afterClosed().subscribe(confirmed => {
+      if (confirmed) {
+        this.service.deletePaymentMethod(id).subscribe(() => {
+          this.load();
+          this.snack.open('Eliminado exitosamente', 'OK', { duration: 2000 });
+        });
+      }
+    });
   }
 }

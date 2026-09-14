@@ -6,12 +6,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { Router } from '@angular/router';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ResponsibleService, Responsible } from '../../services/responsible.service';
+import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-responsible-list',
   standalone: true,
-  imports: [CommonModule, MatTableModule, MatButtonModule, MatIconModule, MatCardModule, MatSnackBarModule],
+  imports: [CommonModule, MatTableModule, MatButtonModule, MatIconModule, MatCardModule, MatSnackBarModule, MatDialogModule],
   template: `
     <div class="container">
       <mat-card>
@@ -66,7 +68,8 @@ export class ResponsibleListComponent implements OnInit {
   constructor(
     private responsibleService: ResponsibleService,
     private router: Router,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -89,14 +92,26 @@ export class ResponsibleListComponent implements OnInit {
   }
 
   deleteResp(id: string): void {
-    if (confirm('¿Está seguro de eliminar este responsable?')) {
-      this.responsibleService.deleteResponsible(id).subscribe({
-        next: () => {
-          this.snackBar.open('Eliminado correctamente', 'Cerrar', { duration: 3000 });
-          this.loadData();
-        },
-        error: (err) => this.snackBar.open(err.error?.message || 'Error al eliminar', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] })
-      });
-    }
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Confirmar Eliminación',
+        message: '¿Está seguro de eliminar este responsable?',
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar',
+        isDestructive: true
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (confirmed) {
+        this.responsibleService.deleteResponsible(id).subscribe({
+          next: () => {
+            this.snackBar.open('Eliminado correctamente', 'Cerrar', { duration: 3000 });
+            this.loadData();
+          },
+          error: (err) => this.snackBar.open(err.error?.message || 'Error al eliminar', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] })
+        });
+      }
+    });
   }
 }

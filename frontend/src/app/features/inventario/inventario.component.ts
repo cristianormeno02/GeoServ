@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
@@ -118,13 +118,6 @@ export class InventarioComponent implements OnInit {
     this.totalValue = data.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0);
     this.outOfStockCount = data.filter(item => item.quantity === 0).length;
     this.criticalItemsCount = data.filter(item => item.quantity > 0 && item.quantity <= item.minimumStock).length;
-    
-    // Logging for Task 2.1 verification
-    console.log('--- KPIs Calculados ---');
-    console.log('Valor Total:', this.totalValue);
-    console.log('Insumos Activos:', this.totalActiveItems);
-    console.log('Agotados:', this.outOfStockCount);
-    console.log('Críticos:', this.criticalItemsCount);
   }
 
   openHistory(element: Consumable) {

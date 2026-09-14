@@ -7,6 +7,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { Check, CheckService } from '../services/check.service';
 import { ChequeFormComponent } from './cheque-form.component';
+import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-cheques',
@@ -54,12 +55,24 @@ export class Cheques implements OnInit {
   }
 
   deleteCheck(check: Check) {
-    if (confirm(`¿Estás seguro de eliminar el cheque #${check.checkNumber}?`)) {
-      this.checkService.deleteCheck(check.id!).subscribe({
-        next: () => this.loadChecks(),
-        error: (err) => console.error(err)
-      });
-    }
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Confirmar Eliminación',
+        message: `¿Estás seguro de eliminar el cheque #${check.checkNumber}?`,
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar',
+        isDestructive: true
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (confirmed) {
+        this.checkService.deleteCheck(check.id!).subscribe({
+          next: () => this.loadChecks(),
+          error: (err) => console.error(err)
+        });
+      }
+    });
   }
 
   getStatusName(status: number): string {

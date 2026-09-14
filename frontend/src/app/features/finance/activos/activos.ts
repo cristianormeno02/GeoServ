@@ -7,6 +7,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { Asset, AssetService } from '../services/asset.service';
 import { ActivoFormComponent } from './activo-form.component';
+import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 import { MatSnackBar } from '@angular/material/snack-bar';
 
@@ -60,17 +61,29 @@ export class Activos implements OnInit {
   }
 
   deleteAsset(asset: Asset) {
-    if (confirm(`¿Estás seguro de eliminar el activo "${asset.name}"?`)) {
-      this.assetService.deleteAsset(asset.id!).subscribe({
-        next: () => {
-          this.snackBar.open('Activo eliminado con éxito', 'Cerrar');
-          this.loadAssets();
-        },
-        error: (err) => {
-          console.error(err);
-          this.snackBar.open(err.error?.message || 'Error al eliminar activo', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] });
-        }
-      });
-    }
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Confirmar Eliminación',
+        message: `¿Estás seguro de eliminar el activo "${asset.name}"?`,
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar',
+        isDestructive: true
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (confirmed) {
+        this.assetService.deleteAsset(asset.id!).subscribe({
+          next: () => {
+            this.snackBar.open('Activo eliminado con éxito', 'Cerrar');
+            this.loadAssets();
+          },
+          error: (err) => {
+            console.error(err);
+            this.snackBar.open(err.error?.message || 'Error al eliminar activo', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] });
+          }
+        });
+      }
+    });
   }
 }

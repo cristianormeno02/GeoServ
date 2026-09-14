@@ -16,6 +16,7 @@ import { Movement, MovementService } from '../services/movement.service';
 import { MovimientoFormComponent } from './movimiento-form.component';
 import { MovementCategoryService } from '../services/movement-category.service';
 import { FinancialAccountService } from '../services/financial-account.service';
+import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-movimientos',
@@ -167,21 +168,43 @@ export class Movimientos implements OnInit {
 
   deleteMovement(movement: Movement) {
     if (movement.transferGroupId) {
-      if (confirm(`¿Estás seguro de eliminar esta Transferencia Interna por $${movement.amount}? Se eliminarán ambos movimientos (origen y destino).`)) {
-        this.movementService.deleteTransfer(movement.transferGroupId).subscribe({
-          next: () => { this.snackBar.open('Transferencia eliminada con éxito', 'Cerrar'); this.loadMovements(); },
-          error: (err) => { console.error(err); this.snackBar.open(err.error?.message || 'Error al eliminar la transferencia', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] }); }
-        });
-      }
+      const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+        data: {
+          title: 'Confirmar Eliminación',
+          message: `¿Estás seguro de eliminar esta Transferencia Interna por $${movement.amount}? Se eliminarán ambos movimientos (origen y destino).`,
+          confirmText: 'Eliminar',
+          cancelText: 'Cancelar',
+          isDestructive: true
+        }
+      });
+      dialogRef.afterClosed().subscribe(confirmed => {
+        if (confirmed) {
+          this.movementService.deleteTransfer(movement.transferGroupId!).subscribe({
+            next: () => { this.snackBar.open('Transferencia eliminada con éxito', 'Cerrar'); this.loadMovements(); },
+            error: (err) => { console.error(err); this.snackBar.open(err.error?.message || 'Error al eliminar la transferencia', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] }); }
+          });
+        }
+      });
       return;
     }
 
-    if (confirm(`¿Estás seguro de eliminar este movimiento por $${movement.amount}?`)) {
-      this.movementService.deleteMovement(movement.id!).subscribe({
-        next: () => { this.snackBar.open('Eliminado con éxito', 'Cerrar'); this.loadMovements(); },
-        error: (err) => { console.error(err); this.snackBar.open(err.error?.message || 'Error al eliminar', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] }); }
-      });
-    }
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Confirmar Eliminación',
+        message: `¿Estás seguro de eliminar este movimiento por $${movement.amount}?`,
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar',
+        isDestructive: true
+      }
+    });
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (confirmed) {
+        this.movementService.deleteMovement(movement.id!).subscribe({
+          next: () => { this.snackBar.open('Eliminado con éxito', 'Cerrar'); this.loadMovements(); },
+          error: (err) => { console.error(err); this.snackBar.open(err.error?.message || 'Error al eliminar', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] }); }
+        });
+      }
+    });
   }
 }
 

@@ -157,7 +157,6 @@ export class DashboardComponent implements OnInit {
     // Cargar profile
     this.dashboardService.getProfile().subscribe({
       next: (res) => {
-        console.log('[Dashboard] Profile response:', res);
         this.profile = res;
         this.cdr.detectChanges();
       },
@@ -170,7 +169,6 @@ export class DashboardComponent implements OnInit {
     // Cargar KPIs
     this.dashboardService.getKpis().subscribe({
       next: (kpis) => {
-        console.log('[Dashboard] KPIs response:', kpis);
         this.kpis = kpis;
         this.statusSlices = (kpis?.byStatus ?? []).map(s => ({
           label: s.statusName,
@@ -193,7 +191,6 @@ export class DashboardComponent implements OnInit {
     // Cargar órdenes activas
     this.dashboardService.getActiveOrders().subscribe({
       next: (orders) => {
-        console.log('[Dashboard] Active orders response:', orders);
         this.activeOrders = orders ?? [];
         this.cdr.detectChanges();
       },
@@ -206,7 +203,6 @@ export class DashboardComponent implements OnInit {
     // Cargar actividades pendientes
     this.dashboardService.getPendingActivities().subscribe({
       next: (activities) => {
-        console.log('[Dashboard] Pending activities response:', activities);
         this.pendingActivities = activities ?? [];
         this.cdr.detectChanges();
       },
@@ -219,7 +215,6 @@ export class DashboardComponent implements OnInit {
     // Cargar observaciones recientes
     this.dashboardService.getRecentObservations().subscribe({
       next: (observations) => {
-        console.log('[Dashboard] Recent observations response:', observations);
         this.recentObservations = observations ?? [];
         this.isLoading = false;
         this.cdr.detectChanges();

@@ -7,6 +7,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { FinancialAccount, FinancialAccountService } from '../services/financial-account.service';
 import { CuentaFormComponent } from './cuenta-form.component';
+import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-cuentas-financieras',
@@ -65,11 +66,23 @@ export class CuentasFinancieras implements OnInit {
   }
 
   deleteAccount(account: FinancialAccount) {
-    if (confirm(`¿Estás seguro de que deseas eliminar la cuenta "${account.name}"?`)) {
-      this.accountService.deleteAccount(account.id!).subscribe({
-        next: () => this.loadAccounts(),
-        error: (err) => console.error(err)
-      });
-    }
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Confirmar Eliminación',
+        message: `¿Estás seguro de que deseas eliminar la cuenta "${account.name}"?`,
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar',
+        isDestructive: true
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (confirmed) {
+        this.accountService.deleteAccount(account.id!).subscribe({
+          next: () => this.loadAccounts(),
+          error: (err) => console.error(err)
+        });
+      }
+    });
   }
 }
