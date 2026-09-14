@@ -1,29 +1,4 @@
-## Purpose
-
-Define las capacidades de gestión de Costos Directos asociados a las Órdenes de Servicio: su modelo de datos, la pestaña de carga en el detalle de la orden, y los mantenedores secundarios de catálogos relacionados.
-
-## Requirements
-
-### Requirement: Pestaña de Costos Directos en la Orden de Servicio
-El detalle de una Orden de Servicio DEBE incluir una sección/pestaña de "Costos Directos" que muestre una grilla o listado de los costos cargados para la orden, permitiendo crear, editar y eliminar registros asociados.
-
-#### Scenario: Cargar costos directos en creación
-- **WHEN** el usuario crea una nueva Orden de Servicio
-- **THEN** puede ver la pestaña de Costos Directos y agregar registros antes de guardar la orden por primera vez
-
-### Requirement: Modelo de Datos de Costos Directos
-Cada registro de costo directo DEBE tener los siguientes campos: Orden de Servicio (FK, relacionada automáticamente por contexto), Fecha, Categoría de Costos Directos (FK a tabla maestra), Detalle (texto libre), Proveedor (FK), Cantidad (numérico decimal), Unidad (FK a tabla maestra, ej. horas/litros/cajas), Precio Unitario (numérico decimal), Importe Total (calculado como Cantidad multiplicado por Precio Unitario, o ingresado manualmente si corresponde), Pagado por (referencia a Responsable), Medio de Pago (FK), Estado ("pagado"/"pendiente") y Observaciones (texto amplio).
-
-#### Scenario: Cálculo del importe total
-- **WHEN** el usuario ingresa Cantidad y Precio Unitario en un registro de costo directo
-- **THEN** el sistema calcula el Importe Total como Cantidad multiplicado por Precio Unitario, permitiendo su ajuste manual si corresponde
-
-### Requirement: Mantenedores Secundarios de Costos Directos
-El sistema DEBE proveer mantenedores independientes para las tablas maestras utilizadas por los Costos Directos: Categorías de Costos Directos (Id, Nombre, Activo), Proveedores (Id, Razón Social, RUT/CUIT, Datos de Contacto), Unidades (Id, Nombre, Abreviatura) y Medios de Pago (Id, Nombre, Activo).
-
-#### Scenario: Alta de una nueva categoría de costo directo
-- **WHEN** un administrador crea una nueva Categoría de Costo Directo desde su mantenedor
-- **THEN** la categoría queda disponible para ser seleccionada al cargar costos directos en cualquier Orden de Servicio
+## ADDED Requirements
 
 ### Requirement: Categorías de Costo Directo Asignables vía Movimientos
 El sistema DEBE permitir configurar en cada Categoría de Costo Directo (`DirectCostCategory`) si la misma puede ser imputada a una Orden de Servicio a través de movimientos contables de egreso, mediante la propiedad booleana `IsAssignableViaMovement`.

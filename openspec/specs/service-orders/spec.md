@@ -14,6 +14,11 @@ El formulario de Creación y Edición de Órdenes de Servicio debe organizarse d
   4. Equipo de Trabajo (Responsables)
   5. Bitácora y Observaciones
 - **Badges de Validación Dinámicos**: Cada cabecera de acordeón (excepto la primera) debe incluir un badge rojo dinámico que indique la cantidad exacta de campos obligatorios (*) faltantes en esa sección, bloqueando el guardado hasta que todos se completen.
+
+#### Scenario: Visualización de acordeones en el formulario
+- **WHEN** el usuario abre el formulario de una Orden de Servicio
+- **THEN** la sección "Datos Principales" se muestra siempre expandida y las demás secciones se presentan como acordeones colapsables, cada uno con su badge de validación en la cabecera
+
 ### Requirement: Fechas de la Orden
 El sistema DEBE gestionar las siguientes fechas clave en el ciclo de vida de la orden.
 - **Manejo Visual y Formato**: Todos los campos de fecha en la interfaz de usuario deben mostrarse y validarse bajo el formato **`dd/mm/aaaa`** (día/mes/año).
@@ -25,6 +30,10 @@ El sistema DEBE gestionar las siguientes fechas clave en el ciclo de vida de la 
 - **Fechas Reales**: "Inicio Real" (`ActualStartDate`) y "Fin Real" (`ActualEndDate`), las cuales se actualizarán conforme avance o concluya el trabajo. Estos campos son **opcionales** al guardar.
 - **Fecha de Cobro** (`CollectionDate`): Este campo es **opcional** al guardar.
 
+#### Scenario: Precarga automática de fechas reales
+- **WHEN** el usuario modifica "Inicio Presupuestado" o "Fin Presupuestado" en el formulario de la orden
+- **THEN** el sistema copia automáticamente ese valor a "Inicio Real" o "Fin Real" respectivamente, sin impedir que el usuario los edite después
+
 ### Requirement: Manejo Multimoneda y Catálogo de Monedas
 El sistema DEBE soportar presupuestación y cobranza dinámica utilizando múltiples monedas.
 - **Catálogo de Monedas**: Debe existir una tabla maestra de monedas (`Currency`) que almacene su `Code` (ej. USD, CLP, ARS), su `Symbol` (ej. $) y su `Name` (ej. Dólar, Peso Chileno).
@@ -32,17 +41,36 @@ El sistema DEBE soportar presupuestación y cobranza dinámica utilizando múlti
 - Si la moneda seleccionada es distinta a la moneda base (ej. ARS), el sistema debe habilitar el campo "Monto en Moneda Extranjera" y requerir la "Cotización al Presupuestar" para calcular automáticamente el "Monto Presupuestado" en la moneda base.
 - Al registrar el cobro, el sistema debe permitir ingresar el monto cobrado y la "Cotización a la Fecha de Cobro" si aplica.
 
+#### Scenario: Presupuesto en moneda extranjera
+- **WHEN** el usuario selecciona una moneda distinta a la moneda base al presupuestar la orden
+- **THEN** el sistema habilita el campo "Monto en Moneda Extranjera" y requiere la "Cotización al Presupuestar" para calcular el Monto Presupuestado en moneda base
+
 ### Requirement: Monto Cobrado
 El formulario financiero de la OS DEBE incluir el campo numérico **"Monto Cobrado"** (`CollectedAmount`).
 - Este campo es **independiente** del "Total Final" (`TotalAmount`): representa lo efectivamente cobrado al cliente, no el monto presupuestado.
 - Se usa para disparar la lógica de distribución real de ingresos (regla de los tercios/porcentajes).
 - El campo debe aplicar el formato numérico local argentino (separador de miles con punto, decimales con coma).
+- **Modalidad Configurable**: La editabilidad del campo depende del parámetro de empresa `os_collected_amount_mode`:
+  - En modalidad `Manual`, el usuario puede ingresar y modificar libremente el monto cobrado desde el formulario.
+  - En modalidad `Automatic`, el campo es de solo lectura (no editable) en la interfaz de usuario, y la API bloquea modificaciones manuales para preservar el valor calculado a partir de los movimientos financieros de ingreso asociados.
+
+#### Scenario: Edición de monto cobrado en modo manual
+- **WHEN** la empresa tiene configurada la modalidad `Manual`
+- **THEN** el usuario puede editar directamente el campo Monto Cobrado en la Orden de Servicio y guardarlo
+
+#### Scenario: Bloqueo de edición de monto cobrado en modo automático
+- **WHEN** la empresa tiene configurada la modalidad `Automatic`
+- **THEN** el campo Monto Cobrado se muestra no editable / solo lectura en el formulario y cualquier valor manual enviado en la actualización de la orden es ignorado por la API
 
 ### Requirement: Detalle de Tareas Presupuestadas
 El formulario de la OS DEBE incluir un campo de texto libre multilinea denominado **"Detalle de Tareas Presupuestadas"** (`BudgetedTasksDetail`).
 - Es un textarea amplio sin restricción de formato estructurado.
 - Su propósito es describir las tareas incluidas en el presupuesto, siendo la fuente de contenido principal para la generación del **PDF del presupuesto**.
 - El campo es opcional al guardar la orden.
+
+#### Scenario: Carga del detalle de tareas presupuestadas
+- **WHEN** el usuario completa el campo "Detalle de Tareas Presupuestadas" y guarda la orden
+- **THEN** el contenido se almacena y queda disponible como fuente de texto para la generación del PDF del presupuesto
 
 ### Requirement: Historial de Observaciones (Bitácora y Línea de Tiempo Enriquecida)
 El sistema DEBE mantener un historial inmutable de observaciones (bitácora) asociado a cada Orden de Servicio, presentado en una interfaz moderna de línea de tiempo dentro de su acordeón correspondiente.
@@ -87,6 +115,10 @@ El sistema DEBE mantener un historial inmutable de observaciones (bitácora) aso
 ### Requirement: Formato Numérico Local (Argentina)
 El sistema DEBE mostrar visualmente en todas las interfaces los campos monetarios y numéricos utilizando el formato local argentino: separador de miles con punto (.) y separador de decimales con coma (,). Sin embargo, estos datos se almacenarán estructuradamente como valores `decimal` estándar en la base de datos.
 
+#### Scenario: Visualización de montos en formato argentino
+- **WHEN** el sistema muestra un campo monetario o numérico en cualquier interfaz de la Orden de Servicio
+- **THEN** el valor se presenta con separador de miles con punto y separador decimal con coma, mientras se almacena internamente como un `decimal` estándar
+
 ### Requirement: Distribución de Cobros Dinámica y Porcentajes
 La lógica de distribución de ingresos DEBE ser dinámica a partir de un catálogo (Amortización Gastos, Capitalización, Honorarios, Utilidad, etc.).
 - El sistema DEBE validar de forma obligatoria y estricta que la sumatoria de todos los porcentajes asignados a la orden dé exactamente 100%. No se pueden repetir conceptos.
@@ -101,11 +133,19 @@ La lógica de distribución de ingresos DEBE ser dinámica a partir de un catál
   - Al seleccionar una orden existente, se deben previsualizar sus conceptos de cobro y porcentajes.
   - Al confirmar, los conceptos de la orden actual se reemplazarán completamente por los conceptos copiados, y el sistema recalculará automáticamente los montos esperados en base a la orden de servicio actual.
 
+#### Scenario: Validación de porcentajes de distribución al 100%
+- **WHEN** el usuario intenta guardar una orden con líneas de distribución de cobro cuya suma de porcentajes no es exactamente 100%
+- **THEN** el sistema rechaza el guardado y resalta visualmente la discrepancia en la fila totalizadora
+
 ### Requirement: Gestión de Actividades de la Orden
 El sistema DEBE permitir asociar múltiples actividades operativas a cada OS.
 - Las actividades tendrán: Detalle corto, Detalle largo, Estado (Pendiente, En Proceso, Cancelado, Finalizado).
 - Contarán con un "Porcentaje de Avance" numérico (1 al 100). Dicho campo solo estará habilitado para su edición si la actividad está en estado "En Proceso". Si la actividad pasa a "Finalizado", el porcentaje tomará el valor 100 de forma automática.
 - **Alineación Visual**: El valor numérico del porcentaje de progreso debe estar alineado a la derecha en la interfaz del formulario.
+
+#### Scenario: Progreso automático al finalizar una actividad
+- **WHEN** el usuario cambia el estado de una actividad operativa a "Finalizado"
+- **THEN** el "Porcentaje de Avance" de esa actividad se establece automáticamente en 100
 
 ### Requirement: Validaciones Generales y de Interfaz al Guardar
 El sistema DEBE realizar verificaciones estrictas antes de permitir guardar (crear o editar) la Orden de Servicio:
@@ -115,6 +155,10 @@ El sistema DEBE realizar verificaciones estrictas antes de permitir guardar (cre
 - **Distribución de Cobro**: Si existe al menos una línea de distribución agregada, la suma de todos los porcentajes de los ítems de distribución DEBE ser exactamente 100%.
 - **Limpieza de Interfaz**: Visualmente solo debe existir una única línea separadora entre la sección de "Datos Principales" y "Fechas".
 
+#### Scenario: Rechazo por número de orden duplicado
+- **WHEN** el usuario intenta guardar una Orden de Servicio con un Nro. de Orden ya utilizado por otra orden
+- **THEN** el sistema rechaza el guardado indicando que el número de orden ya está en uso
+
 ### Requirement: Gestión de Responsables (Catálogo Maestro y Relación)
 La gestión de responsables requiere de un modelo desacoplado y una tabla intermedia para su vinculación con las Órdenes de Servicio.
 - **Tabla Maestra Independiente**: Existirá una tabla `Responsible` autónoma (sin relación directa ni campo `ServiceOrderId`). Tendrá su propio CRUD.
@@ -123,6 +167,10 @@ La gestión de responsables requiere de un modelo desacoplado y una tabla interm
 - **Vinculación a la Orden (Tabla Intermedia)**: Existirá una tabla de unión (ej. `ServiceOrderResponsible`) que contenga el `ServiceOrderId` y el `ResponsibleId`.
 - **Interfaz de la Orden de Servicio**: En el formulario de la OS, los responsables se agregarán o quitarán mediante un selector dinámico (dropdown). El sistema debe impedir que un mismo responsable sea agregado más de una vez a la misma orden.
 
+#### Scenario: Restricción de un usuario a un único Responsable
+- **WHEN** se intenta asignar un `UserId` a un Responsable cuando ese usuario ya está vinculado a otro Responsable existente
+- **THEN** el sistema rechaza la asignación para preservar la relación uno a uno entre Usuario y Responsable
+
 ### Requirement: Gestionar Estado de la Orden
 El sistema DEBE gestionar el flujo de estados de una Orden de Servicio (Alta, Presupuestada, Aprobada, Iniciada, Entregada, Cobrada, Cancelada).
 - **Hito Cobrada**: Cuando el usuario registre el estado a 'Cobrada', ingresará la fecha de cobro y se habilitará la carga de los "Montos Reales Destinados".
@@ -130,7 +178,6 @@ El sistema DEBE gestionar el flujo de estados de una Orden de Servicio (Alta, Pr
 #### Scenario: Creación exitosa de una Orden de Servicio
 - **WHEN** el usuario proporciona detalles válidos, incluyendo la moneda (con cotización si aplica) y las distribuciones sumando 100%
 - **THEN** el sistema crea la OS en estado de 'Alta' con su propio número identificador alfanumérico.
-
 
 ### Requirement: Autocompletado Reactivo en Modales de Búsqueda
 El sistema DEBE proveer un comportamiento reactivo e instantáneo en todos los modales de búsqueda que utilizan autocompletado integrados en la Orden de Servicio (ej. copiar de otra orden en Distribución de Cobros, búsqueda de Actividades Operativas, Detalles de Tareas).
@@ -206,4 +253,68 @@ El sistema MUST permitir a los usuarios marcar una Orden de Servicio como entreg
 - **WHEN** el usuario intenta marcar como entregada una orden en estado "Iniciada" que no posee proyecto asignado o equipo de trabajo
 - **THEN** el sistema rechaza la operación, no modifica los datos y muestra una notificación indicando los datos obligatorios faltantes
 
+### Requirement: Sincronización Automática de Cobros desde Movimientos Contables
+En modalidad automática, el monto cobrado (`CollectedAmount`) de una Orden de Servicio DEBE ser igual a la sumatoria exacta de los montos de todos los movimientos contables de ingreso (`IsIncome == true`) asociados a dicha orden (`ServiceOrderId == order.Id`).
+- Al registrar un nuevo movimiento de ingreso vinculado a una OS, el sistema DEBE actualizar automáticamente `CollectedAmount` de la orden sumando dicho importe.
+- Al editar un movimiento contable (modificación de importe, cambio de tipo ingreso/egreso o cambio de OS asociada), el sistema DEBE recalcular y persistir el `CollectedAmount` de todas las órdenes involucradas.
+- Al eliminar físicamente un movimiento contable vinculado a una OS, el sistema DEBE recalcular y actualizar el `CollectedAmount` de la orden descontando el movimiento suprimido.
 
+#### Scenario: Registro de un cobro vinculado a una OS
+- **WHEN** se crea un movimiento de ingreso por $50.000 vinculado a la orden OS-001
+- **THEN** el campo `CollectedAmount` de OS-001 se actualiza automáticamente incrementándose en $50.000
+
+#### Scenario: Reasignación de orden en un movimiento contable
+- **WHEN** un movimiento de cobro de $20.000 cambia su vinculación de OS-001 a OS-002
+- **THEN** `CollectedAmount` de OS-001 disminuye en $20.000 y `CollectedAmount` de OS-002 aumenta en $20.000
+
+#### Scenario: Eliminación física de un movimiento de cobro
+- **WHEN** se elimina físicamente un movimiento de cobro de $30.000 asociado a la orden OS-001
+- **THEN** `CollectedAmount` de OS-001 se recalcula reflejando la deducción de $30.000
+
+### Requirement: Transición Automática a Estado Cobrada y Asignación de Fecha de Cobro
+El ciclo de vida de la Orden de Servicio DEBE transicionar automáticamente a estado **"Cobrada"** únicamente cuando la orden esté en estado **"Entregada"** y el monto cobrado acumulado cubra la totalidad del total presupuestado (`CollectedAmount >= TotalAmount`).
+- **Fecha de Cobro (`CollectionDate`)**: Al transicionar a "Cobrada", el sistema DEBE establecer la fecha de cobro con la fecha del primer movimiento de cobro registrado (`Min(Date)` de los movimientos vinculados).
+- **Cobros Previos al Entregar**: Si una orden en estado "Iniciada" recibe pagos o anticipos que cubren el total presupuestado, la orden permanecerá "Iniciada" hasta que operativamente sea marcada como "Entregada"; al marcarse como "Entregada", detectará que `CollectedAmount >= TotalAmount` y transicionará automáticamente a "Cobrada" con la fecha de su primer cobro.
+- **Cobros Parciales**: Si una orden está en estado "Entregada" pero registra cobros parciales (`0 < CollectedAmount < TotalAmount`), la orden DEBE permanecer en estado "Entregada" registrando el monto acumulado.
+- **Reversión por Eliminación o Modificación a la Baja**: Si una orden se encuentra en estado "Cobrada" y por eliminación física o modificación de movimientos el monto acumulado desciende por debajo del total (`CollectedAmount < TotalAmount`), el sistema DEBE revertir automáticamente el estado de la orden a **"Entregada"** y limpiar el campo `CollectionDate` (asignándolo en `null`).
+
+#### Scenario: Cobro total sobre orden entregada
+- **WHEN** una orden OS-001 está en estado "Entregada" con total de $100.000 y se registra un movimiento de cobro que completa los $100.000
+- **THEN** el estado de OS-001 cambia automáticamente a "Cobrada" y `CollectionDate` se fija en la fecha del primer cobro
+
+#### Scenario: Cobro parcial sobre orden entregada
+- **WHEN** una orden OS-001 está en estado "Entregada" con total de $100.000 y se registra un cobro de $40.000
+- **THEN** la orden acumula `CollectedAmount = 40000` pero su estado permanece en "Entregada"
+
+#### Scenario: Entrega de orden con cobro anticipado completo
+- **WHEN** una orden en estado "Iniciada" con cobros previos acumulados que cubren el 100% es marcada como "Entregada"
+- **THEN** la orden pasa a estado "Cobrada" y su `CollectionDate` queda fijada con la fecha del primer cobro registrado
+
+#### Scenario: Reversión automática a Entregada por eliminación de cobro
+- **WHEN** se elimina físicamente un movimiento de cobro de una orden en estado "Cobrada" provocando que `CollectedAmount < TotalAmount`
+- **THEN** el estado de la orden vuelve automáticamente a "Entregada" y `CollectionDate` pasa a ser null
+
+### Requirement: Registro en Bitácora de Cada Cobro Vinculado
+
+Toda alta, edición o eliminación de un movimiento contable de ingreso vinculado a una Orden de Servicio DEBE generar una observación de tipo `"Hito Clave"` en la bitácora de la orden, independientemente de si la operación dispara o no una transición de estado.
+
+- **Alta de cobro**: Se registra una observación indicando el monto del cobro y la fecha del movimiento.
+- **Edición de cobro**: Se registra una observación indicando el importe anterior y el nuevo importe.
+- **Eliminación de cobro**: Se registra una observación indicando el monto eliminado y el `CollectedAmount` resultante.
+
+#### Scenario: Observación al registrar un cobro
+- **WHEN** se crea un movimiento de ingreso de $50.000 vinculado a la orden OS-001
+- **THEN** se agrega una observación de tipo "Hito Clave" en la bitácora de OS-001 indicando el cobro registrado
+
+#### Scenario: Observación al eliminar un cobro
+- **WHEN** se elimina un movimiento de cobro de $30.000 asociado a la orden OS-001
+- **THEN** se agrega una observación de tipo "Hito Clave" en la bitácora de OS-001 indicando el cobro eliminado y el nuevo `CollectedAmount`
+
+### Requirement: Desglose de Movimientos de Cobro en la Orden de Servicio
+El sistema DEBE proveer en la vista y edición de la Orden de Servicio una sección o tabla informativa que liste todos los movimientos contables de ingreso vinculados a la orden.
+- Cada fila DEBE mostrar: Fecha, Monto, Cuenta Financiera (Caja/Banco), Medio de Pago y Descripción.
+- Debe incluir un totalizador que coincida con `CollectedAmount`.
+
+#### Scenario: Visualización de movimientos asociados
+- **WHEN** el usuario visualiza el detalle o formulario de una Orden de Servicio que registra cobros
+- **THEN** el sistema presenta la tabla con el desglose de movimientos de ingreso vinculados y el total consolidado
