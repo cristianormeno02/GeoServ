@@ -58,6 +58,7 @@
               <div matListItemTitle>{{ child.name }}</div>
               <!-- Botón de favorito -->
               <button
+                matListItemMeta
                 mat-icon-button
                 class="favorite-btn"
                 [class.is-favorite]="isFavorite(child)"

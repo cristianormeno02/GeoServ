@@ -2,7 +2,7 @@
   display: block;
   height: 100%;
   background-color: var(--color-primary);
-  color: var(--text-primary);
+  color: var(--on-dark-surface);
 }
 
 mat-nav-list {
@@ -12,12 +12,12 @@ mat-nav-list {
 .mdc-list-item__primary-text,
 .mat-mdc-list-item, 
 mat-list-item {
-  color: var(--text-primary) !important;
+  color: var(--on-dark-surface) !important;
 }
 
 .mat-mdc-list-item-icon, 
 mat-icon {
-  color: var(--text-primary) !important;
+  color: var(--on-dark-surface) !important;
 }
 
 .active-link {
@@ -44,14 +44,14 @@ mat-icon {
   font-size: 64px;
   width: 64px;
   height: 64px;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--on-dark-surface-secondary);
   margin-bottom: 8px;
 }
 
 .user-name {
   font-size: 16px;
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--on-dark-surface);
 }
 
 .logout-item, 
@@ -68,7 +68,7 @@ mat-icon {
 .menu-group-panel {
   background: transparent;
   box-shadow: none !important;
-  color: var(--text-primary);
+  color: var(--on-dark-surface);
 }
 
 mat-expansion-panel-header {
@@ -79,16 +79,16 @@ mat-expansion-panel-header {
 mat-panel-title {
   display: flex;
   align-items: center;
-  color: var(--text-primary) !important;
+  color: var(--on-dark-surface) !important;
 }
 
 .group-icon {
   margin-right: 16px;
-  color: var(--text-primary);
+  color: var(--on-dark-surface);
 }
 
 .menu-group-items {
-  padding-left: 16px;
+  padding-left: 8px;
 }
 
 .menu-divider {
@@ -97,16 +97,16 @@ mat-panel-title {
 }
 
 ::ng-deep .mat-expansion-panel-body {
-  padding: 0 0 0 16px !important;
+  padding: 0 0 0 8px !important;
 }
 ::ng-deep .mat-expansion-indicator {
-  color: var(--text-primary) !important;
+  color: var(--on-dark-surface) !important;
 }
 ::ng-deep .mat-expansion-indicator svg {
-  fill: var(--text-primary) !important;
+  fill: var(--on-dark-surface) !important;
 }
 ::ng-deep .mat-expansion-indicator::after {
-  color: var(--text-primary) !important;
+  color: var(--on-dark-surface) !important;
 }
 
 /* ── Campo de búsqueda ─────────────────────────────────────────────────────── */
@@ -135,7 +135,7 @@ mat-panel-title {
   font-size: 16px !important;
   width: 16px !important;
   height: 16px !important;
-  color: rgba(255, 255, 255, 0.5) !important;
+  color: var(--on-dark-surface-secondary) !important;
   margin-right: 6px;
   flex-shrink: 0;
 }
@@ -146,12 +146,12 @@ mat-panel-title {
   border: none;
   outline: none;
   font-size: 12px;
-  color: var(--text-primary);
+  color: var(--on-dark-surface);
   min-width: 0;
 }
 
 .search-input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--on-dark-surface-secondary);
 }
 
 .clear-btn {
@@ -162,12 +162,12 @@ mat-panel-title {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--on-dark-surface-secondary);
   margin-left: 4px;
 }
 
 .clear-btn:hover {
-  color: var(--text-primary);
+  color: var(--on-dark-surface);
 }
 
 .clear-btn mat-icon {
@@ -183,7 +183,7 @@ mat-panel-title {
   align-items: center;
   gap: 8px;
   padding: 24px 16px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--on-dark-surface-secondary);
   font-size: 13px;
   text-align: center;
 }
@@ -192,30 +192,33 @@ mat-panel-title {
   font-size: 32px;
   width: 32px;
   height: 32px;
-  color: rgba(255, 255, 255, 0.3) !important;
+  color: var(--on-dark-surface-secondary) !important;
 }
 
 /* ── Botón de favorito ─────────────────────────────────────────────────────── */
-.child-item {
-  position: relative;
-}
-
+/* Se usa matListItemMeta para que el botón reserve su propio espacio en el
+   layout del ítem (en vez de position:absolute), evitando que tape o
+   desplace el texto del nombre y quede correctamente centrado verticalmente. */
 .favorite-btn {
-  position: absolute;
-  right: 4px;
   opacity: 0;
   transition: opacity 0.15s ease;
-  color: rgba(255, 255, 255, 0.4) !important;
+  color: var(--on-dark-surface-secondary) !important;
   width: 28px !important;
   height: 28px !important;
   line-height: 28px !important;
+  padding: 0 !important;
+  /* Angular Material reserva ~28px de margen izquierdo para el slot "meta" de
+     mat-list-item; se reduce para no restarle tanto ancho disponible al
+     nombre del ítem, que ya es ajustado en el sidebar. */
+  margin: 0 4px 0 4px !important;
+  flex-shrink: 0;
 }
 
 .favorite-btn mat-icon {
   font-size: 18px !important;
   width: 18px !important;
   height: 18px !important;
-  color: rgba(255, 255, 255, 0.4) !important;
+  color: var(--on-dark-surface-secondary) !important;
 }
 
 /* El botón se hace visible al hacer hover sobre el ítem */

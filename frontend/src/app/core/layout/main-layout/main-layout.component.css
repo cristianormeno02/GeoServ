@@ -10,7 +10,7 @@
 }
 
 .sidenav {
-  width: 250px;
+  width: 310px;
   background-color: var(--color-surface);
   border-right: 1px solid #e0e0e0;
 }
@@ -18,4 +18,10 @@
 .content {
   padding: 24px;
   background-color: transparent;
+}
+
+@media (max-width: 960px) {
+  .content {
+    padding: 16px 12px;
+  }
 }
