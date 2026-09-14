@@ -58,7 +58,8 @@
 
 /* ── Botón de Favoritos en el header ───────────────────────────────────────── */
 .favorites-btn {
-  color: var(--text-primary);
+  --mdc-text-button-label-text-color: #ffffff;
+  color: #ffffff !important;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -69,6 +70,7 @@
 }
 
 .favorites-label {
+  color: #ffffff !important;
   font-size: 14px;
   font-weight: 500;
   letter-spacing: 0.2px;
