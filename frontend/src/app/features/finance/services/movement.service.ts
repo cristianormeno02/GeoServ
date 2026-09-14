@@ -29,6 +29,7 @@ export interface Movement {
   fixedCostId?: string;
   fixedCostPaymentId?: string;
   directCostId?: string;
+  directCostCategoryId?: string | null;
   assetId?: string;
   checkId?: string;
   responsibleId?: string;

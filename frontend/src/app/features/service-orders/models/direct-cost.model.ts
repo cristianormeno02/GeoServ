@@ -19,6 +19,7 @@ export interface DirectCost {
   status: string;
   observations?: string;
   orderIndex?: number;
+  isFromMovement?: boolean;
 }
 
 export interface CreateDirectCostDto {

@@ -78,7 +78,9 @@ export class CopyDirectCostsDialogComponent implements OnInit {
     const order = event.option.value;
     if (order.id) {
       this.directCostService.getCostsByOrder(order.id).subscribe(costs => {
-        this.selectedCosts = costs || [];
+        // Los costos generados vía movimiento son pagos reales atados a movimientos contables
+        // de la orden origen: no constituyen un ítem de plantilla reutilizable, se excluyen de la copia.
+        this.selectedCosts = (costs || []).filter(c => !c.isFromMovement);
         this.selectedOrderNumber = order.orderNumber;
         this.cdr.detectChanges();
       });

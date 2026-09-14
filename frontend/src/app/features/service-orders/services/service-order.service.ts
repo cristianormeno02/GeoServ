@@ -105,4 +105,14 @@ export class ServiceOrderService {
   deleteObservation(orderId: string, observationId: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${orderId}/observations/${observationId}`);
   }
+
+  // 11. Desglose de movimientos de cobro vinculados a la orden
+  getMovements(orderId: string): Observable<{ items: any[]; total: number }> {
+    return this.http.get<{ items: any[]; total: number }>(`${this.apiUrl}/${orderId}/movements`);
+  }
+
+  // 12. Recálculo/sincronización masiva de cobros (uso administrativo)
+  recalculateCollections(): Observable<{ totalProcessed: number; updatedOrders: number; transitionedToCobrada: number }> {
+    return this.http.post<{ totalProcessed: number; updatedOrders: number; transitionedToCobrada: number }>(`${this.apiUrl}/recalculate-collections`, {});
+  }
 }

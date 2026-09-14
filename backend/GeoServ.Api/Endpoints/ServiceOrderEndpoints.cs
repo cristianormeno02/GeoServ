@@ -514,7 +514,7 @@ public static class ServiceOrderEndpoints
         .WithOpenApi();
 
         // 7. Actualizar Orden de Servicio (PUT)
-        group.MapPut("/{id:guid}", async (Guid id, UpdateServiceOrderRequest request, GeoServDbContext context) =>
+        group.MapPut("/{id:guid}", async (Guid id, UpdateServiceOrderRequest request, GeoServDbContext context, GeoServ.Api.Infrastructure.Services.IEmpresaConfiguracionService configService) =>
         {
             try
             {
@@ -582,7 +582,15 @@ public static class ServiceOrderEndpoints
                 order.BudgetedAmount = request.BudgetedAmount;
                 order.Discount = request.Discount;
                 order.TotalAmount = request.TotalAmount;
-                order.CollectedAmount = request.CollectedAmount;
+
+                // En modalidad Automatic, el CollectedAmount lo calcula exclusivamente la sincronización
+                // con movimientos contables de ingreso: se ignora cualquier valor manual enviado en el request.
+                var collectedAmountMode = await configService.GetValueAsync("os_collected_amount_mode") ?? "Manual";
+                if (!string.Equals(collectedAmountMode, "Automatic", StringComparison.OrdinalIgnoreCase))
+                {
+                    order.CollectedAmount = request.CollectedAmount;
+                }
+
                 order.UpdatedAt = DateTime.UtcNow;
                 order.RequestDate = request.RequestDate;
                 order.EstimatedStartDate = request.EstimatedStartDate;
@@ -773,6 +781,88 @@ public static class ServiceOrderEndpoints
         })
         .WithName("DeleteServiceOrderObservation")
         .WithOpenApi();
+
+        // 9. Desglose de movimientos de cobro vinculados a la orden
+        group.MapGet("/{id:guid}/movements", async (Guid id, GeoServDbContext context) =>
+        {
+            var orderExists = await context.ServiceOrders.AnyAsync(o => o.Id == id);
+            if (!orderExists) return Results.NotFound();
+
+            var movements = await context.AccountingMovements
+                .Where(m => m.ServiceOrderId == id && m.IsIncome)
+                .Include(m => m.FinancialAccount)
+                .Include(m => m.PaymentMethod)
+                .OrderBy(m => m.Date)
+                .Select(m => new
+                {
+                    m.Id,
+                    m.Date,
+                    m.Amount,
+                    m.Description,
+                    FinancialAccountName = m.FinancialAccount.Name,
+                    PaymentMethodName = m.PaymentMethod != null ? m.PaymentMethod.Name : null
+                })
+                .ToListAsync();
+
+            return Results.Ok(new
+            {
+                Items = movements,
+                Total = movements.Sum(m => m.Amount)
+            });
+        })
+        .WithName("GetServiceOrderMovements")
+        .WithOpenApi();
+
+        // 10. Recálculo/sincronización masiva de CollectedAmount, estados y costos directos vía movimiento
+        group.MapPost("/recalculate-collections", async (HttpContext httpContext, GeoServDbContext context) =>
+        {
+            var userIdStr = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            Guid? userId = Guid.TryParse(userIdStr, out var uid) ? uid : null;
+            var resolvedUserId = await GeoServ.Api.Infrastructure.Services.ServiceOrderFinanceSyncService.ResolveUserIdAsync(context, userId);
+
+            var mode = await GeoServ.Api.Infrastructure.Services.ServiceOrderFinanceSyncService.GetCollectedAmountModeAsync(context);
+            if (!string.Equals(mode, "Automatic", StringComparison.OrdinalIgnoreCase))
+            {
+                return Results.BadRequest(new { message = "La sincronización masiva solo aplica cuando la modalidad de monto cobrado es 'Automatic'." });
+            }
+
+            var orderIds = await context.ServiceOrders.Select(o => o.Id).ToListAsync();
+            var updatedOrders = 0;
+            var transitionedToCobrada = 0;
+
+            foreach (var orderId in orderIds)
+            {
+                var before = await context.ServiceOrders.AsNoTracking().Where(o => o.Id == orderId)
+                    .Select(o => new { o.CollectedAmount, o.StatusId }).FirstAsync();
+
+                await GeoServ.Api.Infrastructure.Services.ServiceOrderFinanceSyncService.SyncCollectionAsync(
+                    context, orderId, resolvedUserId, "Recálculo masivo de cobros ejecutado por el administrador.");
+
+                var after = await context.ServiceOrders.AsNoTracking().Where(o => o.Id == orderId)
+                    .Select(o => new { o.CollectedAmount, o.StatusId, StatusName = o.Status.Name }).FirstAsync();
+
+                if (after.CollectedAmount != before.CollectedAmount) updatedOrders++;
+                if (after.StatusId != before.StatusId && string.Equals(after.StatusName, "Cobrada", StringComparison.OrdinalIgnoreCase))
+                    transitionedToCobrada++;
+            }
+
+            // Costos directos vía movimiento: recalcula todas las filas ya generadas por movimientos,
+            // por si quedaron desincronizadas por datos históricos previos a esta funcionalidad.
+            var directCostRowIds = await context.DirectCosts.Where(d => d.IsFromMovement).Select(d => d.Id).ToListAsync();
+            foreach (var rowId in directCostRowIds)
+            {
+                await GeoServ.Api.Infrastructure.Services.ServiceOrderFinanceSyncService.RecalculateDirectCostRowAsync(context, rowId, resolvedUserId, wasJustCreated: false);
+            }
+
+            return Results.Ok(new
+            {
+                totalProcessed = orderIds.Count,
+                updatedOrders,
+                transitionedToCobrada
+            });
+        })
+        .WithName("RecalculateServiceOrderCollections")
+        .WithOpenApi();
     }
 
     public static async Task<IResult> DeliverServiceOrderAsync(Guid id, Guid? userId, GeoServDbContext context)
@@ -858,15 +948,48 @@ public static class ServiceOrderEndpoints
             context.ServiceOrderObservations.Add(observation);
             await context.SaveChangesAsync();
 
+            // Cobro anticipado completo: si la orden ya registra cobros que cubren el total presupuestado,
+            // transiciona de inmediato a "Cobrada" con la fecha de su primer cobro.
+            if (order.TotalAmount > 0 && order.CollectedAmount >= order.TotalAmount)
+            {
+                var cobradaStatus = await context.ServiceOrderStatuses.FirstOrDefaultAsync(s => s.Name.ToLower() == "cobrada");
+                if (cobradaStatus != null)
+                {
+                    var firstCollectionDate = await context.AccountingMovements
+                        .Where(m => m.ServiceOrderId == order.Id && m.IsIncome)
+                        .OrderBy(m => m.Date)
+                        .Select(m => (DateTime?)m.Date)
+                        .FirstOrDefaultAsync();
+
+                    order.StatusId = cobradaStatus.Id;
+                    order.Status = cobradaStatus;
+                    order.CollectionDate = firstCollectionDate ?? DateTime.UtcNow.Date;
+                    order.UpdatedAt = DateTime.UtcNow;
+
+                    context.ServiceOrderObservations.Add(new ServiceOrderObservation
+                    {
+                        Id = Guid.NewGuid(),
+                        ServiceOrderId = order.Id,
+                        Text = $"Orden marcada automáticamente como Cobrada al entregarse, por registrar cobros previos que cubren el total presupuestado ({GeoServ.Api.Infrastructure.Services.ServiceOrderFinanceSyncService.FormatCurrency(order.CollectedAmount)}).",
+                        ObservationType = "Hito Clave",
+                        UserId = finalUserId,
+                        CreatedAt = DateTime.UtcNow
+                    });
+
+                    await context.SaveChangesAsync();
+                }
+            }
+
             return Results.Ok(new
             {
                 message = "Orden de servicio marcada como entregada exitosamente.",
                 order.Id,
                 order.OrderNumber,
-                StatusId = entregadaStatus.Id,
-                StatusName = entregadaStatus.Name,
+                StatusId = order.StatusId,
+                StatusName = order.Status?.Name,
                 ActualStartDate = order.ActualStartDate,
-                ActualEndDate = order.ActualEndDate
+                ActualEndDate = order.ActualEndDate,
+                CollectionDate = order.CollectionDate
             });
         }
         catch (Exception ex)

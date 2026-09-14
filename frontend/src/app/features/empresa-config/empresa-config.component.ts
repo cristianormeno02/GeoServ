@@ -15,6 +15,9 @@ import { EmpresaConfigService, EmpresaConfigData } from './empresa-config.servic
 import { forkJoin } from 'rxjs';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
+import { ServiceOrderService } from '../service-orders/services/service-order.service';
 
 @Component({
   selector: 'app-empresa-config',
@@ -29,7 +32,8 @@ import { MatTabsModule } from '@angular/material/tabs';
     MatCardModule,
     MatSnackBarModule,
     MatSelectModule,
-    MatTabsModule
+    MatTabsModule,
+    MatDialogModule
   ],
   templateUrl: './empresa-config.component.html',
   styleUrls: ['./empresa-config.component.css']
@@ -37,9 +41,11 @@ import { MatTabsModule } from '@angular/material/tabs';
 export class EmpresaConfigComponent implements OnInit {
   private fb = inject(FormBuilder);
   private empresaService = inject(EmpresaConfigService);
+  private serviceOrderService = inject(ServiceOrderService);
   private snackBar = inject(MatSnackBar);
   private sanitizer = inject(DomSanitizer);
   private cdr = inject(ChangeDetectorRef);
+  private dialog = inject(MatDialog);
 
   configForm: FormGroup;
   settingsForm: FormGroup;
@@ -47,6 +53,7 @@ export class EmpresaConfigComponent implements OnInit {
   selectedFile: File | null = null;
   currentLogoSvg: SafeHtml | null = null;
   isLoading = false;
+  isRecalculating = false;
 
   constructor() {
     this.configForm = this.fb.group({
@@ -59,7 +66,8 @@ export class EmpresaConfigComponent implements OnInit {
     });
 
     this.settingsForm = this.fb.group({
-      os_number_format: ['manual']
+      os_number_format: ['manual'],
+      os_collected_amount_mode: ['Manual']
     });
 
     this.smtpForm = this.fb.group({
@@ -82,6 +90,11 @@ export class EmpresaConfigComponent implements OnInit {
         if (settings['os_number_format']) {
           this.settingsForm.patchValue({
             os_number_format: settings['os_number_format'].value
+          });
+        }
+        if (settings['os_collected_amount_mode']) {
+          this.settingsForm.patchValue({
+            os_collected_amount_mode: settings['os_collected_amount_mode'].value
           });
         }
         if (settings['smtp_host']) this.smtpForm.patchValue({ smtp_host: settings['smtp_host'].value });
@@ -176,6 +189,12 @@ export class EmpresaConfigComponent implements OnInit {
         description: 'Formato de numeración de órdenes de servicio',
         group: 'Ordenes de Servicio'
       },
+      os_collected_amount_mode: {
+        value: this.settingsForm.value.os_collected_amount_mode,
+        valueType: 'string',
+        description: 'Origen del Monto Cobrado de las Órdenes de Servicio (Manual o Automatic)',
+        group: 'Órdenes de Servicio'
+      },
       smtp_host: { value: this.smtpForm.value.smtp_host, valueType: 'string', description: 'Servidor SMTP', group: 'Correo Avisos' },
       smtp_port: { value: this.smtpForm.value.smtp_port, valueType: 'string', description: 'Puerto SMTP', group: 'Correo Avisos' },
       smtp_user: { value: this.smtpForm.value.smtp_user, valueType: 'string', description: 'Usuario SMTP', group: 'Correo Avisos' },
@@ -201,6 +220,44 @@ export class EmpresaConfigComponent implements OnInit {
         this.showError(errorMsg);
         this.cdr.detectChanges();
       }
+    });
+  }
+
+  recalculateCollections(): void {
+    if (this.settingsForm.value.os_collected_amount_mode !== 'Automatic') {
+      this.showError("La sincronización masiva solo aplica cuando la modalidad de monto cobrado es 'Automática'. Guarde esa modalidad primero.");
+      return;
+    }
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '450px',
+      data: {
+        title: 'Sincronizar Montos Cobrados',
+        message: 'Se recalculará el Monto Cobrado y el estado de TODAS las Órdenes de Servicio existentes a partir de sus movimientos de ingreso históricos. Esta acción puede tardar unos segundos. ¿Desea continuar?',
+        confirmText: 'Sincronizar'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (!confirmed) return;
+
+      this.isRecalculating = true;
+      this.cdr.detectChanges();
+
+      this.serviceOrderService.recalculateCollections().subscribe({
+        next: (result) => {
+          this.isRecalculating = false;
+          this.showSuccess(
+            `Sincronización completa: ${result.totalProcessed} órdenes procesadas, ${result.updatedOrders} actualizadas, ${result.transitionedToCobrada} transicionadas a Cobrada.`
+          );
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.isRecalculating = false;
+          this.showError(err.error?.message || 'Error al sincronizar los montos cobrados');
+          this.cdr.detectChanges();
+        }
+      });
     });
   }
 

@@ -97,6 +97,25 @@
                   </mat-select>
                   <mat-hint>Si elige auto-incremental no podrá editar el número al crear OS.</mat-hint>
                 </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Modalidad de Monto Cobrado</mat-label>
+                  <mat-select formControlName="os_collected_amount_mode">
+                    <mat-option value="Manual">Manual</mat-option>
+                    <mat-option value="Automatic">Automática (desde movimientos de ingreso)</mat-option>
+                  </mat-select>
+                  <mat-hint>En modo Automática, el Monto Cobrado de cada OS se calcula solo desde sus movimientos de cobro vinculados.</mat-hint>
+                </mat-form-field>
+
+                <div style="margin-top: 8px;">
+                  <button mat-stroked-button color="primary" type="button" (click)="recalculateCollections()" [disabled]="isRecalculating">
+                    <mat-icon>sync</mat-icon>
+                    {{ isRecalculating ? 'Sincronizando...' : 'Sincronizar Montos Cobrados' }}
+                  </button>
+                  <p style="font-size: 0.85em; color: rgba(0,0,0,0.6); margin-top: 4px;">
+                    Recalcula el Monto Cobrado y el estado de todas las Órdenes de Servicio existentes a partir de sus movimientos de ingreso históricos. Requiere modalidad Automática.
+                  </p>
+                </div>
               </div>
             </div>
           </div>

@@ -21,6 +21,12 @@ import { DirectCostCategory } from '../../models/direct-cost-category.model';
           <input matInput formControlName="name" required>
         </mat-form-field>
         <mat-checkbox formControlName="isActive" color="primary">Activo</mat-checkbox>
+        <mat-checkbox formControlName="isAssignableViaMovement" color="primary" style="margin-top:8px;">
+          Asignable vía movimiento
+        </mat-checkbox>
+        <p style="font-size:12px; color:rgba(0,0,0,0.6); margin:4px 0 0 32px;">
+          Permite imputar egresos de esta categoría a una Orden de Servicio directamente desde el formulario de Movimientos.
+        </p>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -42,7 +48,8 @@ export class DirectCostCategoryDialogComponent implements OnInit {
     this.form = this.fb.group({
       id: [this.data?.category?.id],
       name: [this.data?.category?.name || '', Validators.required],
-      isActive: [this.data?.category?.isActive ?? true]
+      isActive: [this.data?.category?.isActive ?? true],
+      isAssignableViaMovement: [this.data?.category?.isAssignableViaMovement ?? false]
     });
   }
 

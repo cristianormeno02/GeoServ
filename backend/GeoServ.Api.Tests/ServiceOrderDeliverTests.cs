@@ -190,4 +190,47 @@ public class ServiceOrderDeliverTests
         Assert.Equal(actualStart, updatedOrder.ActualStartDate);
         Assert.Equal(actualEnd, updatedOrder.ActualEndDate);
     }
+
+    [Fact]
+    public async Task DeliverServiceOrderAsync_OrdenConCobroAnticipadoCompleto_TransicionaDirectoACobrada()
+    {
+        using var context = CreateInMemoryContext();
+        var (iniciada, entregada, cobrada) = SeedStatuses(context);
+
+        var order = new ServiceOrder
+        {
+            Id = Guid.NewGuid(),
+            OrderNumber = "OS-005",
+            StatusId = iniciada.Id,
+            Status = iniciada,
+            ClientId = Guid.NewGuid(),
+            ProjectId = Guid.NewGuid(),
+            RequestDate = DateTime.UtcNow.Date.AddDays(-10),
+            EstimatedStartDate = DateTime.UtcNow.Date.AddDays(-6),
+            EstimatedEndDate = DateTime.UtcNow.Date.AddDays(-2),
+            BudgetedAmount = 5000m,
+            TotalAmount = 5000m,
+            CollectedAmount = 5000m, // Cobro anticipado (seña/anticipo) que ya cubre el total
+            CreatedAt = DateTime.UtcNow
+        };
+        order.Responsibles.Add(new ServiceOrderResponsible { ResponsibleId = Guid.NewGuid() });
+        context.ServiceOrders.Add(order);
+        await context.SaveChangesAsync();
+
+        var result = await ServiceOrderEndpoints.DeliverServiceOrderAsync(order.Id, Guid.NewGuid(), context);
+
+        var okResult = Assert.IsAssignableFrom<IStatusCodeHttpResult>(result);
+        Assert.Equal(200, okResult.StatusCode);
+
+        var updatedOrder = await context.ServiceOrders
+            .Include(o => o.Status)
+            .Include(o => o.Observations)
+            .FirstAsync(o => o.Id == order.Id);
+
+        Assert.Equal(cobrada.Id, updatedOrder.StatusId);
+        Assert.Equal("Cobrada", updatedOrder.Status.Name);
+        Assert.NotNull(updatedOrder.CollectionDate);
+        Assert.Equal(2, updatedOrder.Observations.Count);
+        Assert.Contains(updatedOrder.Observations, o => o.Text.Contains("marcada automáticamente como Cobrada al entregarse"));
+    }
 }

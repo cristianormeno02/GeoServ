@@ -36,6 +36,7 @@ public static class DirectCostMasterEndpoints
             if (item is null) return Results.NotFound();
             item.Name = request.Name;
             item.IsActive = request.IsActive;
+            item.IsAssignableViaMovement = request.IsAssignableViaMovement;
             await context.SaveChangesAsync();
             return Results.NoContent();
         });

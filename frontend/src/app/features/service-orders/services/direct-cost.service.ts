@@ -20,6 +20,10 @@ export class DirectCostService {
     return this.http.get<any[]>(`${environment.apiUrl}/direct-costs?q=${encodeURIComponent(query)}`);
   }
 
+  getCostById(id: string): Observable<DirectCost> {
+    return this.http.get<DirectCost>(`${environment.apiUrl}/direct-costs/${id}`);
+  }
+
   createCost(cost: CreateDirectCostDto): Observable<DirectCost> {
     return this.http.post<DirectCost>(this.getApiUrl(cost.serviceOrderId), cost);
   }

@@ -17,6 +17,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 // ngx-mask
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
@@ -39,6 +40,7 @@ import { DirectCostService } from '../../services/direct-cost.service';
 import { DirectCost } from '../../models/direct-cost.model';
 import { DirectCostDialogComponent } from '../direct-cost-dialog/direct-cost-dialog.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { UnitService } from '../../../units/services/unit.service';
 
 @Injectable()
 export class CustomDateAdapter extends NativeDateAdapter {
@@ -84,6 +86,7 @@ export const CUSTOM_DATE_FORMATS = {
     MatExpansionModule,
     MatTabsModule,
     MatChipsModule,
+    MatTooltipModule,
     MatTableModule,
     MatProgressSpinnerModule,
     NgxMaskDirective,
@@ -148,6 +151,15 @@ export class ServiceOrderFormComponent implements OnInit {
   newObservationText: string = '';
   isSavingObservation = false;
 
+  // Modalidad de monto cobrado de la empresa ('Manual' o 'Automatic'). Ver openspec/changes/vincular-movimientos-ordenes-servicio.
+  collectedAmountMode: 'Manual' | 'Automatic' = 'Manual';
+  get isCollectedAmountAutomatic(): boolean { return this.collectedAmountMode === 'Automatic'; }
+
+  linkedMovementsDataSource = new MatTableDataSource<any>();
+  linkedMovementsColumns: string[] = ['date', 'amount', 'financialAccountName', 'paymentMethodName', 'description'];
+  linkedMovementsTotal = 0;
+  isLoadingLinkedMovements = false;
+
   constructor(
     private fb: FormBuilder,
     private router: Router,
@@ -160,6 +172,7 @@ export class ServiceOrderFormComponent implements OnInit {
     private dialog: MatDialog,
     private directCostService: DirectCostService,
     private empresaConfigService: EmpresaConfigService,
+    private unitService: UnitService,
     private cdr: ChangeDetectorRef
   ) {
     this.createForm();
@@ -180,15 +193,39 @@ export class ServiceOrderFormComponent implements OnInit {
             this.orderForm.get('orderNumber')?.disable();
           }
         }
+
+        this.collectedAmountMode = settings['os_collected_amount_mode']?.value === 'Automatic' ? 'Automatic' : 'Manual';
+        if (this.isCollectedAmountAutomatic) {
+          this.orderForm.get('collectedAmount')?.disable();
+        }
+        this.cdr.detectChanges();
       }
     });
-    
+
     this.orderId = this.route.snapshot.paramMap.get('id');
     if (this.orderId) {
       this.isEditMode = true;
       this.loadOrderData(this.orderId);
       this.loadDirectCosts();
+      this.loadLinkedMovements();
     }
+  }
+
+  loadLinkedMovements(): void {
+    if (!this.orderId) return;
+    this.isLoadingLinkedMovements = true;
+    this.serviceOrderService.getMovements(this.orderId).subscribe({
+      next: (res: any) => {
+        this.linkedMovementsDataSource.data = res.items || [];
+        this.linkedMovementsTotal = res.total || 0;
+        this.isLoadingLinkedMovements = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error(err);
+        this.isLoadingLinkedMovements = false;
+      }
+    });
   }
 
   createForm(): void {
@@ -949,6 +986,18 @@ export class ServiceOrderFormComponent implements OnInit {
     return this.directCostsDataSource.data.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0);
   }
 
+  getManualCosts(): number {
+    return this.directCostsDataSource.data
+      .filter(c => !c.isFromMovement)
+      .reduce((acc, curr) => acc + (curr.totalAmount || 0), 0);
+  }
+
+  getMovementCosts(): number {
+    return this.directCostsDataSource.data
+      .filter(c => c.isFromMovement)
+      .reduce((acc, curr) => acc + (curr.totalAmount || 0), 0);
+  }
+
   openCopyDirectCostsDialog(): void {
     const dialogRef = this.dialog.open(CopyDirectCostsDialogComponent, {
       width: '600px',
@@ -957,31 +1006,43 @@ export class ServiceOrderFormComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe((result: any[]) => {
       if (result && Array.isArray(result) && result.length > 0) {
-        // Copiar y generar nuevos UUIDs si es necesario, preservando orden.
-        const copiedCosts = result.map(cost => {
-          return {
-             ...cost,
-             id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(),
-             serviceOrderId: this.orderId || null
-          };
+        this.unitService.getUnits().subscribe(units => {
+          const defaultUnit = units.find(u => u.isActive && u.name?.toLowerCase() === 'unidad')
+            || units.find(u => u.isActive);
+
+          // Copia de PLANTILLA: se conservan categoría/descripción/proveedor, pero NUNCA los montos
+          // ni el vínculo a movimientos de la orden origen (cantidad=1, unidad="unidad", precios en $0).
+          const copiedCosts: any[] = result.map(cost => ({
+            id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(),
+            serviceOrderId: this.orderId || '',
+            categoryId: cost.categoryId,
+            category: cost.category,
+            providerId: cost.providerId,
+            provider: cost.provider,
+            description: cost.description,
+            quantity: 1,
+            unitId: defaultUnit?.id || null,
+            unit: defaultUnit || null,
+            unitPrice: 0,
+            totalAmount: 0,
+            date: new Date().toISOString(),
+            status: 'Pendiente',
+            isFromMovement: false
+          }));
+
+          this.directCostsDataSource.data = [...this.directCostsDataSource.data, ...copiedCosts];
+          this.orderForm.markAsDirty();
+          this.snackBar.open('Costos directos copiados con éxito (plantilla sin montos)', 'Cerrar', { duration: 3000 });
+
+          if (this.isEditMode && this.orderId) {
+            copiedCosts.forEach(cc => {
+              this.directCostService.createCost(cc).subscribe({
+                next: () => this.loadDirectCosts(),
+                error: err => console.error(err)
+              });
+            });
+          }
         });
-        
-        this.directCostsDataSource.data = [...this.directCostsDataSource.data, ...copiedCosts];
-        this.orderForm.markAsDirty();
-        this.snackBar.open('Costos directos copiados con éxito', 'Cerrar', { duration: 3000 });
-        
-        // Si estamos editando y el form ya se guardó, quizás deberíamos guardarlos 
-        // pero la instrucción dice de 'Copiar desde otra orden' con inserción. 
-        // Al copiarlos los guardamos localmente. El save total debería guardarlos o podemos subirlos.
-        // Dado que directCost tiene endpoint propio, quizas debamos postear.
-        if (this.isEditMode && this.orderId) {
-           copiedCosts.forEach(cc => {
-               this.directCostService.createCost(cc).subscribe({
-                  next: () => this.loadDirectCosts(),
-                  error: err => console.error(err)
-               });
-           });
-        }
       }
     });
   }

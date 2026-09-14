@@ -36,6 +36,25 @@ h3 {
   align-items: center;
 }
 
+.badge-via-movement {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 8px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background-color: rgba(3, 169, 244, 0.12);
+  color: #0288d1;
+  font-size: 0.72em;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+::ng-deep tr.row-via-movement {
+  border-left: 3px solid #0288d1;
+  background-color: rgba(3, 169, 244, 0.04);
+}
+
 .dynamic-row {
   display: flex;
   gap: 15px;

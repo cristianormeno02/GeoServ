@@ -134,6 +134,11 @@ public static class DirectCostEndpoints
             var directCost = await context.DirectCosts.FirstOrDefaultAsync(c => c.Id == id && c.ServiceOrderId == serviceOrderId);
             if (directCost is null) return Results.NotFound();
 
+            if (directCost.IsFromMovement)
+            {
+                return Results.BadRequest(new { message = "Este costo directo fue generado automáticamente a partir de movimientos financieros y no puede editarse manualmente." });
+            }
+
             directCost.CategoryId = request.CategoryId;
             directCost.ProviderId = request.ProviderId;
             directCost.Description = request.Description;
@@ -157,6 +162,11 @@ public static class DirectCostEndpoints
         {
             var directCost = await context.DirectCosts.FirstOrDefaultAsync(c => c.Id == id && c.ServiceOrderId == serviceOrderId);
             if (directCost is null) return Results.NotFound();
+
+            if (directCost.IsFromMovement)
+            {
+                return Results.BadRequest(new { message = "Este costo directo fue generado automáticamente a partir de movimientos financieros y no puede eliminarse manualmente. Elimine el movimiento contable asociado." });
+            }
 
             context.DirectCosts.Remove(directCost);
             await context.SaveChangesAsync();

@@ -1,6 +1,7 @@
 using GeoServ.Api.Domain.Entities;
 using GeoServ.Api.Domain.Enums;
 using GeoServ.Api.Infrastructure.Data;
+using GeoServ.Api.Infrastructure.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -162,13 +163,21 @@ public static class AccountingMovementEndpoints
         .WithName("CreateMovement")
         .WithOpenApi();
 
-        group.MapPut("/{id:guid}", async (Guid id, [FromBody] UpdateMovementRequest request, GeoServDbContext context) =>
-            await UpdateMovementAsync(id, request, context))
+        group.MapPut("/{id:guid}", async (Guid id, [FromBody] UpdateMovementRequest request, HttpContext httpContext, GeoServDbContext context) =>
+        {
+            var userIdStr = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            Guid? userId = Guid.TryParse(userIdStr, out var uid) ? uid : null;
+            return await UpdateMovementAsync(id, request, context, userId);
+        })
         .WithName("UpdateMovement")
         .WithOpenApi();
 
-        group.MapDelete("/{id:guid}", async (Guid id, GeoServDbContext context) =>
-            await DeleteMovementAsync(id, context))
+        group.MapDelete("/{id:guid}", async (Guid id, HttpContext httpContext, GeoServDbContext context) =>
+        {
+            var userIdStr = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            Guid? userId = Guid.TryParse(userIdStr, out var uid) ? uid : null;
+            return await DeleteMovementAsync(id, context, userId);
+        })
         .WithName("DeleteMovement")
         .WithOpenApi();
 
@@ -311,9 +320,29 @@ public static class AccountingMovementEndpoints
             if (Guid.TryParse(sourceId, out var parsedGuid))
             {
                 if (sourceType == MovementSourceType.ServiceOrderIncome) serviceOrderId = parsedGuid;
-                else if (sourceType == MovementSourceType.DirectCost) directCostId = parsedGuid;
+                // Nuevo flujo: SourceId transporta el Id de la Orden de Servicio de destino (no una fila existente).
+                else if (sourceType == MovementSourceType.DirectCost) serviceOrderId = parsedGuid;
                 else if (sourceType == MovementSourceType.FixedCostPayment) fixedCostPaymentId = parsedGuid;
                 else if (sourceType == MovementSourceType.AssetPurchase) assetId = parsedGuid;
+            }
+
+            var directCostRowWasNew = false;
+            if (sourceType == MovementSourceType.DirectCost)
+            {
+                if (!serviceOrderId.HasValue)
+                    return Results.BadRequest(new { message = "Debe seleccionar la orden de servicio de destino." });
+                if (!request.DirectCostCategoryId.HasValue)
+                    return Results.BadRequest(new { message = "Debe seleccionar una categoría de costo directo." });
+
+                var dcCategory = await context.DirectCostCategories.FindAsync(request.DirectCostCategoryId.Value);
+                if (dcCategory == null || !dcCategory.IsAssignableViaMovement)
+                    return Results.BadRequest(new { message = "La categoría de costo directo seleccionada no está habilitada para asignación vía movimiento." });
+
+                var existingRow = await context.DirectCosts.FirstOrDefaultAsync(d =>
+                    d.ServiceOrderId == serviceOrderId.Value && d.CategoryId == request.DirectCostCategoryId.Value && d.IsFromMovement);
+                directCostRowWasNew = existingRow == null;
+                directCostId = existingRow?.Id ?? await ServiceOrderFinanceSyncService.ResolveOrCreateDirectCostRowAsync(
+                    context, serviceOrderId.Value, request.DirectCostCategoryId.Value, resolvedUserId, request.Date, request.Description);
             }
 
             var movement = new AccountingMovement
@@ -343,6 +372,17 @@ public static class AccountingMovementEndpoints
             if (paymentError != null) return paymentError;
 
             await context.SaveChangesAsync();
+
+            if (sourceType == MovementSourceType.ServiceOrderIncome && serviceOrderId.HasValue)
+            {
+                var actionText = $"Se registró un cobro de {ServiceOrderFinanceSyncService.FormatCurrency(movement.Amount)} vinculado a la orden " +
+                    $"(Movimiento: {(string.IsNullOrWhiteSpace(movement.Description) ? "sin descripción" : movement.Description)}, Fecha: {movement.Date:dd/MM/yyyy}).";
+                await ServiceOrderFinanceSyncService.SyncCollectionAsync(context, serviceOrderId.Value, resolvedUserId, actionText);
+            }
+            else if (sourceType == MovementSourceType.DirectCost && directCostId.HasValue)
+            {
+                await ServiceOrderFinanceSyncService.RecalculateDirectCostRowAsync(context, directCostId.Value, resolvedUserId, directCostRowWasNew);
+            }
 
             return Results.Created($"/api/movements/{movement.Id}", movement);
         }
@@ -432,7 +472,7 @@ public static class AccountingMovementEndpoints
         }
     }
 
-    public static async Task<IResult> UpdateMovementAsync(Guid id, UpdateMovementRequest request, GeoServDbContext context)
+    public static async Task<IResult> UpdateMovementAsync(Guid id, UpdateMovementRequest request, GeoServDbContext context, Guid? userId = null)
     {
         try
         {
@@ -444,6 +484,11 @@ public static class AccountingMovementEndpoints
                 return Results.BadRequest(new { message = "Este movimiento forma parte de una Transferencia Interna y no puede editarse individualmente. Elimine la transferencia completa y vuelva a cargarla." });
             }
 
+            // Estado anterior, capturado antes de mutar, para poder resincronizar ambos lados si cambia el vínculo.
+            var oldSourceType = movement.SourceType;
+            var oldServiceOrderId = movement.ServiceOrderId;
+            var oldDirectCostId = movement.DirectCostId;
+
             var sourceType = request.SourceType ?? MovementSourceType.Manual;
             var sourceId = request.SourceId;
 
@@ -451,6 +496,7 @@ public static class AccountingMovementEndpoints
             Guid? directCostId = request.DirectCostId;
             Guid? fixedCostPaymentId = request.FixedCostPaymentId;
             Guid? assetId = request.AssetId;
+            var isNewDirectCostFlow = false;
 
             if (!request.SourceType.HasValue)
             {
@@ -463,13 +509,35 @@ public static class AccountingMovementEndpoints
             else if (Guid.TryParse(sourceId, out var parsedGuid))
             {
                 if (sourceType == MovementSourceType.ServiceOrderIncome) serviceOrderId = parsedGuid;
-                else if (sourceType == MovementSourceType.DirectCost) directCostId = parsedGuid;
+                // Nuevo flujo: SourceId transporta el Id de la Orden de Servicio de destino (no una fila existente).
+                else if (sourceType == MovementSourceType.DirectCost) { serviceOrderId = parsedGuid; isNewDirectCostFlow = true; }
                 else if (sourceType == MovementSourceType.FixedCostPayment) fixedCostPaymentId = parsedGuid;
                 else if (sourceType == MovementSourceType.AssetPurchase) assetId = parsedGuid;
             }
 
             var coherenceError = await ValidateCategoryCoherenceAsync(context, request.CategoryId, sourceType, sourceId);
             if (coherenceError != null) return coherenceError;
+
+            var resolvedUserId = userId ?? await context.Users.Select(u => u.Id).FirstOrDefaultAsync();
+            var directCostRowWasNew = false;
+
+            if (isNewDirectCostFlow)
+            {
+                if (!serviceOrderId.HasValue)
+                    return Results.BadRequest(new { message = "Debe seleccionar la orden de servicio de destino." });
+                if (!request.DirectCostCategoryId.HasValue)
+                    return Results.BadRequest(new { message = "Debe seleccionar una categoría de costo directo." });
+
+                var dcCategory = await context.DirectCostCategories.FindAsync(request.DirectCostCategoryId.Value);
+                if (dcCategory == null || !dcCategory.IsAssignableViaMovement)
+                    return Results.BadRequest(new { message = "La categoría de costo directo seleccionada no está habilitada para asignación vía movimiento." });
+
+                var existingRow = await context.DirectCosts.FirstOrDefaultAsync(d =>
+                    d.ServiceOrderId == serviceOrderId.Value && d.CategoryId == request.DirectCostCategoryId.Value && d.IsFromMovement);
+                directCostRowWasNew = existingRow == null;
+                directCostId = existingRow?.Id ?? await ServiceOrderFinanceSyncService.ResolveOrCreateDirectCostRowAsync(
+                    context, serviceOrderId.Value, request.DirectCostCategoryId.Value, resolvedUserId, request.Date, request.Description);
+            }
 
             var oldFixedCostPaymentId = movement.FixedCostPaymentId;
 
@@ -495,6 +563,31 @@ public static class AccountingMovementEndpoints
             if (paymentError != null) return paymentError;
 
             await context.SaveChangesAsync();
+
+            // --- Resincronización de Cobros (Ingresos): lado anterior y lado nuevo, si difieren ---
+            var incomeOrdersToSync = new HashSet<Guid>();
+            if (oldSourceType == MovementSourceType.ServiceOrderIncome && oldServiceOrderId.HasValue)
+                incomeOrdersToSync.Add(oldServiceOrderId.Value);
+            if (sourceType == MovementSourceType.ServiceOrderIncome && serviceOrderId.HasValue)
+                incomeOrdersToSync.Add(serviceOrderId.Value);
+
+            foreach (var orderId in incomeOrdersToSync)
+            {
+                var actionText = $"Se actualizó un cobro vinculado a la orden (Movimiento: {(string.IsNullOrWhiteSpace(movement.Description) ? "sin descripción" : movement.Description)}, Fecha: {movement.Date:dd/MM/yyyy}).";
+                await ServiceOrderFinanceSyncService.SyncCollectionAsync(context, orderId, resolvedUserId, actionText);
+            }
+
+            // --- Resincronización de Costos Directos vía Movimiento: fila anterior y fila nueva, si difieren ---
+            var directCostRowsToSync = new HashSet<Guid>();
+            if (oldDirectCostId.HasValue) directCostRowsToSync.Add(oldDirectCostId.Value);
+            if (sourceType == MovementSourceType.DirectCost && directCostId.HasValue) directCostRowsToSync.Add(directCostId.Value);
+
+            foreach (var rowId in directCostRowsToSync)
+            {
+                var wasJustCreated = isNewDirectCostFlow && directCostRowWasNew && rowId == directCostId;
+                await ServiceOrderFinanceSyncService.RecalculateDirectCostRowAsync(context, rowId, resolvedUserId, wasJustCreated);
+            }
+
             return Results.NoContent();
         }
         catch (Exception ex)
@@ -503,7 +596,7 @@ public static class AccountingMovementEndpoints
         }
     }
 
-    public static async Task<IResult> DeleteMovementAsync(Guid id, GeoServDbContext context)
+    public static async Task<IResult> DeleteMovementAsync(Guid id, GeoServDbContext context, Guid? userId = null)
     {
         var movement = await context.AccountingMovements.FindAsync(id);
         if (movement == null) return Results.NotFound();
@@ -524,8 +617,29 @@ public static class AccountingMovementEndpoints
             }
         }
 
+        var sourceType = movement.SourceType;
+        var serviceOrderId = movement.ServiceOrderId;
+        var directCostId = movement.DirectCostId;
+        var amount = movement.Amount;
+        var description = movement.Description;
+        var date = movement.Date;
+
         context.AccountingMovements.Remove(movement);
         await context.SaveChangesAsync();
+
+        var resolvedUserId = userId ?? await context.Users.Select(u => u.Id).FirstOrDefaultAsync();
+
+        if (sourceType == MovementSourceType.ServiceOrderIncome && serviceOrderId.HasValue)
+        {
+            var actionText = $"Se eliminó un cobro de {ServiceOrderFinanceSyncService.FormatCurrency(amount)} vinculado a la orden " +
+                $"(Movimiento: {(string.IsNullOrWhiteSpace(description) ? "sin descripción" : description)}, Fecha: {date:dd/MM/yyyy}).";
+            await ServiceOrderFinanceSyncService.SyncCollectionAsync(context, serviceOrderId.Value, resolvedUserId, actionText);
+        }
+        else if (directCostId.HasValue)
+        {
+            await ServiceOrderFinanceSyncService.RecalculateDirectCostRowAsync(context, directCostId.Value, resolvedUserId, wasJustCreated: false);
+        }
+
         return Results.NoContent();
     }
 
@@ -554,7 +668,10 @@ public record CreateMovementRequest(
     GeoServ.Api.Domain.Enums.MovementSourceType SourceType,
     string? SourceId,
     Guid? CheckId,
-    Guid? ResponsibleId
+    Guid? ResponsibleId,
+    // Categoría de Costo Directo elegida por el usuario cuando SourceType == DirectCost.
+    // SourceId, en ese caso, transporta el Id de la Orden de Servicio de destino (no el de una fila existente).
+    Guid? DirectCostCategoryId = null
 );
 
 public record CreateTransferRequest(
@@ -581,7 +698,10 @@ public record UpdateMovementRequest(
     Guid? DirectCostId = null,
     Guid? AssetId = null,
     Guid? CheckId = null,
-    Guid? ResponsibleId = null
+    Guid? ResponsibleId = null,
+    // Categoría de Costo Directo elegida por el usuario cuando SourceType == DirectCost.
+    // SourceId, en ese caso, transporta el Id de la Orden de Servicio de destino (no el de una fila existente).
+    Guid? DirectCostCategoryId = null
 );
 
 

@@ -17,14 +17,18 @@ import { FinancialAccount, FinancialAccountService } from '../services/financial
 import { MovementCategoryService } from '../services/movement-category.service';
 import { ServiceOrderSearchDialogComponent, SourceSearchResult } from './service-order-search-dialog.component';
 import { AssetSearchDialogComponent } from './asset-search-dialog.component';
-import { DirectCostSearchDialogComponent } from './direct-cost-search-dialog.component';
 import { FixedCostSearchDialogComponent } from './fixed-cost-search-dialog.component';
+import { DirectCostCategoryService } from '../../direct-cost-categories/services/direct-cost-category.service';
+import { DirectCostCategory } from '../../direct-cost-categories/models/direct-cost-category.model';
+import { DirectCostService } from '../../service-orders/services/direct-cost.service';
 
 const SOURCE_FIELD_LABELS: Record<string, string> = {
   ServiceOrderIncome: 'Orden de Servicio',
   AssetPurchase: 'Activo',
   FixedCostPayment: 'Gasto Fijo / Vencimiento',
-  DirectCost: 'Costo Directo'
+  // La búsqueda ahora apunta a la Orden de Servicio de destino; la categoría de Costo Directo
+  // se elige aparte en un selector propio (ver directCostCategoryId).
+  DirectCost: 'Orden de Servicio'
 };
 
 @Component({
@@ -61,6 +65,18 @@ const SOURCE_FIELD_LABELS: Record<string, string> = {
                 {{ cat.name }}
               </mat-option>
             </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width" *ngIf="sourceTypeCtrl.value === 'DirectCost'">
+            <mat-label>Categoría de Costo Directo</mat-label>
+            <mat-select formControlName="directCostCategoryId" [compareWith]="compareIds" required>
+              <mat-option *ngFor="let dcCat of directCostCategories" [value]="dcCat.id">
+                {{ dcCat.name }}
+              </mat-option>
+            </mat-select>
+            <mat-hint *ngIf="directCostCategories.length === 0">
+              No hay categorías de costo directo habilitadas para asignación vía movimiento.
+            </mat-hint>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width" *ngIf="sourceTypeCtrl.value !== 'Manual'">
@@ -144,6 +160,7 @@ export class MovimientoFormComponent implements OnInit {
   isSubmitting = false;
   accounts: FinancialAccount[] = [];
   allCategories: any[] = [];
+  directCostCategories: DirectCostCategory[] = [];
   sourceLabel: string | null = null;
 
   constructor(
@@ -153,6 +170,8 @@ export class MovimientoFormComponent implements OnInit {
     private movementService: MovementService,
     private accountService: FinancialAccountService,
     private categoryService: MovementCategoryService,
+    private directCostCategoryService: DirectCostCategoryService,
+    private directCostService: DirectCostService,
     private snackBar: MatSnackBar,
     private dialog: MatDialog,
     private cdr: ChangeDetectorRef
@@ -164,6 +183,7 @@ export class MovimientoFormComponent implements OnInit {
       categoryId: [data?.movement?.categoryId || '', Validators.required],
       sourceType: [data?.movement?.sourceType || 'Manual', Validators.required],
       sourceId: [data?.movement?.sourceId || ''],
+      directCostCategoryId: [''],
       description: [data?.movement?.description || '', Validators.required],
       amount: [data?.movement?.amount || '', [Validators.required, Validators.min(0.01)]],
       date: [data?.movement?.date ? new Date(data.movement.date) : new Date(), Validators.required],
@@ -182,6 +202,7 @@ export class MovimientoFormComponent implements OnInit {
   ngOnInit(): void {
     this.loadAccounts();
     this.loadCategories();
+    this.loadDirectCostCategories();
 
     this.movementModeCtrl.valueChanges.subscribe(mode => this.applyMovementMode(mode));
     this.applyMovementMode(this.movementModeCtrl.value, { emitEvent: false });
@@ -200,13 +221,26 @@ export class MovimientoFormComponent implements OnInit {
             isIncome: mov.isIncome,
             categoryId: mov.categoryId,
             sourceType: mov.sourceType?.toString() || 'Manual',
-            sourceId: mov.sourceId,
+            sourceId: mov.sourceType === 'DirectCost' ? (mov.serviceOrderId || '') : mov.sourceId,
             description: mov.description,
             amount: mov.amount,
             date: mov.date ? new Date(mov.date) : new Date(),
             financialAccountId: mov.financialAccountId
           }, { emitEvent: false });
           this.sourceLabel = mov.sourceReference || null;
+
+          // El movimiento de costo directo vía el flujo nuevo referencia una fila ya creada/consolidada:
+          // se consulta para preseleccionar su categoría de costo directo en el formulario.
+          if (mov.sourceType === 'DirectCost' && mov.directCostId) {
+            this.directCostService.getCostById(mov.directCostId).subscribe({
+              next: (cost) => {
+                this.movementForm.patchValue({ directCostCategoryId: cost.categoryId }, { emitEvent: false });
+                this.cdr.detectChanges();
+              },
+              error: (err) => console.error('Error fetching direct cost detail', err)
+            });
+          }
+
           this.cdr.detectChanges();
         },
         error: (err) => console.error('Error fetching movement detail', err)
@@ -236,6 +270,12 @@ export class MovimientoFormComponent implements OnInit {
     this.sourceIdCtrl.setValue(sourceType === 'Manual' ? null : '');
     this.sourceIdCtrl.setValidators(sourceType === 'Manual' ? [] : [Validators.required]);
     this.sourceIdCtrl.updateValueAndValidity();
+
+    const directCostCategoryIdCtrl = this.movementForm.get('directCostCategoryId')!;
+    directCostCategoryIdCtrl.setValue('');
+    directCostCategoryIdCtrl.setValidators(sourceType === 'DirectCost' ? [Validators.required] : []);
+    directCostCategoryIdCtrl.updateValueAndValidity();
+
     this.sourceLabel = null;
   }
 
@@ -243,12 +283,12 @@ export class MovimientoFormComponent implements OnInit {
     const type = this.sourceTypeCtrl.value;
     let dialogRef;
 
-    if (type === 'ServiceOrderIncome') {
+    if (type === 'ServiceOrderIncome' || type === 'DirectCost') {
+      // Costo Directo vía movimiento: se busca la Orden de Servicio de destino, igual que para un cobro.
+      // La categoría de costo directo se elige aparte en el selector "Categoría de Costo Directo".
       dialogRef = this.dialog.open(ServiceOrderSearchDialogComponent, { width: '500px' });
     } else if (type === 'AssetPurchase') {
       dialogRef = this.dialog.open(AssetSearchDialogComponent, { width: '500px' });
-    } else if (type === 'DirectCost') {
-      dialogRef = this.dialog.open(DirectCostSearchDialogComponent, { width: '550px' });
     } else if (type === 'FixedCostPayment') {
       dialogRef = this.dialog.open(FixedCostSearchDialogComponent, {
         width: '500px',
@@ -334,6 +374,13 @@ export class MovimientoFormComponent implements OnInit {
     });
   }
 
+  loadDirectCostCategories() {
+    this.directCostCategoryService.getCategories().subscribe(data => {
+      this.directCostCategories = data.filter(c => c.isActive && c.isAssignableViaMovement);
+      this.cdr.detectChanges();
+    });
+  }
+
   save() {
     if (this.movementForm.invalid) return;
     this.isSubmitting = true;
@@ -381,7 +428,8 @@ export class MovimientoFormComponent implements OnInit {
       description: val.description,
       financialAccountId: val.financialAccountId,
       sourceType: val.sourceType,
-      sourceId: val.sourceId || null
+      sourceId: val.sourceId || null,
+      directCostCategoryId: val.sourceType === 'DirectCost' ? (val.directCostCategoryId || null) : null
     };
 
     if (this.isEditMode) {

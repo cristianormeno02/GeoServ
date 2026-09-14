@@ -33,8 +33,12 @@ public class DirectCost
 
     public string Status { get; set; } = "Pendiente";
     public string? Observations { get; set; }
-    
+
     public Guid RegisteredByUserId { get; set; }
     public User RegisteredByUser { get; set; } = null!;
     public int OrderIndex { get; set; } = 0;
+
+    // Fila generada/sincronizada automáticamente a partir de movimientos contables de egreso
+    // (ver ServiceOrderFinanceSyncService). Es de solo lectura en el formulario de la Orden de Servicio.
+    public bool IsFromMovement { get; set; } = false;
 }
