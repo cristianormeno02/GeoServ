@@ -33,11 +33,15 @@ El formulario de creación y edición de movimientos contables NO DEBE solicitar
 - **THEN** el sistema respeta el `SourceType`/`SourceId` ya guardados en el movimiento y permite editarlos mediante el buscador modal correspondiente, sin exigir que la categoría tenga el vínculo configurado para poder guardar sin cambios
 
 ### Requirement: Visualización de orígenes en listados
-La tabla principal de movimientos contables debe mostrar información consolidada e inteligible para el usuario sobre de dónde provino o hacia dónde fue el movimiento.
+La tabla principal de movimientos contables DEBE mostrar información consolidada e inteligible para el usuario sobre el origen o destino del movimiento. En movimientos de egreso originados en Pagos de Costo Directo (`DirectCost`) asociados a una Orden de Servicio, la columna de origen DEBE mostrar tanto la referencia o concepto del costo directo como el número de la Orden de Servicio asociada (ej. "Canon Secretaria (OS: OS-2026-0012)").
 
 #### Scenario: Usuario visualiza la grilla de movimientos
 - **WHEN** el usuario ingresa a la sección de Movimientos Contables
-- **THEN** observa una columna "Origen" que contiene una etiqueta del tipo de origen y el identificador de negocio de la entidad asociada (ej. "Orden de Servicio - OS-00123" o "Compra de Activo - Camioneta Hilux").
+- **THEN** observa una columna "Origen" que contiene una etiqueta del tipo de origen y el identificador de negocio de la entidad asociada (ej. "Orden de Servicio - OS-00123" o "Compra de Activo - Camioneta Hilux")
+
+#### Scenario: Movimiento de pago de costo directo vinculado a Orden de Servicio
+- **WHEN** el usuario visualiza un movimiento de tipo `DirectCost` que tiene un costo directo y una Orden de Servicio vinculada
+- **THEN** el sistema muestra en la columna de origen la descripción o categoría del costo directo junto con el número de orden de servicio identificable
 
 ### Requirement: Registro de Transferencias Internas entre Cuentas
 El formulario de movimientos contables DEBE ofrecer, además de Ingreso y Egreso, un tercer modo "Transferencia entre Cuentas" que reemplace la selección de categoría y origen polimórfico por dos selectores: Cuenta Origen y Cuenta Destino. Al confirmar, el sistema DEBE crear ambos movimientos (Egreso en origen, Ingreso en destino) de forma atómica y vinculada mediante un identificador de grupo (`TransferGroupId`) común, sin requerir que el usuario cargue cada pata por separado.
@@ -211,3 +215,61 @@ Al abrir el formulario de edición de un movimiento con origen polimórfico asig
 #### Scenario: Usuario abre para edición un movimiento vinculado a un vencimiento de Gasto Fijo
 - **WHEN** el usuario abre el formulario de edición de un Egreso con `SourceType = FixedCostPayment` y `FixedCostPaymentId` asignado
 - **THEN** el sistema muestra de inmediato el nombre del Gasto Fijo y la fecha del vencimiento vinculado en el campo de origen específico, sin necesidad de abrir el buscador
+
+### Requirement: Filtro de período con controles independientes y persistencia
+El Libro Diario DEBE proveer selectores de fecha independientes para "Fecha Desde" y "Fecha Hasta" con sus respectivos calendarios. El formulario DEBE validar que la Fecha Desde no sea posterior a la Fecha Hasta, mostrando un mensaje de error y deshabilitando la acción de filtrar si las fechas son inconsistentes. Asimismo, el rango de fechas seleccionado DEBE persistir en el almacenamiento local del navegador (`localStorage`) y restablecerse automáticamente al recargar la vista o volver a ingresar al módulo.
+
+#### Scenario: Usuario selecciona rango de fechas válido
+- **WHEN** el usuario ingresa una "Fecha Desde" menor o igual a "Fecha Hasta" y presiona Filtrar
+- **THEN** el sistema consulta los movimientos en dicho rango y persiste las fechas en `localStorage`
+
+#### Scenario: Usuario ingresa fechas inconsistentes
+- **WHEN** el usuario selecciona una "Fecha Desde" posterior a la "Fecha Hasta"
+- **THEN** el sistema marca el error de validación en el formulario, impide la búsqueda y notifica la incoherencia
+
+#### Scenario: Usuario recarga o reingresa al Libro Diario
+- **WHEN** el usuario ingresa nuevamente a la pantalla de Movimientos Contables habiendo seleccionado previamente un rango
+- **THEN** el sistema recupera automáticamente el período guardado en `localStorage` y ejecuta la carga con dicho filtro
+
+### Requirement: Visualización y edición de Orden de Servicio en Pagos de Costo Directo
+En el formulario modal de edición de movimientos contables, cuando el movimiento corresponde a un Pago de Costo Directo (`sourceType = DirectCost`), el campo etiquetado como "Orden de Servicio" DEBE exhibir el número identificador de la Orden de Servicio vinculada (obtenido a través de la API en `serviceOrderNumber`) y no la descripción o concepto del costo directo.
+
+#### Scenario: Usuario edita un movimiento de costo directo con orden asociada
+- **WHEN** el usuario abre para edición un movimiento de egreso de costo directo asociado a la orden "OS-2026-0005"
+- **THEN** el campo "Orden de Servicio" muestra el valor "OS-2026-0005" como referencia de la orden seleccionada
+
+### Requirement: Consulta de saldos por cuenta financiera en movimientos
+Cuando el usuario filtre los movimientos financieros por una cuenta financiera específica (`financialAccountId`), el sistema DEBE calcular y retornar el saldo acumulado previo al período filtrado (`initialBalance`), la sumatoria de ingresos del período (`periodIncome`), la sumatoria de egresos del período (`periodExpense`) y el saldo al cierre del período (`finalBalance`), además del saldo resultante acumulado (`balanceAfter`) para cada movimiento listado.
+
+#### Scenario: Usuario filtra por cuenta bancaria y período
+- **WHEN** el usuario selecciona una cuenta financiera específica y un rango de fechas en el Libro Diario
+- **THEN** el sistema calcula `initialBalance` sumando todos los movimientos de esa cuenta con fecha anterior a `startDate`
+- **THEN** el sistema calcula los totales de ingresos y egresos dentro del rango de fechas
+- **THEN** cada movimiento devuelto incluye `balanceAfter` reflejando el saldo acumulado tras la aplicación secuencial de dicho movimiento
+
+#### Scenario: Usuario consulta sin filtrar por cuenta ("Todas las cuentas")
+- **WHEN** el usuario consulta movimientos con el filtro de cuenta en "Todas"
+- **THEN** el sistema no calcula saldo inicial ni saldo acumulado por fila, y la grilla oculta la columna de saldo para evitar inconsistencias entre cuentas heterogéneas
+
+### Requirement: Barra de resumen de saldos en Libro Diario
+La interfaz de usuario del Libro Diario DEBE mostrar un bloque de resumen de saldos destacado en la parte superior cuando se haya seleccionado una cuenta financiera específica.
+
+#### Scenario: Visualización del bloque de resumen al seleccionar una cuenta
+- **WHEN** el filtro de cuenta tiene seleccionada una cuenta financiera puntual
+- **THEN** la interfaz muestra cuatro tarjetas o indicadores: "Saldo Inicial", "Ingresos (+)", "Egresos (-)" y "Saldo Final"
+- **THEN** los montos se presentan con formato de moneda y colores semánticos correspondientes
+
+#### Scenario: Ocultamiento del bloque de resumen en vista global
+- **WHEN** el filtro de cuenta está en "Todas"
+- **THEN** el bloque de resumen de saldos de cuenta se oculta automáticamente
+
+### Requirement: Columna dinámica de saldo en grilla de movimientos
+La grilla de movimientos DEBE incluir una columna "Saldo" únicamente cuando se encuentre filtrada una cuenta financiera puntual.
+
+#### Scenario: Grilla con cuenta seleccionada
+- **WHEN** el usuario aplica el filtro con una cuenta financiera seleccionada
+- **THEN** la tabla incluye la columna "Saldo" mostrando el valor de `balanceAfter` formateado, con estilo visual de advertencia si el saldo es negativo
+
+#### Scenario: Grilla sin cuenta seleccionada
+- **WHEN** el usuario consulta con el selector de cuenta en "Todas"
+- **THEN** la tabla excluye la columna "Saldo" de las columnas visibles
