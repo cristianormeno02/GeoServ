@@ -1,8 +1,18 @@
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
   height: 100%;
   background-color: var(--color-primary);
   color: var(--on-dark-surface);
+}
+
+.app-version {
+  flex-shrink: 0;
+  text-align: center;
+  padding: 8px 0 12px;
+  font-size: 11px;
+  opacity: 0.55;
+  letter-spacing: 0.03em;
 }
 
 mat-nav-list {

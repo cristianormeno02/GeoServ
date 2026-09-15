@@ -1,0 +1,76 @@
+<div class="about-container">
+  <div class="header">
+    <h1>Acerca de {{ empresaConfig.empresaActual()?.nombre || 'GeoServ' }}</h1>
+  </div>
+
+  <mat-card class="info-card mat-elevation-z8">
+    <mat-card-content>
+      <div class="version-grid">
+        <div class="version-block">
+          <mat-icon>web</mat-icon>
+          <div>
+            <div class="version-label">Aplicación (frontend)</div>
+            <div class="version-value" *ngIf="frontendVersion; else frontendUnknown">
+              v{{ frontendVersion.version }}
+            </div>
+            <ng-template #frontendUnknown><div class="version-value">—</div></ng-template>
+            <div class="version-meta" *ngIf="frontendVersion">
+              Build: {{ frontendVersion.buildDate | date:'medium' }} · {{ frontendVersion.commit }}
+            </div>
+          </div>
+        </div>
+
+        <div class="version-block">
+          <mat-icon>dns</mat-icon>
+          <div>
+            <div class="version-label">Servidor (API)</div>
+            <div class="version-value" *ngIf="backendVersion; else backendPending">
+              v{{ backendVersion.version }}
+            </div>
+            <ng-template #backendPending>
+              <div class="version-value" [class.version-error]="backendUnreachable">
+                {{ backendUnreachable ? 'No disponible' : 'Cargando…' }}
+              </div>
+            </ng-template>
+            <div class="version-meta" *ngIf="backendVersion">
+              Build: {{ backendVersion.buildDate | date:'medium' }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="info-card mat-elevation-z8" *ngIf="changelog.length">
+    <mat-card-content>
+      <h2 class="section-title">Novedades recientes</h2>
+
+      <div class="changelog-entry" *ngFor="let entry of changelog; let last = last">
+        <h3 class="changelog-header">{{ entry.header }}</h3>
+
+        <div class="changelog-section" *ngFor="let section of entry.sections">
+          <h4 *ngIf="section.title" class="changelog-section-title">{{ section.title }}</h4>
+          <ul class="changelog-items">
+            <li *ngFor="let item of section.items">{{ item }}</li>
+          </ul>
+        </div>
+
+        <mat-divider *ngIf="!last" class="changelog-divider"></mat-divider>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="info-card mat-elevation-z8" *ngIf="empresaConfig.empresaActual() as empresa">
+    <mat-card-content>
+      <h2 class="section-title">Soporte</h2>
+      <div class="support-row" *ngIf="empresa.correo">
+        <mat-icon>mail</mat-icon>
+        <span>{{ empresa.correo }}</span>
+      </div>
+      <div class="support-row" *ngIf="empresa.telefono">
+        <mat-icon>phone</mat-icon>
+        <span>{{ empresa.telefono }}</span>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -202,10 +202,22 @@ body {
   vertical-align: middle;
 }
 
+/* Info */
+.mat-mdc-snack-bar-container.snackbar-info .mdc-snackbar__surface {
+  background-color: var(--color-info) !important;
+  color: white !important;
+}
+.mat-mdc-snack-bar-container.snackbar-info .mdc-snackbar__label::before {
+  content: '\2139 \00a0 '; /* ℹ Info mark */
+  font-size: 18px;
+  vertical-align: middle;
+}
+
 /* Tipografía y acciones en snackbars personalizados */
 .mat-mdc-snack-bar-container.snackbar-success .mdc-snackbar__label,
 .mat-mdc-snack-bar-container.snackbar-error .mdc-snackbar__label,
-.mat-mdc-snack-bar-container.snackbar-warning .mdc-snackbar__label {
+.mat-mdc-snack-bar-container.snackbar-warning .mdc-snackbar__label,
+.mat-mdc-snack-bar-container.snackbar-info .mdc-snackbar__label {
   color: white !important;
   font-weight: 500;
   display: flex;
@@ -214,7 +226,8 @@ body {
 
 .mat-mdc-snack-bar-container.snackbar-success .mat-mdc-snack-bar-action,
 .mat-mdc-snack-bar-container.snackbar-error .mat-mdc-snack-bar-action,
-.mat-mdc-snack-bar-container.snackbar-warning .mat-mdc-snack-bar-action {
+.mat-mdc-snack-bar-container.snackbar-warning .mat-mdc-snack-bar-action,
+.mat-mdc-snack-bar-container.snackbar-info .mat-mdc-snack-bar-action {
   color: #fff !important;
   font-weight: bold !important;
   background-color: rgba(255, 255, 255, 0.2) !important;

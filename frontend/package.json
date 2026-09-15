@@ -1,11 +1,12 @@
 {
   "name": "geoserv-web",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
+    "build-info": "node scripts/generate-build-info.mjs",
+    "start": "npm run build-info && ng serve",
+    "build": "npm run build-info && ng build",
+    "watch": "npm run build-info && ng build --watch --configuration development",
     "test": "ng test"
   },
   "private": true,

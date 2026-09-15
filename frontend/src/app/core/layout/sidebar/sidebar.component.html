@@ -84,8 +84,17 @@
 
   <mat-divider class="menu-divider"></mat-divider>
 
+  <a mat-list-item routerLink="/acerca-de" routerLinkActive="active-link" class="about-item">
+    <mat-icon matListItemIcon>info</mat-icon>
+    <div matListItemTitle>Acerca de</div>
+  </a>
+
   <a mat-list-item (click)="logout()" class="logout-item">
     <mat-icon matListItemIcon>logout</mat-icon>
     <div matListItemTitle>Salir</div>
   </a>
 </mat-nav-list>
+
+<div class="app-version" *ngIf="appVersion() as version" [matTooltip]="'Build: ' + (version.buildDate | date:'medium')">
+  v{{ version.version }}
+</div>

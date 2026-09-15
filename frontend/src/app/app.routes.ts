@@ -38,6 +38,7 @@ export const routes: Routes = [
         data: { roles: ['Administrador', 'Cliente'] }
       },
       { path: 'en-construccion', loadComponent: () => import('./shared/components/under-construction/under-construction.component').then(m => m.UnderConstructionComponent) },
+      { path: 'acerca-de', loadComponent: () => import('./features/about/about.component').then(m => m.AboutComponent) },
       { path: 'inventario', loadComponent: () => import('./features/inventario/inventario.component').then(m => m.InventarioComponent) },
       { path: 'finanzas/resumen', loadComponent: () => import('./features/finance/resumen/financial-summary.component').then(m => m.FinancialSummaryComponent) },
       { path: 'clientes', loadComponent: () => import('./features/clients/components/client-list/client-list.component').then(m => m.ClientListComponent) },

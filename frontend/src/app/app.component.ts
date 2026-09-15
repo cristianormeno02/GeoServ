@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { LoadingSpinnerComponent } from './core/components/loading-spinner/loading-spinner.component';
 import { environment } from '../environments/environment';
+import { VersionCheckService } from './core/services/version-check.service';
 
 @Component({
   selector: 'app-root',
@@ -16,8 +17,11 @@ import { environment } from '../environments/environment';
 export class AppComponent {
   title = 'geoserv-web';
 
+  private versionCheck = inject(VersionCheckService);
+
   constructor() {
     this.loadGoogleMapsApi();
+    this.versionCheck.start();
   }
 
   private loadGoogleMapsApi() {

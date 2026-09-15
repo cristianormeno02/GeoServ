@@ -12,6 +12,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatButtonModule } from '@angular/material/button';
 import { AuthService } from '../../services/auth.service';
 import { MenuFavoritesService } from '../../services/menu-favorites.service';
+import { VersionCheckService } from '../../services/version-check.service';
 import { NavItem, NavGroup } from '../nav-item.model';
 import { MENU_GROUPS } from '../../config/menu.config';
 
@@ -72,8 +73,12 @@ export class SidebarComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private router: Router,
-    public favoritesService: MenuFavoritesService
+    public favoritesService: MenuFavoritesService,
+    private versionCheck: VersionCheckService
   ) {}
+
+  /** Versión del frontend actualmente cargada, para mostrarla al pie del menú */
+  readonly appVersion = this.versionCheck.currentVersion;
 
   ngOnInit() {
     this.userName = this.authService.getUserName();

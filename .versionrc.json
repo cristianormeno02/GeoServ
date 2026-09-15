@@ -1,0 +1,22 @@
+{
+  "packageFiles": [
+    { "filename": "package.json", "type": "json" }
+  ],
+  "bumpFiles": [
+    { "filename": "package.json", "type": "json" },
+    { "filename": "frontend/package.json", "type": "json" },
+    { "filename": "backend/GeoServ.Api/GeoServ.Api.csproj", "updater": "scripts/csproj-version-updater.cjs" }
+  ],
+  "types": [
+    { "type": "feat", "section": "Nuevas funcionalidades" },
+    { "type": "fix", "section": "Correcciones" },
+    { "type": "perf", "section": "Rendimiento" },
+    { "type": "refactor", "section": "Refactorizaciones", "hidden": false },
+    { "type": "docs", "section": "Documentación", "hidden": true },
+    { "type": "style", "section": "Estilos", "hidden": true },
+    { "type": "test", "section": "Tests", "hidden": true },
+    { "type": "build", "section": "Build", "hidden": true },
+    { "type": "ci", "section": "CI", "hidden": true },
+    { "type": "chore", "section": "Otros", "hidden": true }
+  ]
+}

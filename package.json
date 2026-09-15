@@ -1,0 +1,15 @@
+{
+  "name": "geoserv",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Versionado del proyecto GeoServ (frontend Angular + backend .NET). No es una app Node en sí misma.",
+  "scripts": {
+    "release": "commit-and-tag-version",
+    "release:minor": "commit-and-tag-version --release-as minor",
+    "release:major": "commit-and-tag-version --release-as major",
+    "release:patch": "commit-and-tag-version --release-as patch"
+  },
+  "devDependencies": {
+    "commit-and-tag-version": "^13.2.1"
+  }
+}

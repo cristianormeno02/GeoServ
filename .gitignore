@@ -13,3 +13,7 @@ coverage/
 bin/
 obj/
 .vs/
+
+# Generado en cada build por frontend/scripts/generate-build-info.mjs
+frontend/src/assets/version.json
+frontend/src/assets/changelog.json
