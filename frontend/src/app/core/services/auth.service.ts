@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, Subject, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface LoginResponse {
@@ -26,6 +26,9 @@ export class AuthService {
   private readonly REFRESH_TOKEN_KEY = 'refresh_token';
   private readonly USER_NAME_KEY = 'user_name';
   private readonly REMEMBER_ME_KEY = 'remember_me';
+
+  /** Evento emitido al cerrar sesión */
+  public readonly onLogout$ = new Subject<void>();
 
   constructor(private http: HttpClient) {}
 
@@ -213,6 +216,7 @@ export class AuthService {
     localStorage.removeItem(this.USER_NAME_KEY);
     sessionStorage.removeItem(this.USER_NAME_KEY);
     localStorage.removeItem(this.REMEMBER_ME_KEY);
+    this.onLogout$.next();
   }
 
   isLoggedIn(): boolean {

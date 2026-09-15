@@ -151,4 +151,5 @@ GeoServ.Api.Endpoints.OperationalDashboardEndpoints.MapOperationalDashboardEndpo
 GeoServ.Api.Endpoints.FinancialDashboardEndpoints.MapFinancialDashboardEndpoints(app);
 GeoServ.Api.Endpoints.GeneralDashboardEndpoints.MapGeneralDashboardEndpoints(app);
 GeoServ.Api.Endpoints.FinancialSummaryEndpoints.MapFinancialSummaryEndpoints(app);
+GeoServ.Api.Endpoints.UserMenuFavoriteEndpoints.MapUserMenuFavoriteEndpoints(app);
 app.Run();

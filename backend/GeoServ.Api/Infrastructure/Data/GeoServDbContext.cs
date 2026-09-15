@@ -46,6 +46,7 @@ public class GeoServDbContext : DbContext
     public DbSet<InventoryMovement> InventoryMovements { get; set; } = null!;
     public DbSet<FixedCostItem> FixedCostItems { get; set; } = null!;
     public DbSet<FixedCostPayment> FixedCostPayments { get; set; } = null!;
+    public DbSet<UserMenuFavorite> UserMenuFavorites { get; set; } = null!;
     
     // Vistas
     public DbSet<AccountingMovementDetail> AccountingMovementDetails { get; set; } = null!;
@@ -318,5 +319,15 @@ public class GeoServDbContext : DbContext
             new MovementCategory { Id = Guid.Parse("A9999999-9999-9999-9999-999999999999"), Name = "Pago de Honorarios", Description = "Honorarios de socios o terceros", IsIncome = false, IsActive = true, IsSystemDefault = false },
             new MovementCategory { Id = Guid.Parse("AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"), Name = "Transferencia Interna (Egreso)", Description = "Salida de fondos hacia otra cuenta propia", IsIncome = false, IsActive = true, IsSystemDefault = true }
         );
+
+        modelBuilder.Entity<UserMenuFavorite>(b =>
+        {
+            b.Property(f => f.MenuPath).HasMaxLength(250).IsRequired();
+            b.HasIndex(f => new { f.UserId, f.MenuPath }).IsUnique();
+            b.HasOne(f => f.User)
+             .WithMany()
+             .HasForeignKey(f => f.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
     }
 }

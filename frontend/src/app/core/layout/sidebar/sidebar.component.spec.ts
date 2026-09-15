@@ -1,4 +1,4 @@
-﻿import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { SidebarComponent } from './sidebar.component';
@@ -10,9 +10,10 @@ describe('SidebarComponent', () => {
   let authServiceSpy: jasmine.SpyObj<AuthService>;
 
   beforeEach(async () => {
-    authServiceSpy = jasmine.createSpyObj('AuthService', ['getUserName', 'getUserRole', 'logout']);
+    authServiceSpy = jasmine.createSpyObj('AuthService', ['getUserName', 'getUserRole', 'logout', 'getUserId']);
     authServiceSpy.getUserName.and.returnValue('Test User');
     authServiceSpy.getUserRole.and.returnValue('Administrador');
+    authServiceSpy.getUserId.and.returnValue('test-user-123');
 
     await TestBed.configureTestingModule({
       imports: [SidebarComponent, NoopAnimationsModule],
