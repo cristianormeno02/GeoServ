@@ -13,7 +13,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
-import { Movement, MovementService } from '../services/movement.service';
+import { ActivatedRoute } from '@angular/router';
+import { Movement, MovementService, AccountPeriodSummary } from '../services/movement.service';
 import { MovimientoFormComponent } from './movimiento-form.component';
 import { MovementCategoryService } from '../services/movement-category.service';
 import { FinancialAccountService } from '../services/financial-account.service';
@@ -92,6 +93,7 @@ export class Movimientos implements OnInit {
   pageSize = 10;
   pageIndex = 0;
 
+  accountSummary: AccountPeriodSummary | null = null;
   filterForm: FormGroup;
   categories: any[] = [];
   accounts: any[] = [];
@@ -100,6 +102,7 @@ export class Movimientos implements OnInit {
     private movementService: MovementService,
     private categoryService: MovementCategoryService,
     private accountService: FinancialAccountService,
+    private route: ActivatedRoute,
     private dialog: MatDialog,
     private cdr: ChangeDetectorRef,
     private fb: FormBuilder,
@@ -113,6 +116,22 @@ export class Movimientos implements OnInit {
       financialAccountId: [''],
       isIncome: ['']
     }, { validators: dateRangeValidator });
+  }
+
+  updateDisplayedColumns(): void {
+    const hasAccount = !!this.filterForm.get('financialAccountId')?.value;
+    if (hasAccount) {
+      this.displayedColumns = ['date', 'type', 'category', 'source', 'description', 'account', 'amount', 'balance', 'actions'];
+    } else {
+      this.displayedColumns = ['date', 'type', 'category', 'source', 'description', 'account', 'amount', 'actions'];
+    }
+  }
+
+  getSelectedAccountName(): string {
+    const accId = this.filterForm.get('financialAccountId')?.value;
+    if (!accId) return '';
+    const found = this.accounts.find(a => a.id === accId);
+    return found ? found.name : 'Cuenta Seleccionada';
   }
 
   private getDefaultPeriod(): { startDate: Date; endDate: Date } {
@@ -157,7 +176,29 @@ export class Movimientos implements OnInit {
 
   ngOnInit(): void {
     this.loadFiltersData();
-    this.loadMovements();
+    this.route.queryParams.subscribe(params => {
+      let filterChanged = false;
+      if (params['financialAccountId']) {
+        this.filterForm.patchValue({ financialAccountId: params['financialAccountId'] });
+        filterChanged = true;
+      }
+      if (params['startDate']) {
+        const sDate = new Date(params['startDate']);
+        if (!isNaN(sDate.getTime())) {
+          this.filterForm.patchValue({ startDate: sDate });
+          filterChanged = true;
+        }
+      }
+      if (params['endDate']) {
+        const eDate = new Date(params['endDate']);
+        if (!isNaN(eDate.getTime())) {
+          this.filterForm.patchValue({ endDate: eDate });
+          filterChanged = true;
+        }
+      }
+      this.updateDisplayedColumns();
+      this.loadMovements();
+    });
   }
 
   loadFiltersData() {
@@ -171,6 +212,8 @@ export class Movimientos implements OnInit {
     const endDate = filters.endDate ? new Date(filters.endDate).toISOString() : undefined;
     const isIncome = filters.isIncome === '' ? undefined : filters.isIncome === 'true';
 
+    this.updateDisplayedColumns();
+
     this.movementService.getMovements(
       this.pageIndex + 1,
       this.pageSize,
@@ -183,6 +226,7 @@ export class Movimientos implements OnInit {
       next: (res) => {
         this.movements = [...res.items];
         this.totalCount = res.totalCount;
+        this.accountSummary = res.accountSummary || null;
         this.cdr.detectChanges();
       },
       error: (err) => console.error(err)

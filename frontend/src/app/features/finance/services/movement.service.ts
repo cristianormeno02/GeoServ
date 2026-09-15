@@ -38,6 +38,14 @@ export interface Movement {
   sourceId?: string | null;
   sourceReference?: string | null;
   transferGroupId?: string | null;
+  balanceAfter?: number;
+}
+
+export interface AccountPeriodSummary {
+  initialBalance: number;
+  periodIncome: number;
+  periodExpense: number;
+  finalBalance: number;
 }
 
 export interface PagedMovementResponse {
@@ -45,6 +53,7 @@ export interface PagedMovementResponse {
   totalCount: number;
   page: number;
   pageSize: number;
+  accountSummary?: AccountPeriodSummary | null;
 }
 
 export interface CreateTransferRequest {

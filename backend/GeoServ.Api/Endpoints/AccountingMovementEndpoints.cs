@@ -57,9 +57,53 @@ public static class AccountingMovementEndpoints
             var actualPage = page ?? 1;
             var actualPageSize = pageSize ?? 10;
 
-            var items = await query
+            object? accountSummary = null;
+            decimal? runningBalance = null;
+
+            if (financialAccountId.HasValue)
+            {
+                var accId = financialAccountId.Value;
+                var initialBalance = startDate.HasValue
+                    ? await context.AccountingMovements
+                        .Where(m => m.FinancialAccountId == accId && m.Date < startDate.Value.Date)
+                        .SumAsync(m => (decimal?)(m.IsIncome ? m.Amount : -m.Amount)) ?? 0m
+                    : 0m;
+
+                var periodQuery = context.AccountingMovements.Where(m => m.FinancialAccountId == accId);
+                if (startDate.HasValue)
+                    periodQuery = periodQuery.Where(m => m.Date >= startDate.Value.Date);
+                if (endDate.HasValue)
+                    periodQuery = periodQuery.Where(m => m.Date <= endDate.Value.Date.AddDays(1).AddTicks(-1));
+
+                var periodIncome = await periodQuery.Where(m => m.IsIncome).SumAsync(m => (decimal?)m.Amount) ?? 0m;
+                var periodExpense = await periodQuery.Where(m => !m.IsIncome).SumAsync(m => (decimal?)m.Amount) ?? 0m;
+                var finalBalance = initialBalance + periodIncome - periodExpense;
+
+                accountSummary = new
+                {
+                    InitialBalance = initialBalance,
+                    PeriodIncome = periodIncome,
+                    PeriodExpense = periodExpense,
+                    FinalBalance = finalBalance
+                };
+
+                var skipCount = (actualPage - 1) * actualPageSize;
+                var priorDelta = skipCount > 0
+                    ? await query
+                        .OrderBy(m => m.Date)
+                        .ThenBy(m => m.CreatedAt)
+                        .ThenBy(m => m.Id)
+                        .Take(skipCount)
+                        .SumAsync(m => (decimal?)(m.IsIncome ? m.Amount : -m.Amount)) ?? 0m
+                    : 0m;
+
+                runningBalance = initialBalance + priorDelta;
+            }
+
+            var rawItems = await query
                 .OrderBy(m => m.Date)
                 .ThenBy(m => m.CreatedAt)
+                .ThenBy(m => m.Id)
                 .Skip((actualPage - 1) * actualPageSize)
                 .Take(actualPageSize)
                 .Select(m => new
@@ -100,12 +144,54 @@ public static class AccountingMovementEndpoints
                 })
                 .ToListAsync();
 
+            var currentBal = runningBalance;
+            var items = rawItems.Select(m =>
+            {
+                decimal? balAfter = null;
+                if (currentBal.HasValue)
+                {
+                    currentBal += (m.IsIncome ? m.Amount : -m.Amount);
+                    balAfter = currentBal.Value;
+                }
+
+                return new
+                {
+                    m.Id,
+                    m.IsIncome,
+                    m.CategoryId,
+                    m.CategoryName,
+                    m.Amount,
+                    BalanceAfter = balAfter,
+                    m.Date,
+                    m.CreatedAt,
+                    m.Description,
+                    m.FinancialAccountId,
+                    m.FinancialAccountName,
+                    m.PaymentMethodId,
+                    m.PaymentMethodName,
+                    m.ServiceOrderId,
+                    m.ServiceOrderNumber,
+                    m.FixedCostId,
+                    m.FixedCostPaymentId,
+                    m.DirectCostId,
+                    m.AssetId,
+                    m.CheckId,
+                    m.ResponsibleId,
+                    m.RegisteredByUserId,
+                    m.SourceType,
+                    m.SourceId,
+                    m.TransferGroupId,
+                    m.SourceReference
+                };
+            }).ToList();
+
             return Results.Ok(new
             {
                 Items = items,
                 TotalCount = totalCount,
                 Page = actualPage,
-                PageSize = actualPageSize
+                PageSize = actualPageSize,
+                AccountSummary = accountSummary
             });
         })
         .WithName("GetMovements")

@@ -69,6 +69,51 @@
     </mat-card-content>
   </mat-card>
 
+  <!-- Banner de saldos de la cuenta seleccionada -->
+  <div class="account-summary-banner" *ngIf="accountSummary">
+    <div class="account-summary-header">
+      <div class="account-badge">
+        <mat-icon class="account-icon">account_balance</mat-icon>
+        <span class="account-name">{{ getSelectedAccountName() }}</span>
+      </div>
+      <span class="account-summary-subtitle">Estado de saldos para el período seleccionado</span>
+    </div>
+
+    <div class="account-metrics-grid">
+      <div class="metric-card neutral">
+        <span class="metric-label">Saldo Inicial</span>
+        <span class="metric-value" [class.text-negative]="accountSummary.initialBalance < 0">
+          {{ accountSummary.initialBalance | currency:'ARS':'$' }}
+        </span>
+        <small class="metric-hint">Previo a fecha desde</small>
+      </div>
+
+      <div class="metric-card positive">
+        <span class="metric-label">Ingresos del Período</span>
+        <span class="metric-value text-income">
+          + {{ accountSummary.periodIncome | currency:'ARS':'$' }}
+        </span>
+        <small class="metric-hint">Total cobros / transferencias</small>
+      </div>
+
+      <div class="metric-card negative">
+        <span class="metric-label">Egresos del Período</span>
+        <span class="metric-value text-expense">
+          - {{ accountSummary.periodExpense | currency:'ARS':'$' }}
+        </span>
+        <small class="metric-hint">Total pagos / transferencias</small>
+      </div>
+
+      <div class="metric-card highlight">
+        <span class="metric-label">Saldo Final</span>
+        <span class="metric-value" [class.text-negative]="accountSummary.finalBalance < 0">
+          {{ accountSummary.finalBalance | currency:'ARS':'$' }}
+        </span>
+        <small class="metric-hint">Al cierre del período</small>
+      </div>
+    </div>
+  </div>
+
   <mat-card>
     <mat-card-content>
       <table mat-table [dataSource]="movements" class="mat-elevation-z2" style="width: 100%;">
@@ -116,6 +161,13 @@
           <th mat-header-cell *matHeaderCellDef class="text-right"> Monto </th>
           <td mat-cell *matCellDef="let element" class="text-right" [ngClass]="element.isIncome ? 'text-income' : 'text-expense'">
             {{element.isIncome ? '+' : '-'}} {{element.amount | currency:'ARS':'$'}}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="balance">
+          <th mat-header-cell *matHeaderCellDef class="text-right"> Saldo </th>
+          <td mat-cell *matCellDef="let element" class="text-right font-medium" [class.text-negative]="(element.balanceAfter ?? 0) < 0">
+            {{ element.balanceAfter != null ? (element.balanceAfter | currency:'ARS':'$') : '-' }}
           </td>
         </ng-container>
 
