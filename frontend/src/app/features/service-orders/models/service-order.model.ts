@@ -80,7 +80,18 @@ export interface ServiceOrder {
 export interface ServiceOrderObservation {
   id: string;
   text: string;
+  observationType?: string;
+  userName?: string;
   createdAt: string;
+}
+
+export interface ServiceOrderMovement {
+  id: string;
+  date: string;
+  amount: number;
+  description?: string;
+  financialAccountName?: string;
+  paymentMethodName?: string;
 }
 
 export interface ServiceOrderActivity {

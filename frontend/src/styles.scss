@@ -65,6 +65,12 @@ $theme-dark: mat.define-theme((
   --color-warning: #F59E0B;
   --color-info: #2563EB;
 
+  /* Fondos suaves para badges/chips de estado (Modo Claro) */
+  --color-success-soft: #E6F6EF;
+  --color-error-soft: #FCEAEA;
+  --color-warning-soft: #FBF0DD;
+  --color-info-soft: #E9F0FE;
+
   /* Superficies */
   --color-background: #FAF8F5;
   --color-surface: #FFFFFF;
@@ -107,6 +113,12 @@ html.dark-theme,
   --color-error: #F87171;
   --color-warning: #FBBF24;
   --color-info: #60A5FA;
+
+  /* Fondos suaves para badges/chips de estado (Modo Oscuro) */
+  --color-success-soft: rgba(16, 185, 129, .14);
+  --color-error-soft: rgba(248, 113, 113, .14);
+  --color-warning-soft: rgba(251, 191, 36, .14);
+  --color-info-soft: rgba(96, 165, 250, .14);
 }
 
 /* =========================================================================

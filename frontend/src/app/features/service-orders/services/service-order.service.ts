@@ -7,7 +7,8 @@ import {
   ServiceOrder,
   CreateServiceOrderRequest,
   UpdateServiceOrderRequest,
-  DocumentUploadResponse
+  DocumentUploadResponse,
+  ServiceOrderMovement
 } from '../models/service-order.model';
 
 @Injectable({
@@ -107,8 +108,8 @@ export class ServiceOrderService {
   }
 
   // 11. Desglose de movimientos de cobro vinculados a la orden
-  getMovements(orderId: string): Observable<{ items: any[]; total: number }> {
-    return this.http.get<{ items: any[]; total: number }>(`${this.apiUrl}/${orderId}/movements`);
+  getMovements(orderId: string): Observable<{ items: ServiceOrderMovement[]; total: number }> {
+    return this.http.get<{ items: ServiceOrderMovement[]; total: number }>(`${this.apiUrl}/${orderId}/movements`);
   }
 
   // 12. Recálculo/sincronización masiva de cobros (uso administrativo)
