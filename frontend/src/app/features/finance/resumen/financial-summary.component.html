@@ -206,7 +206,7 @@
                   <td>{{ acc.accountNumber || '-' }}</td>
                   <td>
                     <span class="account-type-tag" [ngClass]="acc.accountType?.toLowerCase()">
-                      {{ acc.accountType }}
+                      {{ getAccountTypeLabel(acc.accountType) }}
                     </span>
                   </td>
                   <td>{{ acc.currencyName }}</td>

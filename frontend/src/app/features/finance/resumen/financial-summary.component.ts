@@ -72,6 +72,17 @@ export class FinancialSummaryComponent implements OnInit {
   checkStatusFilter: string = 'ALL';
   checkSearchTerm: string = '';
 
+  readonly accountTypeLabels: Record<string, string> = {
+    'BankAccount': 'Cuenta Bancaria',
+    'Cash': 'Efectivo',
+    'DigitalWallet': 'Billetera Digital'
+  };
+
+  getAccountTypeLabel(accountType?: string): string {
+    if (!accountType) return '-';
+    return this.accountTypeLabels[accountType] ?? accountType;
+  }
+
   // Donut chart slices
   checkSlices: DonutSlice[] = [];
 

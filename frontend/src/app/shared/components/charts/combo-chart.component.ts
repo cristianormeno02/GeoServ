@@ -1,4 +1,4 @@
-﻿import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -61,15 +61,15 @@ interface ChartBarPoint {
       </div>
 
       <div class="combo-chart-wrapper" *ngIf="data.length > 0; else emptyState">
-        <svg viewBox="0 0 700 240" class="combo-svg" preserveAspectRatio="none">
+        <svg viewBox="0 0 850 300" class="combo-svg" preserveAspectRatio="none">
           <!-- Grid Lines & Y Axis Labels -->
           <g class="grid-lines">
-            <line *ngFor="let tick of yTicks" x1="50" [attr.y1]="tick.y" x2="680" [attr.y2]="tick.y" stroke="#f1f5f9" stroke-dasharray="3,3" />
-            <text *ngFor="let tick of yTicks" x="42" [attr.y]="tick.y + 4" text-anchor="end" class="axis-text">{{ tick.label }}</text>
+            <line *ngFor="let tick of yTicks" x1="60" [attr.y1]="tick.y" x2="820" [attr.y2]="tick.y" stroke="#f1f5f9" stroke-dasharray="3,3" />
+            <text *ngFor="let tick of yTicks" x="52" [attr.y]="tick.y + 4" text-anchor="end" class="axis-text">{{ tick.label }}</text>
           </g>
 
           <!-- Zero line -->
-          <line x1="50" [attr.y1]="zeroY" x2="680" [attr.y2]="zeroY" stroke="#cbd5e1" stroke-width="1.2" />
+          <line x1="60" [attr.y1]="zeroY" x2="820" [attr.y2]="zeroY" stroke="#cbd5e1" stroke-width="1.2" />
 
           <!-- Bars -->
           <g *ngFor="let p of chartPoints" class="bar-group">
@@ -100,7 +100,7 @@ interface ChartBarPoint {
             </rect>
 
             <!-- Period Label -->
-            <text [attr.x]="p.x" y="228" text-anchor="middle" class="axis-text period-text">{{ p.periodo }}</text>
+            <text [attr.x]="p.x" y="285" text-anchor="middle" class="axis-text period-text">{{ p.periodo }}</text>
           </g>
 
           <!-- Saldo Acumulado Area / Line -->
@@ -207,7 +207,7 @@ interface ChartBarPoint {
     .combo-chart-wrapper {
       position: relative;
       width: 100%;
-      height: 240px;
+      height: 320px;
       padding-top: 8px;
     }
     .combo-svg {
@@ -304,7 +304,7 @@ export class ComboChartComponent implements OnChanges {
     const range = maxVal - minVal;
 
     const chartTop = 20;
-    const chartBottom = 205;
+    const chartBottom = 260;
     const chartHeight = chartBottom - chartTop;
 
     const getY = (val: number) => {
@@ -326,8 +326,8 @@ export class ComboChartComponent implements OnChanges {
     }
 
     // X coordinates
-    const startX = 85;
-    const endX = 660;
+    const startX = 100;
+    const endX = 800;
     const availableWidth = endX - startX;
     const stepX = this.data.length > 1 ? availableWidth / (this.data.length - 1) : availableWidth / 2;
 

@@ -12,13 +12,23 @@
       <form [formGroup]="filterForm" class="filter-form">
         
         <mat-form-field appearance="outline">
-          <mat-label>Fechas</mat-label>
-          <mat-date-range-input [rangePicker]="picker">
-            <input matStartDate formControlName="startDate" placeholder="Desde">
-            <input matEndDate formControlName="endDate" placeholder="Hasta">
-          </mat-date-range-input>
-          <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-          <mat-date-range-picker #picker></mat-date-range-picker>
+          <mat-label>Fecha Desde</mat-label>
+          <input matInput [matDatepicker]="pickerDesde" formControlName="startDate" placeholder="Desde">
+          <mat-datepicker-toggle matIconSuffix [for]="pickerDesde"></mat-datepicker-toggle>
+          <mat-datepicker #pickerDesde></mat-datepicker>
+          <mat-error *ngIf="filterForm.errors?.['dateRangeInvalid']">
+            Fecha Desde no puede ser posterior a Fecha Hasta
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha Hasta</mat-label>
+          <input matInput [matDatepicker]="pickerHasta" formControlName="endDate" placeholder="Hasta">
+          <mat-datepicker-toggle matIconSuffix [for]="pickerHasta"></mat-datepicker-toggle>
+          <mat-datepicker #pickerHasta></mat-datepicker>
+          <mat-error *ngIf="filterForm.errors?.['dateRangeInvalid']">
+            Fecha Hasta no puede ser anterior a Fecha Desde
+          </mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
@@ -51,7 +61,7 @@
         </mat-form-field>
 
         <div class="filter-actions">
-          <button mat-raised-button color="primary" (click)="applyFilter()">Filtrar</button>
+          <button mat-raised-button color="primary" (click)="applyFilter()" [disabled]="filterForm.invalid">Filtrar</button>
           <button mat-button (click)="resetFilter()">Limpiar</button>
         </div>
 

@@ -111,46 +111,7 @@ public static class AccountingMovementEndpoints
         .WithName("GetMovements")
         .WithOpenApi();
 
-        group.MapGet("/{id:guid}", async (Guid id, GeoServDbContext context) =>
-        {
-            var movement = await context.AccountingMovements
-                .Include(m => m.Category)
-                .Include(m => m.FinancialAccount)
-                .Include(m => m.PaymentMethod)
-                .Include(m => m.ServiceOrder)
-                .Include(m => m.DirectCost)
-                .Include(m => m.Asset)
-                .Include(m => m.FixedCostPayment)
-                    .ThenInclude(fcp => fcp!.FixedCostItem)
-                .FirstOrDefaultAsync(m => m.Id == id);
-
-            if (movement is null) return Results.NotFound();
-
-            return Results.Ok(new
-            {
-                movement.Id,
-                movement.IsIncome,
-                movement.CategoryId,
-                CategoryName = movement.Category?.Name,
-                movement.Amount,
-                movement.Date,
-                movement.Description,
-                movement.FinancialAccountId,
-                movement.PaymentMethodId,
-                movement.ServiceOrderId,
-                movement.FixedCostId,
-                movement.FixedCostPaymentId,
-                movement.DirectCostId,
-                movement.AssetId,
-                movement.CheckId,
-                movement.ResponsibleId,
-                movement.RegisteredByUserId,
-                SourceType = movement.SourceType.ToString(),
-                movement.SourceId,
-                movement.TransferGroupId,
-                SourceReference = BuildSourceReference(movement)
-            });
-        })
+        group.MapGet("/{id:guid}", (Guid id, GeoServDbContext context) => GetMovementByIdAsync(id, context))
         .WithName("GetMovementById")
         .WithOpenApi();
 
@@ -201,6 +162,51 @@ public static class AccountingMovementEndpoints
     // que ya las referencian.
     private static readonly Guid InternalTransferIncomeCategoryId = Guid.Parse("A3333333-3333-3333-3333-333333333333");
     private static readonly Guid InternalTransferExpenseCategoryId = Guid.Parse("AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA");
+
+    public static async Task<IResult> GetMovementByIdAsync(Guid id, GeoServDbContext context)
+    {
+        var movement = await context.AccountingMovements
+            .Include(m => m.Category)
+            .Include(m => m.FinancialAccount)
+            .Include(m => m.PaymentMethod)
+            .Include(m => m.ServiceOrder)
+            .Include(m => m.DirectCost)
+                .ThenInclude(dc => dc!.ServiceOrder)
+            .Include(m => m.Asset)
+            .Include(m => m.FixedCostPayment)
+                .ThenInclude(fcp => fcp!.FixedCostItem)
+            .FirstOrDefaultAsync(m => m.Id == id);
+
+        if (movement is null) return Results.NotFound();
+
+        return Results.Ok(new
+        {
+            movement.Id,
+            movement.IsIncome,
+            movement.CategoryId,
+            CategoryName = movement.Category?.Name,
+            movement.Amount,
+            movement.Date,
+            movement.Description,
+            movement.FinancialAccountId,
+            movement.PaymentMethodId,
+            movement.ServiceOrderId,
+            ServiceOrderNumber = movement.ServiceOrder != null
+                ? movement.ServiceOrder.OrderNumber
+                : (movement.DirectCost != null && movement.DirectCost.ServiceOrder != null ? movement.DirectCost.ServiceOrder.OrderNumber : null),
+            movement.FixedCostId,
+            movement.FixedCostPaymentId,
+            movement.DirectCostId,
+            movement.AssetId,
+            movement.CheckId,
+            movement.ResponsibleId,
+            movement.RegisteredByUserId,
+            SourceType = movement.SourceType.ToString(),
+            movement.SourceId,
+            movement.TransferGroupId,
+            SourceReference = BuildSourceReference(movement)
+        });
+    }
 
     // Construye la referencia legible del origen específico de un movimiento (usada en el listado y en el detalle).
     public static string? BuildSourceReference(AccountingMovement movement)

@@ -227,7 +227,9 @@ export class MovimientoFormComponent implements OnInit {
             date: mov.date ? new Date(mov.date) : new Date(),
             financialAccountId: mov.financialAccountId
           }, { emitEvent: false });
-          this.sourceLabel = mov.sourceReference || null;
+          this.sourceLabel = mov.sourceType === 'DirectCost'
+            ? (mov.serviceOrderNumber || mov.sourceReference || null)
+            : (mov.sourceReference || null);
 
           // El movimiento de costo directo vía el flujo nuevo referencia una fila ya creada/consolidada:
           // se consulta para preseleccionar su categoría de costo directo en el formulario.

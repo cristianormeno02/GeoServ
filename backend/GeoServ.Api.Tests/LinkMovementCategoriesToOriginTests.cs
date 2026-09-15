@@ -340,4 +340,70 @@ public class LinkMovementCategoriesToOriginTests
 
         Assert.Equal("Alquiler Galpón - Venc. 15/10/2026", reference);
     }
+
+    [Fact]
+    public async Task GetMovementByIdAsync_ParaDirectCostConOrdenDeServicio_RetornaServiceOrderNumber()
+    {
+        using var context = CreateInMemoryContext();
+        var (account, categoriaLinkeada, _) = await SeedBaseAsync(context, false, MovementSourceType.DirectCost);
+        var user = new User { Id = Guid.NewGuid(), Email = "test@geoserv.com", Name = "tester", PasswordHash = "hash" };
+        var client = new Client { Id = Guid.NewGuid(), CompanyName = "Cliente Test" };
+        var status = new ServiceOrderStatus { Id = Guid.NewGuid(), Name = "Iniciada" };
+        var serviceOrder = new ServiceOrder
+        {
+            Id = Guid.NewGuid(),
+            OrderNumber = "OS-2026-0099",
+            Description = "Servicio Topográfico",
+            ClientId = client.Id,
+            Client = client,
+            StatusId = status.Id,
+            Status = status
+        };
+        var directCostCategory = new DirectCostCategory { Id = Guid.NewGuid(), Name = "Canon Secretaria" };
+        var directCost = new DirectCost
+        {
+            Id = Guid.NewGuid(),
+            ServiceOrderId = serviceOrder.Id,
+            ServiceOrder = serviceOrder,
+            CategoryId = directCostCategory.Id,
+            Category = directCostCategory,
+            Description = "Canon Secretaria Mes Marzo",
+            TotalAmount = 150000m,
+            RegisteredByUserId = user.Id,
+            RegisteredByUser = user
+        };
+        var movement = new AccountingMovement
+        {
+            Id = Guid.NewGuid(),
+            IsIncome = false,
+            CategoryId = categoriaLinkeada.Id,
+            Category = categoriaLinkeada,
+            FinancialAccountId = account.Id,
+            FinancialAccount = account,
+            Amount = 150000m,
+            Date = DateTime.UtcNow,
+            SourceType = MovementSourceType.DirectCost,
+            DirectCostId = directCost.Id,
+            DirectCost = directCost
+        };
+
+        context.Users.Add(user);
+        context.Clients.Add(client);
+        context.ServiceOrderStatuses.Add(status);
+        context.ServiceOrders.Add(serviceOrder);
+        context.DirectCostCategories.Add(directCostCategory);
+        context.DirectCosts.Add(directCost);
+        context.AccountingMovements.Add(movement);
+        await context.SaveChangesAsync();
+
+        var result = await AccountingMovementEndpoints.GetMovementByIdAsync(movement.Id, context);
+
+        var okResult = Assert.IsAssignableFrom<IStatusCodeHttpResult>(result);
+        Assert.Equal(StatusCodes.Status200OK, okResult.StatusCode);
+
+        var value = result.GetType().GetProperty("Value")?.GetValue(result);
+        Assert.NotNull(value);
+        var orderNumber = value.GetType().GetProperty("ServiceOrderNumber")?.GetValue(value);
+        Assert.Equal("OS-2026-0099", orderNumber);
+    }
 }

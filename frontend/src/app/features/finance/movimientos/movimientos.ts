@@ -1,7 +1,7 @@
 import {  Component, OnInit, ChangeDetectorRef, ViewChild  } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -9,6 +9,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatPaginator, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
@@ -17,6 +18,21 @@ import { MovimientoFormComponent } from './movimiento-form.component';
 import { MovementCategoryService } from '../services/movement-category.service';
 import { FinancialAccountService } from '../services/financial-account.service';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
+
+export const STORAGE_KEY_MOVIMIENTOS_PERIOD = 'geoserv_movimientos_period';
+
+export function dateRangeValidator(control: AbstractControl): ValidationErrors | null {
+  const start = control.get('startDate')?.value;
+  const end = control.get('endDate')?.value;
+  if (!start || !end) return null;
+
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  if (startDate.getTime() > endDate.getTime()) {
+    return { dateRangeInvalid: true };
+  }
+  return null;
+}
 
 @Component({
   selector: 'app-movimientos',
@@ -31,6 +47,7 @@ import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialo
     MatDialogModule,
     MatPaginatorModule,
     MatFormFieldModule,
+    MatInputModule,
     MatDatepickerModule,
     MatNativeDateModule,
     MatSelectModule
@@ -61,6 +78,13 @@ export class Movimientos implements OnInit {
       const otherName = otherAccount?.name || 'otra cuenta';
       return movement.isIncome ? `Desde ${otherName}` : `Hacia ${otherName}`;
     }
+    if (movement.sourceType === 'DirectCost') {
+      const directCostDesc = movement.sourceReference || 'Costo Directo';
+      if (movement.serviceOrderNumber) {
+        return `${directCostDesc} (OS: ${movement.serviceOrderNumber})`;
+      }
+      return directCostDesc;
+    }
     return movement.sourceReference || movement.serviceOrderNumber || null;
   }
 
@@ -81,16 +105,54 @@ export class Movimientos implements OnInit {
     private fb: FormBuilder,
     private snackBar: MatSnackBar
   ) {
-        const today = new Date();
-    const lastMonth = new Date();
-    lastMonth.setMonth(today.getMonth() - 1);
+    const initialPeriod = this.getInitialPeriod();
     this.filterForm = this.fb.group({
-      startDate: [lastMonth],
-      endDate: [today],
+      startDate: [initialPeriod.startDate],
+      endDate: [initialPeriod.endDate],
       categoryId: [''],
       financialAccountId: [''],
       isIncome: ['']
-    });
+    }, { validators: dateRangeValidator });
+  }
+
+  private getDefaultPeriod(): { startDate: Date; endDate: Date } {
+    const today = new Date();
+    const lastMonth = new Date();
+    lastMonth.setMonth(today.getMonth() - 1);
+    return { startDate: lastMonth, endDate: today };
+  }
+
+  private getInitialPeriod(): { startDate: Date; endDate: Date } {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_MOVIMIENTOS_PERIOD);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.startDate && parsed.endDate) {
+          const start = new Date(parsed.startDate);
+          const end = new Date(parsed.endDate);
+          if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && start.getTime() <= end.getTime()) {
+            return { startDate: start, endDate: end };
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Error al leer el período desde localStorage', e);
+    }
+    return this.getDefaultPeriod();
+  }
+
+  private savePeriodToStorage(startDate: any, endDate: any): void {
+    try {
+      if (startDate && endDate) {
+        const data = {
+          startDate: startDate instanceof Date ? startDate.toISOString() : new Date(startDate).toISOString(),
+          endDate: endDate instanceof Date ? endDate.toISOString() : new Date(endDate).toISOString()
+        };
+        localStorage.setItem(STORAGE_KEY_MOVIMIENTOS_PERIOD, JSON.stringify(data));
+      }
+    } catch (e) {
+      console.warn('Error al guardar el período en localStorage', e);
+    }
   }
 
   ngOnInit(): void {
@@ -105,8 +167,8 @@ export class Movimientos implements OnInit {
 
   loadMovements() {
     const filters = this.filterForm.value;
-    const startDate = filters.startDate ? filters.startDate.toISOString() : undefined;
-    const endDate = filters.endDate ? filters.endDate.toISOString() : undefined;
+    const startDate = filters.startDate ? new Date(filters.startDate).toISOString() : undefined;
+    const endDate = filters.endDate ? new Date(filters.endDate).toISOString() : undefined;
     const isIncome = filters.isIncome === '' ? undefined : filters.isIncome === 'true';
 
     this.movementService.getMovements(
@@ -128,17 +190,19 @@ export class Movimientos implements OnInit {
   }
 
   applyFilter() {
+    if (this.filterForm.invalid) return;
     this.pageIndex = 0; // reset to first page
+    const { startDate, endDate } = this.filterForm.value;
+    this.savePeriodToStorage(startDate, endDate);
     this.loadMovements();
   }
 
-    resetFilter() {
-    const today = new Date();
-    const lastMonth = new Date();
-    lastMonth.setMonth(today.getMonth() - 1);
+  resetFilter() {
+    const defaultPeriod = this.getDefaultPeriod();
+    this.savePeriodToStorage(defaultPeriod.startDate, defaultPeriod.endDate);
     this.filterForm.reset({
-      startDate: lastMonth,
-      endDate: today,
+      startDate: defaultPeriod.startDate,
+      endDate: defaultPeriod.endDate,
       categoryId: '',
       financialAccountId: '',
       isIncome: ''
