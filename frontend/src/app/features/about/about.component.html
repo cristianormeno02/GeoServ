@@ -1,40 +1,21 @@
 <div class="about-container">
   <div class="header">
-    <h1>Acerca de {{ empresaConfig.empresaActual()?.nombre || 'GeoServ' }}</h1>
+    <h1>Acerca de GeoServ</h1>
+    <p class="app-description">{{ appDescription }}</p>
   </div>
 
   <mat-card class="info-card mat-elevation-z8">
     <mat-card-content>
-      <div class="version-grid">
-        <div class="version-block">
-          <mat-icon>web</mat-icon>
-          <div>
-            <div class="version-label">Aplicación (frontend)</div>
-            <div class="version-value" *ngIf="frontendVersion; else frontendUnknown">
-              v{{ frontendVersion.version }}
-            </div>
-            <ng-template #frontendUnknown><div class="version-value">—</div></ng-template>
-            <div class="version-meta" *ngIf="frontendVersion">
-              Build: {{ frontendVersion.buildDate | date:'medium' }} · {{ frontendVersion.commit }}
-            </div>
+      <div class="version-block">
+        <mat-icon>info</mat-icon>
+        <div>
+          <div class="version-label">Versión</div>
+          <div class="version-value" *ngIf="frontendVersion; else frontendUnknown">
+            v{{ frontendVersion.version }}
           </div>
-        </div>
-
-        <div class="version-block">
-          <mat-icon>dns</mat-icon>
-          <div>
-            <div class="version-label">Servidor (API)</div>
-            <div class="version-value" *ngIf="backendVersion; else backendPending">
-              v{{ backendVersion.version }}
-            </div>
-            <ng-template #backendPending>
-              <div class="version-value" [class.version-error]="backendUnreachable">
-                {{ backendUnreachable ? 'No disponible' : 'Cargando…' }}
-              </div>
-            </ng-template>
-            <div class="version-meta" *ngIf="backendVersion">
-              Build: {{ backendVersion.buildDate | date:'medium' }}
-            </div>
+          <ng-template #frontendUnknown><div class="version-value">—</div></ng-template>
+          <div class="version-meta" *ngIf="frontendVersion">
+            Build: {{ frontendVersion.buildDate | date:'medium' }} · {{ frontendVersion.commit }}
           </div>
         </div>
       </div>

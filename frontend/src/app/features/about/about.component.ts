@@ -5,7 +5,6 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { catchError, of } from 'rxjs';
-import { environment } from '../../../environments/environment';
 import { EmpresaConfigService } from '../../core/services/empresa-config.service';
 import { VersionCheckService, VersionInfo } from '../../core/services/version-check.service';
 
@@ -22,11 +21,6 @@ interface ChangelogSection {
 interface ChangelogEntry {
   header: string;
   sections: ChangelogSection[];
-}
-
-interface BackendVersionInfo {
-  version: string;
-  buildDate: string;
 }
 
 /** Convierte el cuerpo Markdown de una entrada del CHANGELOG en secciones con viñetas. */
@@ -65,18 +59,13 @@ export class AboutComponent implements OnInit {
   private versionCheck = inject(VersionCheckService);
   public empresaConfig = inject(EmpresaConfigService);
 
+  readonly appDescription = 'Gestión inteligente de órdenes de servicio y finanzas para consultoras geológicas.';
+
   frontendVersion: VersionInfo | null = null;
-  backendVersion: BackendVersionInfo | null = null;
-  backendUnreachable = false;
   changelog: ChangelogEntry[] = [];
 
   ngOnInit(): void {
     this.frontendVersion = this.versionCheck.currentVersion();
-
-    this.http
-      .get<BackendVersionInfo>(`${environment.apiUrl}/system/version`)
-      .pipe(catchError(() => { this.backendUnreachable = true; return of(null); }))
-      .subscribe(info => { if (info) this.backendVersion = info; });
 
     this.http
       .get<RawChangelogEntry[]>('assets/changelog.json')
