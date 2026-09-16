@@ -1,7 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { catchError, of } from 'rxjs';
+import { SKIP_GLOBAL_LOADING } from '../interceptors/loading.interceptor';
 
 export interface VersionInfo {
   version: string;
@@ -76,7 +77,8 @@ export class VersionCheckService {
   private fetchVersion() {
     return this.http
       .get<VersionInfo>(`assets/version.json?t=${Date.now()}`, {
-        headers: { 'Cache-Control': 'no-cache' }
+        headers: { 'Cache-Control': 'no-cache' },
+        context: new HttpContext().set(SKIP_GLOBAL_LOADING, true)
       })
       .pipe(catchError(() => of(null)));
   }

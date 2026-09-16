@@ -1,4 +1,4 @@
-﻿{
+{
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
@@ -8,6 +8,8 @@
   },
   "include": [
     "src/app/core/**/*.spec.ts",
+    "src/app/features/service-orders/**/*.spec.ts",
+    "src/app/shared/**/*.spec.ts",
     "src/**/*.d.ts"
   ]
 }

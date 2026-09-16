@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, Inject, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -10,6 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { OperationalDashboardService } from '../services/operational-dashboard.service';
 import { UpcomingDeliveryOrder } from '../models/operational-dashboard.model';
+import { LoadingService } from '../../../core/services/loading.service';
 
 export interface UpcomingDeliveriesModalData {
   range: string;
@@ -42,7 +43,7 @@ export interface UpcomingDeliveriesModalData {
     </div>
 
     <mat-dialog-content>
-      <div *ngIf="loading" class="spinner-container">
+      <div *ngIf="loading && !(isGlobalLoading$ | async)" class="spinner-container">
         <mat-spinner diameter="40"></mat-spinner>
       </div>
 
@@ -176,6 +177,9 @@ export interface UpcomingDeliveriesModalData {
   `]
 })
 export class UpcomingDeliveriesModalComponent implements OnInit {
+  private loadingService = inject(LoadingService);
+  public isGlobalLoading$ = this.loadingService.loading$;
+
   loading = false;
   items: UpcomingDeliveryOrder[] = [];
   totalCount = 0;

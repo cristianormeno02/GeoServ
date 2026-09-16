@@ -2,7 +2,7 @@
   Detalle: {{ data.kpiTitle }}
 </h2>
 <mat-dialog-content>
-  <div *ngIf="loading" class="spinner-container" style="display: flex; justify-content: center; padding: 2rem;">
+  <div *ngIf="loading && !(isGlobalLoading$ | async)" class="spinner-container" style="display: flex; justify-content: center; padding: 2rem;">
     <mat-spinner diameter="40"></mat-spinner>
   </div>
 

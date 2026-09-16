@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, Inject, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -8,6 +8,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { environment } from '../../../../environments/environment';
+import { LoadingService } from '../../../core/services/loading.service';
 
 export interface KpiDetailModalData {
   dashboardType: 'operational' | 'general';
@@ -31,6 +32,9 @@ export interface KpiDetailModalData {
   styleUrl: './kpi-detail-modal.css',
 })
 export class KpiDetailModal implements OnInit {
+  private loadingService = inject(LoadingService);
+  public isGlobalLoading$ = this.loadingService.loading$;
+
   loading = false;
   items: any[] = [];
   entityType: 'orders' | 'consumables' = 'orders';

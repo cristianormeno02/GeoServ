@@ -519,7 +519,7 @@
           <tr mat-row *matRowDef="let row; columns: directCostsColumns;" [class.row-via-movement]="row.isFromMovement"></tr>
           <tr mat-footer-row *matFooterRowDef="directCostsColumns" style="background-color: #f5f5f5;"></tr>
         </table>
-        <mat-spinner *ngIf="isLoadingCosts"></mat-spinner>
+        <mat-spinner *ngIf="isLoadingCosts && !(isGlobalLoading$ | async)"></mat-spinner>
 
         <div *ngIf="directCostsDataSource.data.length > 0" style="display:flex; justify-content:flex-end; gap:24px; margin-top:8px; font-size:0.9em;">
           <span>Costo Manual: <strong>{{getManualCosts() | currency}}</strong></span>

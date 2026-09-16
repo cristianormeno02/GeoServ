@@ -1,4 +1,4 @@
-<div class="container" *ngIf="isLoading">
+<div class="container" *ngIf="isLoading && !(isGlobalLoading$ | async)">
   <mat-spinner></mat-spinner>
 </div>
 
@@ -178,7 +178,7 @@
             <mat-card class="info-card">
               <div class="card-head"><mat-icon>receipt</mat-icon><h3>Movimientos de Cobro Vinculados</h3></div>
               <mat-card-content>
-                <mat-spinner diameter="28" *ngIf="isLoadingMovements"></mat-spinner>
+                <mat-spinner diameter="28" *ngIf="isLoadingMovements && !(isGlobalLoading$ | async)"></mat-spinner>
                 <table class="dtable" *ngIf="!isLoadingMovements && movements.length > 0; else noMov">
                   <thead>
                     <tr><th>Fecha</th><th>Cuenta</th><th>Medio de Pago</th><th>Descripción</th><th class="num">Monto</th></tr>
@@ -379,7 +379,7 @@
               <tr mat-row *matRowDef="let row; columns: directCostsColumns;" [class.row-linked]="row.isFromMovement"></tr>
               <tr mat-footer-row *matFooterRowDef="directCostsColumns"></tr>
             </table>
-            <mat-spinner diameter="28" *ngIf="isLoadingCosts"></mat-spinner>
+            <mat-spinner diameter="28" *ngIf="isLoadingCosts && !(isGlobalLoading$ | async)"></mat-spinner>
 
             <div class="empty" *ngIf="!isLoadingCosts && directCostsDataSource.data.length === 0">
               <mat-icon>local_shipping</mat-icon>

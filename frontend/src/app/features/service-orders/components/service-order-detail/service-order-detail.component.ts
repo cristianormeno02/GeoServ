@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -17,6 +17,7 @@ import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
+import { LoadingService } from '../../../../core/services/loading.service';
 import { ServiceOrderService } from '../../services/service-order.service';
 import { ServiceOrder, ServiceOrderDocument, ServiceOrderMovement, ServiceOrderObservation } from '../../models/service-order.model';
 import { DirectCostService } from '../../services/direct-cost.service';
@@ -52,6 +53,9 @@ const LIFECYCLE_STEPS = ['Alta', 'Presupuestada', 'Aprobada', 'Iniciada', 'Entre
   styleUrls: ['./service-order-detail.component.scss']
 })
 export class ServiceOrderDetailComponent implements OnInit {
+  private loadingService = inject(LoadingService);
+  public isGlobalLoading$ = this.loadingService.loading$;
+
   orderId: string | null = null;
   order: ServiceOrder | null = null;
   isLoading = true;

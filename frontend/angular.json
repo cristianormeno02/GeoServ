@@ -92,7 +92,9 @@
             ],
             "tsConfig": "tsconfig.spec.json",
             "include": [
-              "src/app/core/**/*.spec.ts"
+              "src/app/core/**/*.spec.ts",
+              "src/app/features/service-orders/**/*.spec.ts",
+              "src/app/shared/**/*.spec.ts"
             ],
             "assets": [
               "src/favicon.ico",

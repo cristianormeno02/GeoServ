@@ -26,6 +26,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { LoadingService } from '../../../core/services/loading.service';
 
 export interface CrudTableColumn<T = any> {
   key: string;
@@ -85,8 +86,8 @@ export interface CrudTableColumn<T = any> {
 
       <!-- Contenedor de la Tabla -->
       <div class="table-responsive-container mat-elevation-z2">
-        <!-- Indicador de Carga -->
-        <div *ngIf="isLoading" class="loading-overlay">
+        <!-- Indicador de Carga (suprimido si el loader global está activo para evitar doble spinner) -->
+        <div *ngIf="isLoading && !(isGlobalLoading$ | async)" class="loading-overlay">
           <mat-spinner diameter="40"></mat-spinner>
           <span class="loading-text">Cargando datos...</span>
         </div>
@@ -265,6 +266,9 @@ export interface CrudTableColumn<T = any> {
   `]
 })
 export class CrudTableComponent<T = any> implements OnInit, AfterViewInit, OnChanges {
+  private loadingService = inject(LoadingService);
+  public isGlobalLoading$ = this.loadingService.loading$;
+
   @Input() columns: CrudTableColumn<T>[] = [];
   @Input() displayedColumns: string[] = [];
   @Input() data: T[] = [];

@@ -26,6 +26,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 import { NumericInputDirective } from '../../../../shared/directives/numeric-input.directive';
 
+import { LoadingService } from '../../../../core/services/loading.service';
 import { ServiceOrderService } from '../../services/service-order.service';
 import { EmpresaConfigService } from '../../../empresa-config/empresa-config.service';
 import { ClientService } from '../../../clients/services/client.service';
@@ -133,6 +134,8 @@ export class ServiceOrderFormComponent implements OnInit {
   isLoadingCosts = false;
 
   private destroyRef = inject(DestroyRef);
+  private loadingService = inject(LoadingService);
+  public isGlobalLoading$ = this.loadingService.loading$;
 
   // Catálogos
   clients: any[] = [];
@@ -143,7 +146,7 @@ export class ServiceOrderFormComponent implements OnInit {
   distributionConcepts: any[] = [];
   currencies: any[] = [];
   responsiblesCatalog: any[] = [];
-  selectedCurrencyCode: string = '';
+  selectedCurrencyCode: string = 'ARS';
 
   priorities = [
     { value: 1, label: 'Baja' },
@@ -579,6 +582,15 @@ export class ServiceOrderFormComponent implements OnInit {
         const ars = this.currencies.find(c => c.code === 'ARS');
         if (ars) {
           this.orderForm.get('currencyId')?.setValue(ars.id);
+          this.selectedCurrencyCode = 'ARS';
+        }
+      } else {
+        const currentCurrencyId = this.orderForm.get('currencyId')?.value;
+        if (currentCurrencyId) {
+          const match = this.currencies.find(c => c.id === currentCurrencyId);
+          if (match) {
+            this.selectedCurrencyCode = match.code;
+          }
         }
       }
       this.cdr.detectChanges();
@@ -617,9 +629,15 @@ export class ServiceOrderFormComponent implements OnInit {
           responsibleIds: order.responsibles ? order.responsibles.map((r: any) => r.id) : []
         });
 
-        // Actualizar la moneda seleccionada para que funcione el selector de tipo de cambio
-        const selectedCurrency = this.currencies.find(c => c.id === order.currencyId);
-        if (selectedCurrency) this.selectedCurrencyCode = selectedCurrency.code;
+        // Actualizar la moneda seleccionada para que funcione el selector de tipo de cambio y editabilidad del presupuesto
+        if (order.currencyCode) {
+          this.selectedCurrencyCode = order.currencyCode;
+        } else {
+          const selectedCurrency = this.currencies.find(c => c.id === order.currencyId);
+          if (selectedCurrency) {
+            this.selectedCurrencyCode = selectedCurrency.code;
+          }
+        }
 
         // Cargar distribuciones
         order.distributions?.forEach((d: any) => {
