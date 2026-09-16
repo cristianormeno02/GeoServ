@@ -17,7 +17,11 @@ El sistema DEBE disponer de un componente compartido de tabla para operaciones C
 
 #### Scenario: Presentación de estado de carga y vacío
 - **WHEN** los datos se están recuperando de la API o la consulta devuelve una lista sin resultados
-- **THEN** la tabla DEBE mostrar un spinner/barra de progreso durante la carga, y un mensaje ilustrativo claro ("No se encontraron registros") cuando la lista esté vacía.
+- **THEN** la tabla DEBE mostrar un indicador de carga coordinado sin duplicar spinners visuales superpuestos con el indicador global, y un mensaje ilustrativo claro ("No se encontraron registros") cuando la lista esté vacía.
+
+#### Scenario: Coordinación visual sin doble spinner
+- **WHEN** se realiza una petición de datos a la API donde el cargador global (`LoadingSpinnerComponent`) se encuentra activo
+- **THEN** la tabla y vistas asociadas SHALL evitar superponer un spinner circular local sobre el overlay translúcido global, garantizando que el usuario perciba un único indicador de carga unificado.
 
 #### Scenario: Proyección de columnas de acción personalizadas
 - **WHEN** una vista requiere acciones específicas por fila (editar, ver detalle, eliminar, descargar)
