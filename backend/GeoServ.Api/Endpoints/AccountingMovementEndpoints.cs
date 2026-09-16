@@ -396,6 +396,11 @@ public static class AccountingMovementEndpoints
     {
         try
         {
+            if (request.Date.Date > DateTime.UtcNow.Date)
+            {
+                return Results.BadRequest(new { message = "No se permiten movimientos con fecha futura." });
+            }
+
             var sourceId = request.SourceId;
             var sourceType = request.SourceType;
 
@@ -488,6 +493,11 @@ public static class AccountingMovementEndpoints
     {
         try
         {
+            if (request.Date.Date > DateTime.UtcNow.Date)
+            {
+                return Results.BadRequest(new { message = "No se permiten transferencias con fecha futura." });
+            }
+
             if (request.FromAccountId == request.ToAccountId)
             {
                 return Results.BadRequest(new { message = "La cuenta origen y la cuenta destino no pueden ser la misma." });
@@ -568,6 +578,11 @@ public static class AccountingMovementEndpoints
     {
         try
         {
+            if (request.Date.Date > DateTime.UtcNow.Date)
+            {
+                return Results.BadRequest(new { message = "No se permiten movimientos con fecha futura." });
+            }
+
             var movement = await context.AccountingMovements.FindAsync(id);
             if (movement == null) return Results.NotFound();
 

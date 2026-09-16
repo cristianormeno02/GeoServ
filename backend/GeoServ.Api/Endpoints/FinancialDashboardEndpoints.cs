@@ -245,76 +245,7 @@ public static class FinancialDashboardEndpoints
         });
 
         // 4. Informe de Cobertura Mensual (Vista SQL con Arrastre)
-        group.MapGet("/monthly-coverage-report", async (int? months, GeoServDbContext context) =>
-        {
-            var numMonths = months.HasValue && months.Value > 0 ? months.Value : 12;
-
-            try
-            {
-                var report = await context.MonthlyCoverageReports
-                    .AsNoTracking()
-                    .OrderBy(r => r.Periodo)
-                    .ToListAsync();
-
-                var items = report.TakeLast(numMonths).ToList();
-                return Results.Ok(items);
-            }
-            catch
-            {
-                // Fallback robusto en memoria si la vista SQL aún no se ejecutó en la base actual
-                var now = DateTime.UtcNow;
-                var items = new List<object>();
-                decimal runningBalance = 0;
-
-                for (int i = numMonths - 1; i >= 0; i--)
-                {
-                    var pDate = now.AddMonths(-i);
-                    var periodo = pDate.ToString("yyyy-MM");
-
-                    var inc = await context.AccountingMovements
-                        .AsNoTracking()
-                        .Where(m => m.SourceType == MovementSourceType.ServiceOrderIncome && m.Date.Month == pDate.Month && m.Date.Year == pDate.Year)
-                        .SumAsync(m => (decimal?)m.Amount) ?? 0;
-
-                    var fix = await context.AccountingMovements
-                        .AsNoTracking()
-                        .Where(m => m.SourceType == MovementSourceType.FixedCostPayment && m.Date.Month == pDate.Month && m.Date.Year == pDate.Year)
-                        .SumAsync(m => (decimal?)m.Amount) ?? 0;
-
-                    var dir = await context.AccountingMovements
-                        .AsNoTracking()
-                        .Where(m => m.SourceType == MovementSourceType.DirectCost && m.Date.Month == pDate.Month && m.Date.Year == pDate.Year)
-                        .SumAsync(m => (decimal?)m.Amount) ?? 0;
-
-                    var paidOrders = await context.AccountingMovements
-                        .AsNoTracking()
-                        .Where(m => m.SourceType == MovementSourceType.ServiceOrderIncome && m.Date.Month == pDate.Month && m.Date.Year == pDate.Year && m.ServiceOrderId != null)
-                        .Select(m => m.ServiceOrderId!.Value)
-                        .ToListAsync();
-
-                    var hon = await context.ServiceOrderDistributions
-                        .AsNoTracking()
-                        .Where(d => paidOrders.Contains(d.ServiceOrderId) && d.DistributionConcept.Name.Contains("Honorario"))
-                        .SumAsync(d => (decimal?)d.ExpectedAmount) ?? 0;
-
-                    var resMes = inc - (fix + dir + hon);
-                    runningBalance += resMes;
-
-                    items.Add(new
-                    {
-                        periodo,
-                        ingresos = inc,
-                        gastosFijos = fix,
-                        gastosDirectos = dir,
-                        honorarios = hon,
-                        resultadoMes = resMes,
-                        saldoAcumulado = runningBalance
-                    });
-                }
-
-                return Results.Ok(items);
-            }
-        });
+        group.MapGet("/monthly-coverage-report", (int? months, GeoServDbContext context) => GetMonthlyCoverageReportAsync(months, context));
 
         // 5. Aging de Gastos Fijos por Vencer
         group.MapGet("/fixed-costs-aging", async (GeoServDbContext context) =>
@@ -371,53 +302,7 @@ public static class FinancialDashboardEndpoints
         });
 
         // 7. Rentabilidad por Orden de Servicio (Ranking Top/Bottom 10)
-        group.MapGet("/service-orders-profitability", async (DateTime? startDate, DateTime? endDate, GeoServDbContext context) =>
-        {
-            var query = context.ServiceOrders
-                .AsNoTracking()
-                .Where(o => o.Status.Name != "Cancelada")
-                .Include(o => o.Client)
-                .Include(o => o.ServiceType)
-                .Include(o => o.DirectCosts)
-                .AsQueryable();
-
-            if (startDate.HasValue)
-                query = query.Where(o => o.CreatedAt >= startDate.Value);
-            if (endDate.HasValue)
-                query = query.Where(o => o.CreatedAt <= endDate.Value);
-
-            var orders = await query.ToListAsync();
-
-            var calculated = orders.Select(o =>
-            {
-                var income = o.TotalAmount;
-                var directCosts = o.DirectCosts.Sum(d => d.TotalAmount);
-                var profit = income - directCosts;
-                var marginPercentage = income > 0 ? Math.Round((profit / income) * 100, 1) : 0;
-
-                return new
-                {
-                    o.Id,
-                    o.OrderNumber,
-                    clientName = o.Client.CompanyName,
-                    serviceTypeName = o.ServiceType.Name,
-                    income,
-                    directCosts,
-                    profit,
-                    marginPercentage
-                };
-            }).ToList();
-
-            var topOrders = calculated.OrderByDescending(x => x.profit).Take(10).ToList();
-            var bottomOrders = calculated.OrderBy(x => x.profit).Take(10).ToList();
-
-            return Results.Ok(new
-            {
-                topOrders,
-                bottomOrders,
-                totalAnalyzed = calculated.Count
-            });
-        });
+        group.MapGet("/service-orders-profitability", (DateTime? startDate, DateTime? endDate, GeoServDbContext context) => GetServiceOrdersProfitabilityAsync(startDate, endDate, context));
 
         // 8. Distribución de Ingresos y Honorarios
         group.MapGet("/distribution-summary", async (DateTime? startDate, DateTime? endDate, GeoServDbContext context) =>
@@ -571,6 +456,203 @@ public static class FinancialDashboardEndpoints
                 historicalAssetsTotal,
                 recentAssets
             });
+        });
+    }
+
+    public static async Task<IResult> GetMonthlyCoverageReportAsync(int? months, GeoServDbContext context)
+    {
+        var numMonths = months.HasValue && months.Value > 0 ? months.Value : 12;
+        var now = DateTime.UtcNow;
+        var targetPeriods = new List<string>();
+        for (int i = numMonths - 1; i >= 0; i--)
+        {
+            targetPeriods.Add(now.AddMonths(-i).ToString("yyyy-MM"));
+        }
+        var firstTargetPeriod = targetPeriods[0];
+
+        try
+        {
+            var report = await context.MonthlyCoverageReports
+                .AsNoTracking()
+                .OrderBy(r => r.Periodo)
+                .ToListAsync();
+
+            if (report.Count == 0 && await context.AccountingMovements.AnyAsync())
+            {
+                return await CalculateMonthlyCoverageReportInMemoryAsync(numMonths, now, context);
+            }
+
+            var reportDict = report.ToDictionary(r => r.Periodo);
+            var priorItems = report.Where(r => string.Compare(r.Periodo, firstTargetPeriod, StringComparison.Ordinal) < 0).ToList();
+            decimal runningBalance = priorItems.Count > 0 ? priorItems.Last().SaldoAcumulado : 0m;
+
+            var items = new List<object>();
+            foreach (var p in targetPeriods)
+            {
+                if (reportDict.TryGetValue(p, out var row))
+                {
+                    runningBalance = row.SaldoAcumulado;
+                    items.Add(new
+                    {
+                        periodo = row.Periodo,
+                        ingresos = row.Ingresos,
+                        gastosFijos = row.GastosFijos,
+                        gastosDirectos = row.GastosDirectos,
+                        honorarios = row.Honorarios,
+                        resultadoMes = row.ResultadoMes,
+                        saldoAcumulado = row.SaldoAcumulado
+                    });
+                }
+                else
+                {
+                    items.Add(new
+                    {
+                        periodo = p,
+                        ingresos = 0m,
+                        gastosFijos = 0m,
+                        gastosDirectos = 0m,
+                        honorarios = 0m,
+                        resultadoMes = 0m,
+                        saldoAcumulado = runningBalance
+                    });
+                }
+            }
+
+            return Results.Ok(items);
+        }
+        catch
+        {
+            return await CalculateMonthlyCoverageReportInMemoryAsync(numMonths, now, context);
+        }
+    }
+
+    private static async Task<IResult> CalculateMonthlyCoverageReportInMemoryAsync(int numMonths, DateTime now, GeoServDbContext context)
+    {
+        var windowStartDate = new DateTime(now.Year, now.Month, 1).AddMonths(-(numMonths - 1));
+
+        var priorInc = await context.AccountingMovements
+            .AsNoTracking()
+            .Where(m => m.SourceType == MovementSourceType.ServiceOrderIncome && m.Date < windowStartDate)
+            .SumAsync(m => (decimal?)m.Amount) ?? 0m;
+
+        var priorFix = await context.AccountingMovements
+            .AsNoTracking()
+            .Where(m => m.SourceType == MovementSourceType.FixedCostPayment && m.Date < windowStartDate)
+            .SumAsync(m => (decimal?)m.Amount) ?? 0m;
+
+        var priorDir = await context.AccountingMovements
+            .AsNoTracking()
+            .Where(m => m.SourceType == MovementSourceType.DirectCost && m.Date < windowStartDate)
+            .SumAsync(m => (decimal?)m.Amount) ?? 0m;
+
+        var priorPaidOrders = await context.AccountingMovements
+            .AsNoTracking()
+            .Where(m => m.SourceType == MovementSourceType.ServiceOrderIncome && m.Date < windowStartDate && m.ServiceOrderId != null)
+            .Select(m => m.ServiceOrderId!.Value)
+            .ToListAsync();
+
+        var priorHon = await context.ServiceOrderDistributions
+            .AsNoTracking()
+            .Where(d => priorPaidOrders.Contains(d.ServiceOrderId) && d.DistributionConcept.Name.Contains("Honorario"))
+            .SumAsync(d => (decimal?)d.ExpectedAmount) ?? 0m;
+
+        decimal runningBalance = priorInc - (priorFix + priorDir + priorHon);
+        var items = new List<object>();
+
+        for (int i = numMonths - 1; i >= 0; i--)
+        {
+            var pDate = now.AddMonths(-i);
+            var periodo = pDate.ToString("yyyy-MM");
+
+            var inc = await context.AccountingMovements
+                .AsNoTracking()
+                .Where(m => m.SourceType == MovementSourceType.ServiceOrderIncome && m.Date.Month == pDate.Month && m.Date.Year == pDate.Year)
+                .SumAsync(m => (decimal?)m.Amount) ?? 0m;
+
+            var fix = await context.AccountingMovements
+                .AsNoTracking()
+                .Where(m => m.SourceType == MovementSourceType.FixedCostPayment && m.Date.Month == pDate.Month && m.Date.Year == pDate.Year)
+                .SumAsync(m => (decimal?)m.Amount) ?? 0m;
+
+            var dir = await context.AccountingMovements
+                .AsNoTracking()
+                .Where(m => m.SourceType == MovementSourceType.DirectCost && m.Date.Month == pDate.Month && m.Date.Year == pDate.Year)
+                .SumAsync(m => (decimal?)m.Amount) ?? 0m;
+
+            var paidOrders = await context.AccountingMovements
+                .AsNoTracking()
+                .Where(m => m.SourceType == MovementSourceType.ServiceOrderIncome && m.Date.Month == pDate.Month && m.Date.Year == pDate.Year && m.ServiceOrderId != null)
+                .Select(m => m.ServiceOrderId!.Value)
+                .ToListAsync();
+
+            var hon = await context.ServiceOrderDistributions
+                .AsNoTracking()
+                .Where(d => paidOrders.Contains(d.ServiceOrderId) && d.DistributionConcept.Name.Contains("Honorario"))
+                .SumAsync(d => (decimal?)d.ExpectedAmount) ?? 0m;
+
+            var resMes = inc - (fix + dir + hon);
+            runningBalance += resMes;
+
+            items.Add(new
+            {
+                periodo,
+                ingresos = inc,
+                gastosFijos = fix,
+                gastosDirectos = dir,
+                honorarios = hon,
+                resultadoMes = resMes,
+                saldoAcumulado = runningBalance
+            });
+        }
+
+        return Results.Ok(items);
+    }
+
+    public static async Task<IResult> GetServiceOrdersProfitabilityAsync(DateTime? startDate, DateTime? endDate, GeoServDbContext context)
+    {
+        var query = context.ServiceOrders
+            .AsNoTracking()
+            .Where(o => o.Status.Name == "Cobrada")
+            .Include(o => o.Client)
+            .Include(o => o.ServiceType)
+            .Include(o => o.DirectCosts)
+            .AsQueryable();
+
+        if (startDate.HasValue)
+            query = query.Where(o => (o.CollectionDate ?? o.CreatedAt) >= startDate.Value);
+        if (endDate.HasValue)
+            query = query.Where(o => (o.CollectionDate ?? o.CreatedAt) <= endDate.Value);
+
+        var orders = await query.ToListAsync();
+
+        var calculated = orders.Select(o =>
+        {
+            var income = o.CollectedAmount;
+            var directCosts = o.DirectCosts.Sum(d => d.TotalAmount);
+            var profit = income - directCosts;
+            var marginPercentage = income > 0 ? Math.Round((profit / income) * 100, 1) : 0;
+
+            return new
+            {
+                o.Id,
+                o.OrderNumber,
+                clientName = o.Client.CompanyName,
+                serviceTypeName = o.ServiceType.Name,
+                income,
+                directCosts,
+                profit,
+                marginPercentage
+            };
+        }).ToList();
+
+        var topOrders = calculated.OrderByDescending(x => x.profit).Take(10).ToList();
+        var bottomOrders = calculated.OrderBy(x => x.profit).Take(10).ToList();
+
+        return Results.Ok(new
+        {
+            topOrders,
+            bottomOrders,
+            totalAnalyzed = calculated.Count
         });
     }
 }

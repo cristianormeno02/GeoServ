@@ -281,11 +281,11 @@ public class LinkMovementCategoriesToOriginTests
         context.PaymentMethods.AddRange(metodoOriginal, metodoNuevo);
         await context.SaveChangesAsync();
 
-        var createRequest = new CreateMovementRequest(false, categoriaLinkeada.Id, payment.Amount, DateTime.UtcNow.Date, "Pago", account.Id, metodoOriginal.Id, MovementSourceType.FixedCostPayment, payment.Id.ToString(), null, null);
+        var createRequest = new CreateMovementRequest(false, categoriaLinkeada.Id, payment.Amount, DateTime.UtcNow.Date.AddDays(-5), "Pago", account.Id, metodoOriginal.Id, MovementSourceType.FixedCostPayment, payment.Id.ToString(), null, null);
         await AccountingMovementEndpoints.CreateMovementAsync(createRequest, Guid.NewGuid(), context);
         var movement = await context.AccountingMovements.FirstAsync();
 
-        var nuevaFecha = DateTime.UtcNow.Date.AddDays(2);
+        var nuevaFecha = DateTime.UtcNow.Date.AddDays(-2);
         var updateRequest = new UpdateMovementRequest(
             movement.IsIncome, movement.CategoryId, movement.Amount, nuevaFecha, movement.Description, movement.FinancialAccountId, metodoNuevo.Id,
             SourceType: MovementSourceType.FixedCostPayment, SourceId: payment.Id.ToString());

@@ -26,6 +26,7 @@ operations:
       - "Superpowers TDD: Para cada tarea en tasks.md, aplicar ciclo Red-Green-Refactor escribiendo primero pruebas que fallen (superpowers-tdd)."
       - "Superpowers Debugging: En caso de errores o fallos en pruebas, diagnosticar la causa raíz antes de modificar código (superpowers-debugging)."
       - "Superpowers Code Review: Antes de marcar una tarea como completada, validar conformidad con la especificación delta y calidad de arquitectura (superpowers-code-review)."
+      - "Conventional Commits: Al realizar commits o sugerir comandos de git, utilizar estrictamente el formato Conventional Commits (feat, fix, refactor, perf, chore, etc.) para mantener la coherencia con el versionado automático."
   archive:
     guidance:
       - "Verificar que toda la suite de pruebas automatizadas (.NET y Angular) pase exitosamente antes de archivar."

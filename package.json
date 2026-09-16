@@ -4,6 +4,7 @@
   "private": true,
   "description": "Versionado del proyecto GeoServ (frontend Angular + backend .NET). No es una app Node en sí misma.",
   "scripts": {
+    "prepare": "node scripts/install-hooks.cjs",
     "release": "commit-and-tag-version",
     "release:minor": "commit-and-tag-version --release-as minor",
     "release:major": "commit-and-tag-version --release-as major",

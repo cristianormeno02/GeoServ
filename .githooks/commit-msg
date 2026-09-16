@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+# Llama al validador Node para chequear el mensaje del commit
+node scripts/validate-commit-msg.cjs "$1"

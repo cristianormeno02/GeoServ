@@ -225,10 +225,10 @@ public class ServiceOrderFinanceSyncTests
         await context.SaveChangesAsync();
         var user = await context.Users.FirstAsync();
 
-        var request1 = new CreateMovementRequest(false, directCostCategory.Id, 15000m, DateTime.UtcNow.Date, "Nafta 1", account.Id, null, MovementSourceType.DirectCost, order.Id.ToString(), null, null, dcCategory.Id);
+        var request1 = new CreateMovementRequest(false, directCostCategory.Id, 15000m, DateTime.UtcNow.Date.AddDays(-1), "Nafta 1", account.Id, null, MovementSourceType.DirectCost, order.Id.ToString(), null, null, dcCategory.Id);
         await AccountingMovementEndpoints.CreateMovementAsync(request1, user.Id, context);
 
-        var request2 = new CreateMovementRequest(false, directCostCategory.Id, 10000m, DateTime.UtcNow.Date.AddDays(1), "Nafta 2", account.Id, null, MovementSourceType.DirectCost, order.Id.ToString(), null, null, dcCategory.Id);
+        var request2 = new CreateMovementRequest(false, directCostCategory.Id, 10000m, DateTime.UtcNow.Date, "Nafta 2", account.Id, null, MovementSourceType.DirectCost, order.Id.ToString(), null, null, dcCategory.Id);
         await AccountingMovementEndpoints.CreateMovementAsync(request2, user.Id, context);
 
         var rows = await context.DirectCosts.Where(d => d.IsFromMovement).ToListAsync();

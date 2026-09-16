@@ -1,7 +1,7 @@
 import { Component, Inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -30,6 +30,17 @@ const SOURCE_FIELD_LABELS: Record<string, string> = {
   // se elige aparte en un selector propio (ver directCostCategoryId).
   DirectCost: 'Orden de Servicio'
 };
+
+function noFutureDateValidator(control: AbstractControl): ValidationErrors | null {
+  if (!control.value) return null;
+  const inputDate = new Date(control.value);
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
+  if (inputDate.getTime() > today.getTime()) {
+    return { futureDate: true };
+  }
+  return null;
+}
 
 @Component({
   selector: 'app-movimiento-form',
@@ -124,9 +135,15 @@ const SOURCE_FIELD_LABELS: Record<string, string> = {
 
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Fecha</mat-label>
-          <input matInput [matDatepicker]="picker" formControlName="date" required>
+          <input matInput [matDatepicker]="picker" [max]="today" formControlName="date" required>
           <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
           <mat-datepicker #picker></mat-datepicker>
+          <mat-error *ngIf="movementForm.get('date')?.hasError('futureDate')">
+            No se permiten movimientos con fecha futura.
+          </mat-error>
+          <mat-error *ngIf="movementForm.get('date')?.hasError('required')">
+            La fecha es requerida.
+          </mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width" *ngIf="movementModeCtrl.value !== 'Transferencia'">
@@ -155,6 +172,7 @@ const SOURCE_FIELD_LABELS: Record<string, string> = {
   `]
 })
 export class MovimientoFormComponent implements OnInit {
+  today: Date = new Date();
   movementForm: FormGroup;
   isEditMode = false;
   isSubmitting = false;
@@ -186,7 +204,7 @@ export class MovimientoFormComponent implements OnInit {
       directCostCategoryId: [''],
       description: [data?.movement?.description || '', Validators.required],
       amount: [data?.movement?.amount || '', [Validators.required, Validators.min(0.01)]],
-      date: [data?.movement?.date ? new Date(data.movement.date) : new Date(), Validators.required],
+      date: [data?.movement?.date ? new Date(data.movement.date) : new Date(), [Validators.required, noFutureDateValidator]],
       financialAccountId: [data?.movement?.financialAccountId || '', Validators.required],
       fromAccountId: [''],
       toAccountId: ['']
