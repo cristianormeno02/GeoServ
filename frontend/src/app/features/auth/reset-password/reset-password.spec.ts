@@ -89,6 +89,16 @@ describe('ResetPassword', () => {
     expect(text()).toContain('restablecido correctamente');
   });
 
+  it('actualiza la vista por sí sola al recibir la respuesta (sin depender de otro evento)', () => {
+    create({ token: 'abc' });
+    authServiceSpy.resetPassword.and.returnValue(of({}));
+    component.resetForm.setValue({ password: 'Clave123', confirmPassword: 'Clave123' });
+
+    component.onSubmit();   // sin fixture.detectChanges() posterior
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('.success-message')).not.toBeNull();
+  });
+
   it('marca el enlace como inválido cuando el backend responde 400 por token', () => {
     create({ token: 'vencido' });
     authServiceSpy.resetPassword.and.returnValue(

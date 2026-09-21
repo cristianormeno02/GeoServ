@@ -135,6 +135,25 @@ describe('RecoverPassword', () => {
     });
   });
 
+  it('actualiza la vista por sí sola al recibir la respuesta (sin depender de otro evento)', () => {
+    authServiceSpy.recoverPassword.and.returnValue(of({}));
+    component.recoverForm.get('email')!.setValue('usuario@empresa.com');
+
+    component.onSubmit();   // sin fixture.detectChanges() posterior
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('.success-message')).not.toBeNull();
+    expect((fixture.nativeElement as HTMLElement).querySelector('form')).toBeNull();
+  });
+
+  it('actualiza la vista por sí sola al recibir un error', () => {
+    authServiceSpy.recoverPassword.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+    component.recoverForm.get('email')!.setValue('usuario@empresa.com');
+
+    component.onSubmit();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('[role="alert"]')).not.toBeNull();
+  });
+
   it('marca el banner de error como alerta accesible', () => {
     authServiceSpy.recoverPassword.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 

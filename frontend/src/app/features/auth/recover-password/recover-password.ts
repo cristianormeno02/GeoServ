@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -48,11 +48,13 @@ export class RecoverPassword implements AfterViewInit, OnDestroy {
   appLogo = '/assets/geoserv-logo.svg';
 
   private cooldownSub?: Subscription;
+  private destroyed = false;
 
   constructor(
     private fb: FormBuilder,
     public empresaConfig: EmpresaConfigService,
-    private authService: AuthService
+    private authService: AuthService,
+    private cdr: ChangeDetectorRef
   ) {
     this.recoverForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]]
@@ -64,7 +66,15 @@ export class RecoverPassword implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
     this.cooldownSub?.unsubscribe();
+  }
+
+  /** Las respuestas HTTP no refrescan la vista por sí solas en esta app (ver login), por eso se fuerza. */
+  private refresh(): void {
+    if (!this.destroyed) {
+      this.cdr.detectChanges();
+    }
   }
 
   onSubmit(): void {
@@ -101,6 +111,7 @@ export class RecoverPassword implements AfterViewInit, OnDestroy {
         this.submittedEmail = email;
         this.resendNotice = isResend;
         this.startCooldown();
+        this.refresh();
       },
       error: (err: HttpErrorResponse) => {
         this.isLoading = false;
@@ -108,6 +119,7 @@ export class RecoverPassword implements AfterViewInit, OnDestroy {
         if (err.status === 429 && this.isSuccess) {
           this.startCooldown();
         }
+        this.refresh();
       }
     });
   }
@@ -120,6 +132,7 @@ export class RecoverPassword implements AfterViewInit, OnDestroy {
       if (this.resendSeconds === 0) {
         this.cooldownSub?.unsubscribe();
       }
+      this.refresh();
     });
   }
 

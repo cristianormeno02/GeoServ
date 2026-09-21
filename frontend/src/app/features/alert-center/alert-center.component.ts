@@ -108,6 +108,20 @@ export class AlertCenterComponent implements OnInit {
     this.query.update(q => ({ ...q, page: 1 }));
     this.loadAlerts();
   }
+
+  updateSearchQuery(search: string): void {
+    this.query.update(q => ({ ...q, search }));
+  }
+
+  clearSearch(): void {
+    this.query.update(q => ({ ...q, search: '' }));
+    this.onSearch();
+  }
+
+  updatePriorityFilter(priority: string): void {
+    this.query.update(q => ({ ...q, priority }));
+    this.onFilterChange();
+  }
   
   setTabFilter(index: number): void {
     const states = ['', 'New', 'Read', 'Snoozed', 'Resolved'];

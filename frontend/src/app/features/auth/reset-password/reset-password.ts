@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -28,7 +28,7 @@ export const MIN_PASSWORD_LENGTH = 6;
   templateUrl: './reset-password.html',
   styleUrl: './reset-password.css',
 })
-export class ResetPassword implements OnInit {
+export class ResetPassword implements OnInit, OnDestroy {
   resetForm: FormGroup;
   hidePassword = true;
   isLoading = false;
@@ -37,6 +37,7 @@ export class ResetPassword implements OnInit {
   linkInvalid = false;
   errorMessage = '';
   token = '';
+  private destroyed = false;
   readonly minPasswordLength = MIN_PASSWORD_LENGTH;
 
   // App Branding
@@ -47,7 +48,8 @@ export class ResetPassword implements OnInit {
     private fb: FormBuilder,
     private route: ActivatedRoute,
     public empresaConfig: EmpresaConfigService,
-    private authService: AuthService
+    private authService: AuthService,
+    private cdr: ChangeDetectorRef
   ) {
     this.resetForm = this.fb.group({
       password: ['', [Validators.required, Validators.minLength(MIN_PASSWORD_LENGTH)]],
@@ -60,6 +62,17 @@ export class ResetPassword implements OnInit {
       this.token = params['token'] ?? '';
       this.linkInvalid = !this.token;
     });
+  }
+
+  ngOnDestroy(): void {
+    this.destroyed = true;
+  }
+
+  /** Las respuestas HTTP no refrescan la vista por sí solas en esta app (ver login), por eso se fuerza. */
+  private refresh(): void {
+    if (!this.destroyed) {
+      this.cdr.detectChanges();
+    }
   }
 
   passwordMatchValidator(g: AbstractControl): ValidationErrors | null {
@@ -84,6 +97,7 @@ export class ResetPassword implements OnInit {
       next: () => {
         this.isLoading = false;
         this.isSuccess = true;
+        this.refresh();
       },
       error: (err: HttpErrorResponse) => {
         this.isLoading = false;
@@ -96,6 +110,7 @@ export class ResetPassword implements OnInit {
         } else {
           this.errorMessage = 'No se pudo restablecer la contraseña. Intenta nuevamente más tarde.';
         }
+        this.refresh();
       }
     });
   }
