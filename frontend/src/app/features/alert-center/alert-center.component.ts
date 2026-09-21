@@ -84,7 +84,7 @@ export class AlertCenterComponent implements OnInit {
         this.loading.set(false);
       },
       error: (err) => {
-        this.snackBar.open('Error al cargar alertas', 'Cerrar', { duration: 3000 });
+        this.snackBar.open('Error al cargar alertas', 'Cerrar', { duration: 3000, panelClass: ['snackbar-error'] });
         this.loading.set(false);
       }
     });
@@ -164,7 +164,7 @@ export class AlertCenterComponent implements OnInit {
         this.loadAlerts();
       },
       error: () => {
-        this.snackBar.open('Error al actualizar la alerta', 'Cerrar', { duration: 3000 });
+        this.snackBar.open('Error al actualizar la alerta', 'Cerrar', { duration: 3000, panelClass: ['snackbar-error'] });
       }
     });
   }
