@@ -47,7 +47,8 @@ public class GeoServDbContext : DbContext
     public DbSet<FixedCostItem> FixedCostItems { get; set; } = null!;
     public DbSet<FixedCostPayment> FixedCostPayments { get; set; } = null!;
     public DbSet<UserMenuFavorite> UserMenuFavorites { get; set; } = null!;
-    
+    public DbSet<PasswordResetToken> PasswordResetTokens { get; set; } = null!;
+
     // Vistas
     public DbSet<AccountingMovementDetail> AccountingMovementDetails { get; set; } = null!;
     public DbSet<MonthlyCoverageReport> MonthlyCoverageReports { get; set; } = null!;
@@ -327,6 +328,16 @@ public class GeoServDbContext : DbContext
             b.HasOne(f => f.User)
              .WithMany()
              .HasForeignKey(f => f.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<PasswordResetToken>(b =>
+        {
+            b.Property(t => t.TokenHash).HasMaxLength(64).IsRequired();
+            b.HasIndex(t => t.TokenHash).IsUnique();
+            b.HasOne(t => t.User)
+             .WithMany()
+             .HasForeignKey(t => t.UserId)
              .OnDelete(DeleteBehavior.Cascade);
         });
     }

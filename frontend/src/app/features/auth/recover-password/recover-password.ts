@@ -1,14 +1,20 @@
-import { Component } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { Router, RouterModule } from '@angular/router';
+import { RouterModule } from '@angular/router';
+import { Subscription, interval } from 'rxjs';
 import { EmpresaConfigService } from '../../../core/services/empresa-config.service';
 import { AuthService } from '../../../core/services/auth.service';
+
+/** Segundos que debe esperar el usuario antes de poder reenviar el correo. */
+export const RESEND_COOLDOWN_SECONDS = 60;
+/** Vigencia del enlace de recuperación, en minutos (debe coincidir con el backend). */
+export const LINK_VALIDITY_MINUTES = 30;
 
 @Component({
   selector: 'app-recover-password',
@@ -17,7 +23,6 @@ import { AuthService } from '../../../core/services/auth.service';
     CommonModule,
     ReactiveFormsModule,
     RouterModule,
-    MatCardModule,
     MatInputModule,
     MatButtonModule,
     MatIconModule,
@@ -26,20 +31,26 @@ import { AuthService } from '../../../core/services/auth.service';
   templateUrl: './recover-password.html',
   styleUrl: './recover-password.css',
 })
-export class RecoverPassword {
+export class RecoverPassword implements AfterViewInit, OnDestroy {
+  @ViewChild('emailInput') emailInput?: ElementRef<HTMLInputElement>;
+
   recoverForm: FormGroup;
   isLoading = false;
   isSuccess = false;
   errorMessage = '';
-  isError = true;
+  submittedEmail = '';
+  resendSeconds = 0;
+  resendNotice = false;
+  readonly linkValidityMinutes = LINK_VALIDITY_MINUTES;
 
   // App Branding
   appName = 'GeoServ';
   appLogo = '/assets/geoserv-logo.svg';
 
+  private cooldownSub?: Subscription;
+
   constructor(
     private fb: FormBuilder,
-    private router: Router,
     public empresaConfig: EmpresaConfigService,
     private authService: AuthService
   ) {
@@ -48,30 +59,83 @@ export class RecoverPassword {
     });
   }
 
-  onSubmit() {
+  ngAfterViewInit(): void {
+    this.emailInput?.nativeElement.focus();
+  }
+
+  ngOnDestroy(): void {
+    this.cooldownSub?.unsubscribe();
+  }
+
+  onSubmit(): void {
+    if (this.isLoading) return;
+
+    const emailControl = this.recoverForm.get('email')!;
+    emailControl.setValue((emailControl.value ?? '').trim());
+
     if (this.recoverForm.invalid) {
       this.recoverForm.markAllAsTouched();
-      this.isError = true;
-      this.errorMessage = 'Ingresa un correo electrónico válido.';
+      this.errorMessage = '';
       return;
     }
 
+    this.send(emailControl.value, false);
+  }
+
+  onResend(): void {
+    if (this.isLoading || this.resendSeconds > 0 || !this.submittedEmail) return;
+    this.send(this.submittedEmail, true);
+  }
+
+  private send(email: string, isResend: boolean): void {
     this.isLoading = true;
     this.errorMessage = '';
-    
+    this.resendNotice = false;
+
     const tenantId = this.empresaConfig.obtenerSubdominioActual() || 'default';
-    
-    this.authService.recoverPassword(this.recoverForm.value.email, tenantId).subscribe({
+
+    this.authService.recoverPassword(email, tenantId).subscribe({
       next: () => {
         this.isLoading = false;
         this.isSuccess = true;
+        this.submittedEmail = email;
+        this.resendNotice = isResend;
+        this.startCooldown();
       },
-      error: (err) => {
-        console.error('Error al recuperar contraseña:', err);
+      error: (err: HttpErrorResponse) => {
         this.isLoading = false;
-        this.isError = true;
-        this.errorMessage = err.error?.detail || err.error?.title || 'No se pudo enviar el correo de recuperación. Intenta nuevamente.';
+        this.errorMessage = this.mapError(err);
+        if (err.status === 429 && this.isSuccess) {
+          this.startCooldown();
+        }
       }
     });
+  }
+
+  private startCooldown(): void {
+    this.cooldownSub?.unsubscribe();
+    this.resendSeconds = RESEND_COOLDOWN_SECONDS;
+    this.cooldownSub = interval(1000).subscribe(() => {
+      this.resendSeconds = Math.max(0, this.resendSeconds - 1);
+      if (this.resendSeconds === 0) {
+        this.cooldownSub?.unsubscribe();
+      }
+    });
+  }
+
+  private mapError(err: HttpErrorResponse): string {
+    if (err.status === 0) {
+      return 'No hay conexión con el servidor. Revisa tu conexión a internet e intenta nuevamente.';
+    }
+    if (err.status === 429) {
+      return 'Demasiados intentos. Espera unos minutos antes de volver a intentar.';
+    }
+    if (err.status === 400) {
+      return 'Verifica el correo ingresado e intenta nuevamente.';
+    }
+    if (err.status >= 500) {
+      return 'El servicio no está disponible en este momento. Intenta nuevamente más tarde.';
+    }
+    return 'No se pudo procesar la solicitud. Intenta nuevamente.';
   }
 }

@@ -83,8 +83,11 @@ export class AuthService {
     return this.http.post(`${environment.apiUrl}/auth/recover-password`, { email }, { headers });
   }
 
-  resetPassword(token: string, newPassword: string): Observable<any> {
-    return this.http.post(`${environment.apiUrl}/auth/reset-password`, { token, newPassword });
+  resetPassword(token: string, newPassword: string, tenantId: string): Observable<any> {
+    const headers = new HttpHeaders({
+      'X-Tenant-Id': tenantId
+    });
+    return this.http.post(`${environment.apiUrl}/auth/reset-password`, { token, newPassword }, { headers });
   }
 
   refreshTokenApi(token: string, refreshToken: string): Observable<RefreshTokenResponse> {

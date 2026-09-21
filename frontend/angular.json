@@ -93,6 +93,8 @@
             "tsConfig": "tsconfig.spec.json",
             "include": [
               "src/app/core/**/*.spec.ts",
+              "src/app/features/auth/recover-password/**/*.spec.ts",
+              "src/app/features/auth/reset-password/**/*.spec.ts",
               "src/app/features/service-orders/**/*.spec.ts",
               "src/app/shared/**/*.spec.ts"
             ],
