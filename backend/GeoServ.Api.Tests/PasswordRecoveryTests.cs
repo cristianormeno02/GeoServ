@@ -17,12 +17,54 @@ public class PasswordRecoveryTests
         public List<(string Email, string Token)> Sent { get; } = new();
         public bool ShouldFail { get; set; }
 
-        public Task SendPasswordRecoveryEmailAsync(string toEmail, string resetToken)
+        public Task<EmailMessage> PreparePasswordRecoveryEmailAsync(string toEmail, string resetToken)
         {
-            if (ShouldFail) throw new Exception("SMTP caído");
+            if (ShouldFail) throw new InvalidOperationException("SMTP incompleto");
             Sent.Add((toEmail, resetToken));
+            return Task.FromResult(new EmailMessage("smtp.test", 587, "u", "p", "from@test", toEmail, "Asunto", "<p>Hola</p>"));
+        }
+    }
+
+    private class FakeQueue : IEmailQueue
+    {
+        public List<EmailMessage> Enqueued { get; } = new();
+        public void Enqueue(EmailMessage email) => Enqueued.Add(email);
+    }
+
+    private class FakeSender : IEmailSender
+    {
+        public List<EmailMessage> Delivered { get; } = new();
+        public bool ShouldFail { get; set; }
+
+        public Task SendAsync(EmailMessage email, CancellationToken cancellationToken)
+        {
+            if (ShouldFail) throw new Exception("Conexión SMTP bloqueada");
+            Delivered.Add(email);
             return Task.CompletedTask;
         }
+    }
+
+    private class FakeConfigService : IEmpresaConfiguracionService
+    {
+        public Dictionary<string, string> Smtp { get; set; } = new();
+        public Task<string?> GetValueAsync(string key) => Task.FromResult<string?>(null);
+        public Task SetValueAsync(string key, string value, string valueType = "string", string? description = null, string group = "General") => Task.CompletedTask;
+        public Task<Dictionary<string, string>> GetSmtpConfigAsync() => Task.FromResult(Smtp);
+    }
+
+    private class FakeAppConfig : Microsoft.Extensions.Configuration.IConfiguration
+    {
+        private readonly Dictionary<string, string?> _values = new();
+        public string? this[string key] { get => _values.GetValueOrDefault(key); set => _values[key] = value; }
+        public IEnumerable<Microsoft.Extensions.Configuration.IConfigurationSection> GetChildren() => Enumerable.Empty<Microsoft.Extensions.Configuration.IConfigurationSection>();
+        public Microsoft.Extensions.Primitives.IChangeToken GetReloadToken() => throw new NotSupportedException();
+        public Microsoft.Extensions.Configuration.IConfigurationSection GetSection(string key) => throw new NotSupportedException();
+    }
+
+    private class FakeTenantService : ITenantService
+    {
+        public string GetTenantId() => "geocobre";
+        public string GetConnectionString() => "";
     }
 
     private class FakeLimiter : IPasswordRecoveryRateLimiter
@@ -74,10 +116,12 @@ public class PasswordRecoveryTests
         Assert.Equal(StatusCodes.Status200OK, status.StatusCode);
     }
 
+    private FakeQueue _queue = new();
+
     private Task<IResult> Recover(string email, GeoServDbContext context, FakeMailer mailer, FakeLimiter? limiter = null, HttpContext? http = null)
         => PasswordRecoveryEndpoints.RecoverAsync(
             new RecoverPasswordRequest { Email = email },
-            context, mailer, limiter ?? new FakeLimiter(), http ?? new DefaultHttpContext(),
+            context, mailer, _queue, limiter ?? new FakeLimiter(), http ?? new DefaultHttpContext(),
             NullLogger<RecoverPasswordRequest>.Instance);
 
     // ---------- recover-password ----------
@@ -94,6 +138,7 @@ public class PasswordRecoveryTests
         AssertOk(result);
         var sent = Assert.Single(mailer.Sent);
         Assert.Equal("user@geoserv.com", sent.Email);
+        Assert.Equal("user@geoserv.com", Assert.Single(_queue.Enqueued).To);
 
         var stored = await context.PasswordResetTokens.SingleAsync();
         Assert.Equal(user.Id, stored.UserId);
@@ -128,6 +173,7 @@ public class PasswordRecoveryTests
         await Recover("user@geoserv.com", context, mailer);
 
         Assert.Empty(mailer.Sent);
+        Assert.Empty(_queue.Enqueued);
         Assert.Empty(context.PasswordResetTokens);
     }
 
@@ -161,6 +207,7 @@ public class PasswordRecoveryTests
         var result = await Recover("user@geoserv.com", context, mailer);
 
         AssertOk(result);
+        Assert.Empty(_queue.Enqueued);
     }
 
     [Fact]
@@ -279,6 +326,88 @@ public class PasswordRecoveryTests
         var problem = Assert.IsType<ProblemHttpResult>(result);
         Assert.Equal(StatusCodes.Status400BadRequest, problem.StatusCode);
         Assert.Null((await context.PasswordResetTokens.SingleAsync()).UsedAt);
+    }
+
+    // ---------- cola de correo en segundo plano ----------
+
+    private static EmailMessage SampleEmail() =>
+        new("smtp.test", 587, "u", "p", "from@test", "to@test", "Asunto", "<p>Hola</p>");
+
+    [Fact]
+    public async Task EmailQueue_ProcessAsync_DeliversEmailThroughSender()
+    {
+        var sender = new FakeSender();
+        var queue = new EmailQueueService(sender, NullLogger<EmailQueueService>.Instance);
+
+        await queue.ProcessAsync(SampleEmail(), CancellationToken.None);
+
+        Assert.Single(sender.Delivered);
+    }
+
+    [Fact]
+    public async Task EmailQueue_ProcessAsync_SwallowsSenderErrors()
+    {
+        var sender = new FakeSender { ShouldFail = true };
+        var queue = new EmailQueueService(sender, NullLogger<EmailQueueService>.Instance);
+
+        var ex = await Record.ExceptionAsync(() => queue.ProcessAsync(SampleEmail(), CancellationToken.None));
+
+        Assert.Null(ex);
+    }
+
+    [Fact]
+    public async Task EmailQueue_BackgroundLoop_SendsEnqueuedEmailsAndSurvivesFailures()
+    {
+        var sender = new FakeSender { ShouldFail = true };
+        var queue = new EmailQueueService(sender, NullLogger<EmailQueueService>.Instance);
+        using var cts = new CancellationTokenSource();
+
+        await queue.StartAsync(cts.Token);
+        queue.Enqueue(SampleEmail());           // falla, pero no debe detener el ciclo
+        sender.ShouldFail = false;
+        queue.Enqueue(SampleEmail());
+
+        for (var i = 0; i < 50 && sender.Delivered.Count == 0; i++) await Task.Delay(50);
+        await queue.StopAsync(CancellationToken.None);
+
+        Assert.NotEmpty(sender.Delivered);
+    }
+
+    // ---------- preparación del correo ----------
+
+    [Fact]
+    public async Task Mailer_Prepare_ThrowsWithMissingKeysWhenSmtpIncomplete()
+    {
+        var config = new FakeConfigService { Smtp = new() { ["smtp_host"] = "smtp.gmail.com" } };
+        var mailer = new MailerService(config, new FakeTenantService(), new FakeAppConfig());
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => mailer.PreparePasswordRecoveryEmailAsync("a@b.com", "tok"));
+
+        Assert.Contains("smtp_port", ex.Message);
+        Assert.Contains("geocobre", ex.Message);
+        Assert.DoesNotContain("smtp_host", ex.Message);
+    }
+
+    [Fact]
+    public async Task Mailer_Prepare_BuildsMessageWithTenantLink()
+    {
+        var config = new FakeConfigService
+        {
+            Smtp = new()
+            {
+                ["smtp_host"] = "smtp.gmail.com", ["smtp_port"] = "587", ["smtp_user"] = "u",
+                ["smtp_password"] = "p", ["smtp_from"] = "noreply@geoserv.com"
+            }
+        };
+        var appConfig = new FakeAppConfig { ["App:FrontendBaseUrl"] = "https://{tenant}.geoserv.com" };
+        var mailer = new MailerService(config, new FakeTenantService(), appConfig);
+
+        var email = await mailer.PreparePasswordRecoveryEmailAsync("a@b.com", "tok");
+
+        Assert.Equal("smtp.gmail.com", email.Host);
+        Assert.Equal(587, email.Port);
+        Assert.Equal("a@b.com", email.To);
+        Assert.Contains("https://geocobre.geoserv.com/reset-password?tenant=geocobre&token=tok", email.HtmlBody);
     }
 
     // ---------- rate limiter ----------

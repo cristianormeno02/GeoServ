@@ -30,6 +30,7 @@ public static class PasswordRecoveryEndpoints
         RecoverPasswordRequest request,
         GeoServDbContext context,
         IMailerService mailer,
+        IEmailQueue emailQueue,
         IPasswordRecoveryRateLimiter limiter,
         HttpContext httpContext,
         ILogger<RecoverPasswordRequest> logger)
@@ -77,12 +78,14 @@ public static class PasswordRecoveryEndpoints
 
         try
         {
-            await mailer.SendPasswordRecoveryEmailAsync(user.Email, rawToken);
+            // El SMTP se resuelve aquí (depende del tenant de la solicitud) pero el envío ocurre en segundo plano
+            var message = await mailer.PreparePasswordRecoveryEmailAsync(user.Email, rawToken);
+            emailQueue.Enqueue(message);
         }
         catch (Exception ex)
         {
             // No se informa al cliente para no revelar la existencia del correo
-            logger.LogError(ex, "Error enviando correo de recuperación de contraseña");
+            logger.LogError(ex, "Error preparando correo de recuperación de contraseña");
         }
 
         return TypedResults.Ok(new { message = NeutralMessage });

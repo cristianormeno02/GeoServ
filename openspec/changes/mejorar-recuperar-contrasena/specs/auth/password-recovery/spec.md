@@ -40,6 +40,19 @@ El sistema SHALL emitir un token aleatorio de un solo uso con vigencia de 30 min
 - **THEN** el sistema responde HTTP 400 con un mensaje genérico y no modifica la contraseña
 - **THEN** el frontend indica que el enlace no es válido o venció e incluye un enlace a `/recover-password` para solicitar uno nuevo
 
+### Requirement: Envío de correo desacoplado de la solicitud
+
+El sistema SHALL enviar el correo de recuperación en segundo plano, sin que la duración o el fallo del servidor SMTP afecte el tiempo ni el resultado de la respuesta al cliente.
+
+#### Scenario: SMTP lento o inaccesible
+- **WHEN** el servidor SMTP tarda en responder o rechaza la conexión
+- **THEN** la respuesta HTTP a `recover-password` se devuelve de inmediato con el mensaje neutro
+- **THEN** el error queda registrado en el log con destinatario, host y puerto, sin incluir credenciales
+
+#### Scenario: Configuración SMTP incompleta
+- **WHEN** faltan claves SMTP en la configuración del tenant
+- **THEN** no se encola ningún correo y el log indica las claves faltantes
+
 ### Requirement: Enlace de recuperación por tenant
 
 El sistema SHALL construir el enlace del correo usando la URL base configurada y el subdominio del tenant, sin valores fijos de desarrollo en producción.

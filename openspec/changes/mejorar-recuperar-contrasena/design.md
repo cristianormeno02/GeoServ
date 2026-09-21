@@ -13,6 +13,9 @@ Nueva entidad `PasswordResetToken { Id, UserId, TokenHash, ExpiresAt, UsedAt, Cr
 ### 2. Respuesta neutra siempre
 `recover-password` responde 200 con el mismo mensaje exista o no el correo (ya es así). **Decidido**: los fallos SMTP se registran en log y la respuesta sigue siendo 200; devolver 500 solo cuando el usuario existe habría revelado la existencia del correo.
 
+### 2.b Envío de correo en segundo plano
+La solicitud ya no espera al SMTP. `IMailerService.PreparePasswordRecoveryEmailAsync` arma el correo dentro de la solicitud (necesita el tenant y su configuración SMTP) y `IEmailQueue` lo encola; `EmailQueueService` (`BackgroundService` con `Channel`) lo envía mediante `IEmailSender`/`SmtpEmailSender`. Los errores se registran con destinatario, host y puerto (sin credenciales) y no detienen la cola. Si la configuración SMTP está incompleta, el mensaje del log lista las claves faltantes. Limitación: la cola es en memoria, por lo que un reinicio del servicio pierde los correos pendientes (el usuario puede reenviar).
+
 ### 3. Rate limiting
 Limitador de ventana fija propio y en memoria (`PasswordRecoveryRateLimiter`, singleton, con `TimeProvider` para pruebas): 5 solicitudes / 15 min por IP y 3 / 15 min por correo. Se prefirió sobre el middleware nativo `AddRateLimiter` porque este no permite limitar por el correo del cuerpo de la petición. Limitación conocida: el contador es por instancia (no se comparte entre réplicas). Excedido → 429 con `Retry-After`. El frontend mapea 429 a un mensaje propio.
 

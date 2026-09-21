@@ -18,6 +18,10 @@ builder.Services.AddScoped<GeoServ.Api.Infrastructure.Services.ITenantService, G
 builder.Services.AddScoped<GeoServ.Api.Infrastructure.Services.IEmpresaConfiguracionService, GeoServ.Api.Infrastructure.Services.EmpresaConfiguracionService>();
 builder.Services.AddSingleton<GeoServ.Api.Infrastructure.Services.IPasswordRecoveryRateLimiter, GeoServ.Api.Infrastructure.Services.PasswordRecoveryRateLimiter>();
 builder.Services.AddScoped<GeoServ.Api.Infrastructure.Services.IMailerService, GeoServ.Api.Infrastructure.Services.MailerService>();
+builder.Services.AddSingleton<GeoServ.Api.Infrastructure.Services.IEmailSender, GeoServ.Api.Infrastructure.Services.SmtpEmailSender>();
+builder.Services.AddSingleton<GeoServ.Api.Infrastructure.Services.EmailQueueService>();
+builder.Services.AddSingleton<GeoServ.Api.Infrastructure.Services.IEmailQueue>(sp => sp.GetRequiredService<GeoServ.Api.Infrastructure.Services.EmailQueueService>());
+builder.Services.AddHostedService(sp => sp.GetRequiredService<GeoServ.Api.Infrastructure.Services.EmailQueueService>());
 
 builder.Services.AddDbContext<GeoServDbContext>((serviceProvider, options) =>
 {
