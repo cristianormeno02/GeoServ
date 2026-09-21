@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+# Sube la versión automáticamente según el prefijo del commit recién creado:
+#   feat -> minor, fix/perf/refactor -> patch, "!" o BREAKING CHANGE -> major.
+# docs, style, test, build, ci y chore no generan release.
+# Si falla, el commit original queda intacto; el release se puede reintentar con `npm run release`.
+
+# Evita recursión: el propio release crea un commit
+[ -n "$GEOSERV_RELEASING" ] && exit 0
+
+msg=$(git log -1 --format=%B)
+first_line=$(printf '%s' "$msg" | head -n1)
+
+case "$first_line" in
+  "chore(release)"*) exit 0 ;;
+esac
+
+if ! printf '%s' "$first_line" | grep -qE '^(feat|fix|perf|refactor)(\([^)]+\))?!?:' \
+   && ! printf '%s' "$msg" | grep -q 'BREAKING CHANGE'; then
+  exit 0
+fi
+
+# El release commitea estos archivos completos: no mezclar cambios propios sin commitear
+if ! git diff --quiet -- package.json frontend/package.json backend/GeoServ.Api/GeoServ.Api.csproj CHANGELOG.md; then
+  echo "[release] Hay cambios sin commitear en archivos de versión; se omite el release automático." >&2
+  echo "[release] Ejecuta 'npm run release' manualmente cuando los hayas commiteado." >&2
+  exit 0
+fi
+
+root=$(git rev-parse --show-toplevel)
+cd "$root" || exit 0
+
+GEOSERV_RELEASING=1 npm run release --silent || \
+  echo "[release] El release automático falló; el commit se conserva. Reintenta con 'npm run release'." >&2
+
+exit 0

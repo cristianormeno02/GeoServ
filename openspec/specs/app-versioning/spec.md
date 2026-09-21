@@ -12,6 +12,10 @@ El sistema DEBE exponer una única versión semántica (`MAJOR.MINOR.PATCH`) com
 - **WHEN** un integrante del equipo ejecuta `npm run release` en la raíz del repositorio tras mergear commits siguiendo Conventional Commits
 - **THEN** el sistema calcula el incremento de versión correspondiente (`feat`→minor, `fix`→patch, `BREAKING CHANGE`→major), actualiza la versión en `frontend/package.json` y en `backend/GeoServ.Api/GeoServ.Api.csproj` de forma sincronizada, regenera `CHANGELOG.md` y crea un commit y tag `vX.Y.Z`
 
+#### Scenario: Release automático tras un commit
+- **WHEN** se crea un commit de tipo `feat`, `fix`, `perf` o `refactor` (o con `!`/`BREAKING CHANGE`)
+- **THEN** el hook `.githooks/post-commit` ejecuta `npm run release` automáticamente, generando el commit `chore(release)` y el tag correspondiente; los tipos `docs`, `style`, `test`, `build`, `ci` y `chore` no modifican la versión
+
 ### Requirement: Página "Acerca de"
 El sistema DEBE proveer una página "Acerca de" (`/acerca-de`), accesible desde el menú principal para cualquier usuario autenticado, que muestre el nombre y una descripción breve de la aplicación (fijos, independientes del tenant actual), la versión del frontend con su fecha de build, y las novedades más recientes del `CHANGELOG.md`.
 
