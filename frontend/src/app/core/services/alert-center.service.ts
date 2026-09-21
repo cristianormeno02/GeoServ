@@ -15,7 +15,7 @@ import {
 })
 export class AlertCenterService {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/api/alert-center`;
+  private apiUrl = `${environment.apiUrl}/alert-center`;
 
   private summarySubject = new BehaviorSubject<AlertCenterSummaryDto | null>(null);
   public summary$ = this.summarySubject.asObservable();
