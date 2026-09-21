@@ -23,6 +23,14 @@ interface ChangelogEntry {
   sections: ChangelogSection[];
 }
 
+/** Quita el énfasis y los enlaces a commits que agrega commit-and-tag-version. */
+function cleanMarkdown(text: string): string {
+  return text
+    .replace(/\s*\(\[[0-9a-f]{7,}\]\([^)]*\)\)\s*$/, '')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .trim();
+}
+
 /** Convierte el cuerpo Markdown de una entrada del CHANGELOG en secciones con viñetas. */
 function parseChangelogBody(body: string): ChangelogSection[] {
   const sections: ChangelogSection[] = [];
@@ -35,12 +43,12 @@ function parseChangelogBody(body: string): ChangelogSection[] {
     if (line.startsWith('### ')) {
       current = { title: line.replace(/^###\s*/, ''), items: [] };
       sections.push(current);
-    } else if (line.startsWith('- ')) {
+    } else if (/^[-*]\s/.test(line)) {
       if (!current) {
         current = { title: '', items: [] };
         sections.push(current);
       }
-      current.items.push(line.replace(/^-\s*/, ''));
+      current.items.push(cleanMarkdown(line.replace(/^[-*]\s*/, '')));
     }
   }
 
@@ -72,7 +80,7 @@ export class AboutComponent implements OnInit {
       .pipe(catchError(() => of([])))
       .subscribe(entries => {
         this.changelog = entries.map(entry => ({
-          header: entry.header,
+          header: entry.header.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1'),
           sections: parseChangelogBody(entry.body)
         }));
       });
