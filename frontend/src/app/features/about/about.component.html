@@ -22,11 +22,11 @@
     </mat-card-content>
   </mat-card>
 
-  <mat-card class="info-card mat-elevation-z8" *ngIf="changelog.length">
+  <mat-card class="info-card mat-elevation-z8" *ngIf="changelog().length">
     <mat-card-content>
       <h2 class="section-title">Novedades recientes</h2>
 
-      <div class="changelog-entry" *ngFor="let entry of changelog; let last = last">
+      <div class="changelog-entry" *ngFor="let entry of changelog(); let last = last">
         <h3 class="changelog-header">{{ entry.header }}</h3>
 
         <div class="changelog-section" *ngFor="let section of entry.sections">

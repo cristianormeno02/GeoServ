@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { MatCardModule } from '@angular/material/card';
@@ -70,7 +70,7 @@ export class AboutComponent implements OnInit {
   readonly appDescription = 'Gestión inteligente de órdenes de servicio y finanzas para consultoras geológicas.';
 
   frontendVersion: VersionInfo | null = null;
-  changelog: ChangelogEntry[] = [];
+  changelog = signal<ChangelogEntry[]>([]);
 
   ngOnInit(): void {
     this.frontendVersion = this.versionCheck.currentVersion();
@@ -79,10 +79,12 @@ export class AboutComponent implements OnInit {
       .get<RawChangelogEntry[]>('assets/changelog.json')
       .pipe(catchError(() => of([])))
       .subscribe(entries => {
-        this.changelog = entries.map(entry => ({
-          header: entry.header.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1'),
-          sections: parseChangelogBody(entry.body)
-        }));
+        this.changelog.set(
+          entries.map(entry => ({
+            header: entry.header.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1'),
+            sections: parseChangelogBody(entry.body)
+          }))
+        );
       });
   }
 }
