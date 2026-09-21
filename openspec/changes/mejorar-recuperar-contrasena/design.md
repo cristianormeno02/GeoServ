@@ -16,6 +16,9 @@ Nueva entidad `PasswordResetToken { Id, UserId, TokenHash, ExpiresAt, UsedAt, Cr
 ### 2.b Envío de correo en segundo plano
 La solicitud ya no espera al SMTP. `IMailerService.PreparePasswordRecoveryEmailAsync` arma el correo dentro de la solicitud (necesita el tenant y su configuración SMTP) y `IEmailQueue` lo encola; `EmailQueueService` (`BackgroundService` con `Channel`) lo envía mediante `IEmailSender`/`SmtpEmailSender`. Los errores se registran con destinatario, host y puerto (sin credenciales) y no detienen la cola. Si la configuración SMTP está incompleta, el mensaje del log lista las claves faltantes. Limitación: la cola es en memoria, por lo que un reinicio del servicio pierde los correos pendientes (el usuario puede reenviar).
 
+### 2.c Proveedor de correo por API HTTP (Brevo)
+Los logs de producción mostraron `TimeoutException` al conectar con `smtp.gmail.com:587`: Render bloquea el SMTP saliente en su plan gratuito. `ConfiguredEmailSender` usa `BrevoEmailSender` (POST a `https://api.brevo.com/v3/smtp/email`, puerto 443) cuando existe `Brevo:ApiKey`, y SMTP en caso contrario. La API key se define solo como variable de entorno (`Brevo__ApiKey`); el remitente sigue siendo `smtp_from` del tenant y debe estar verificado en Brevo. Con Brevo solo se exige `smtp_from` en la configuración del tenant.
+
 ### 3. Rate limiting
 Limitador de ventana fija propio y en memoria (`PasswordRecoveryRateLimiter`, singleton, con `TimeProvider` para pruebas): 5 solicitudes / 15 min por IP y 3 / 15 min por correo. Se prefirió sobre el middleware nativo `AddRateLimiter` porque este no permite limitar por el correo del cuerpo de la petición. Limitación conocida: el contador es por instancia (no se comparte entre réplicas). Excedido → 429 con `Retry-After`. El frontend mapea 429 a un mensaje propio.
 

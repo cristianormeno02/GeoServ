@@ -61,6 +61,21 @@ public class PasswordRecoveryTests
         public Microsoft.Extensions.Configuration.IConfigurationSection GetSection(string key) => throw new NotSupportedException();
     }
 
+    private class CapturingHandler : HttpMessageHandler
+    {
+        public HttpRequestMessage? Request { get; private set; }
+        public string? Body { get; private set; }
+        public System.Net.HttpStatusCode Status { get; set; } = System.Net.HttpStatusCode.Created;
+        public string ResponseBody { get; set; } = "{\"messageId\":\"x\"}";
+
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            Request = request;
+            Body = request.Content == null ? null : await request.Content.ReadAsStringAsync(cancellationToken);
+            return new HttpResponseMessage(Status) { Content = new StringContent(ResponseBody) };
+        }
+    }
+
     private class FakeTenantService : ITenantService
     {
         public string GetTenantId() => "geocobre";
@@ -408,6 +423,57 @@ public class PasswordRecoveryTests
         Assert.Equal(587, email.Port);
         Assert.Equal("a@b.com", email.To);
         Assert.Contains("https://geocobre.geoserv.com/reset-password?tenant=geocobre&token=tok", email.HtmlBody);
+    }
+
+    // ---------- Brevo (API HTTP) ----------
+
+    [Fact]
+    public async Task Brevo_Send_PostsExpectedRequest()
+    {
+        var handler = new CapturingHandler();
+        var sender = new BrevoEmailSender(new FakeAppConfig { ["Brevo:ApiKey"] = "clave-secreta" }, handler);
+
+        await sender.SendAsync(SampleEmail(), CancellationToken.None);
+
+        Assert.Equal(HttpMethod.Post, handler.Request!.Method);
+        Assert.Equal(BrevoEmailSender.Endpoint, handler.Request.RequestUri!.ToString());
+        Assert.Equal("clave-secreta", handler.Request.Headers.GetValues("api-key").Single());
+        Assert.Contains("\"email\":\"from@test\"", handler.Body);
+        Assert.Contains("\"email\":\"to@test\"", handler.Body);
+        Assert.Contains("\"subject\":\"Asunto\"", handler.Body);
+    }
+
+    [Fact]
+    public async Task Brevo_Send_ThrowsWithApiErrorDetail_WithoutLeakingApiKey()
+    {
+        var handler = new CapturingHandler { Status = System.Net.HttpStatusCode.BadRequest, ResponseBody = "{\"message\":\"sender not valid\"}" };
+        var sender = new BrevoEmailSender(new FakeAppConfig { ["Brevo:ApiKey"] = "clave-secreta" }, handler);
+
+        var ex = await Assert.ThrowsAsync<HttpRequestException>(() => sender.SendAsync(SampleEmail(), CancellationToken.None));
+
+        Assert.Contains("400", ex.Message);
+        Assert.Contains("sender not valid", ex.Message);
+        Assert.DoesNotContain("clave-secreta", ex.Message);
+    }
+
+    [Fact]
+    public void ConfiguredSender_UsesBrevo_OnlyWhenApiKeyIsPresent()
+    {
+        Assert.True(ConfiguredEmailSender.UsesBrevo(new FakeAppConfig { ["Brevo:ApiKey"] = "k" }));
+        Assert.False(ConfiguredEmailSender.UsesBrevo(new FakeAppConfig()));
+        Assert.False(ConfiguredEmailSender.UsesBrevo(new FakeAppConfig { ["Brevo:ApiKey"] = "  " }));
+    }
+
+    [Fact]
+    public async Task Mailer_Prepare_WithBrevo_OnlyRequiresSmtpFrom()
+    {
+        var config = new FakeConfigService { Smtp = new() { ["smtp_from"] = "cristianormeno@gmail.com" } };
+        var mailer = new MailerService(config, new FakeTenantService(), new FakeAppConfig { ["Brevo:ApiKey"] = "k" });
+
+        var email = await mailer.PreparePasswordRecoveryEmailAsync("a@b.com", "tok");
+
+        Assert.Equal("cristianormeno@gmail.com", email.From);
+        Assert.Equal("a@b.com", email.To);
     }
 
     // ---------- rate limiter ----------
