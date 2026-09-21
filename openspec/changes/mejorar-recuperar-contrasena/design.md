@@ -37,6 +37,10 @@ Mapa `HttpErrorResponse.status` → mensaje en español (0 sin conexión, 429 de
 ### 8. Hallazgo durante la implementación
 Las plantillas de `recover-password` y `reset-password` usaban clases (`login-container`, `login-left-panel`…) que no existían en su CSS, por lo que la página se veía sin layout. Se reescribieron sobre la estructura del login (`login-wrapper`, `branding-section`, `form-section`) con `auth-shell.css` compartido vía `@import`. Además `reset-password` no enviaba `X-Tenant-Id`, por lo que habría consultado el tenant por defecto; ahora `AuthService.resetPassword` lo recibe y lo envía.
 
+### 9. Hallazgos en producción
+- **Vista no se refrescaba**: en esta app las respuestas HTTP no disparan el refresco de la vista (por eso `login` y otros 31 archivos llaman a `ChangeDetectorRef.detectChanges()`). `recover-password` y `reset-password` quedaban en "Enviando..." con el estado ya actualizado. Se aplica la misma convención con una guarda para vistas destruidas y pruebas de regresión que no llaman a `fixture.detectChanges()`.
+- **Dominio del enlace**: el valor por defecto `https://{tenant}.geoserv.com` era un supuesto erróneo. El despliegue real usa `https://{tenant}-geoserv.vercel.app` (convención ya soportada por `obtenerSubdominioActual`). Puede sobrescribirse con la variable `App__FrontendBaseUrl`.
+
 ## Riesgos / Trade-offs
 
 - **Alcance backend**: sin arreglar el backend, las mejoras visuales ocultarían un flujo roto. Si se prefiere acotar, la sección 1 de `tasks.md` puede separarse en un cambio propio.
