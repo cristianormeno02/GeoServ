@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("GeoServ.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+525e7edf5e0c06b929709ff19eb22d34e0e50f2e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8d1c8f729c7fbf5a90780012a7dd1e83151e510d")]
 [assembly: System.Reflection.AssemblyProductAttribute("GeoServ.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("GeoServ.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

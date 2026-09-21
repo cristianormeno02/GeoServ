@@ -30,7 +30,8 @@ builder.Services.AddDbContext<GeoServDbContext>((serviceProvider, options) =>
 {
     var tenantService = serviceProvider.GetRequiredService<GeoServ.Api.Infrastructure.Services.ITenantService>();
     var connectionString = tenantService.GetConnectionString();
-    options.UseNpgsql(connectionString);
+    options.UseNpgsql(connectionString)
+           .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
 });
 
 // Configure CORS
