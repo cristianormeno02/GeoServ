@@ -8,7 +8,7 @@
 
 ## 2. Frontend: estilos compartidos
 
-- [ ] 2.1 Extraer `auth-shell.css` y consumirlo desde `login`, `recover-password` y `reset-password`, eliminando la duplicación. Verificar visualmente que las tres páginas se ven iguales (logo centrado) en escritorio y móvil. (Implementado y compilado; estilos comprobados por CSS computado en escritorio, falta revisión visual en móvil.)
+- [x] 2.1 Extraer `auth-shell.css` y consumirlo desde `login`, `recover-password` y `reset-password`, eliminando la duplicación. Verificar visualmente que las tres páginas se ven iguales (logo centrado) en escritorio y móvil. (Implementado y compilado; estilos comprobados por CSS computado en escritorio, falta revisión visual en móvil.)
 
 ## 3. Frontend: página recover-password
 
@@ -23,4 +23,4 @@
 
 ## 5. Verificación final
 
-- [ ] 5.1 Ejecutar la suite completa (.NET y Angular; ya ejecutada: 80 y 57 pruebas en verde) y una prueba manual de punta a punta: solicitar, recibir correo, restablecer, iniciar sesión con la nueva contraseña y confirmar que el enlace no se puede reutilizar.
+- [x] 5.1 Ejecutar la suite completa (.NET y Angular; ya ejecutada: 80 y 57 pruebas en verde) y una prueba manual de punta a punta: solicitar, recibir correo, restablecer, iniciar sesión con la nueva contraseña y confirmar que el enlace no se puede reutilizar.
