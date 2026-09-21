@@ -51,7 +51,8 @@ public static class PasswordRecoveryEndpoints
         var user = await context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email && u.IsActive);
         if (user == null)
         {
-            // Respuesta idéntica para no revelar si el correo existe
+            // Respuesta idéntica para no revelar si el correo existe (el detalle solo queda en el log del servidor)
+            logger.LogInformation("Recuperación de contraseña: no existe un usuario activo con el correo {Email}", email);
             return TypedResults.Ok(new { message = NeutralMessage });
         }
 
@@ -81,6 +82,7 @@ public static class PasswordRecoveryEndpoints
             // El SMTP se resuelve aquí (depende del tenant de la solicitud) pero el envío ocurre en segundo plano
             var message = await mailer.PreparePasswordRecoveryEmailAsync(user.Email, rawToken);
             emailQueue.Enqueue(message);
+            logger.LogInformation("Recuperación de contraseña: correo encolado para {Email}", email);
         }
         catch (Exception ex)
         {
