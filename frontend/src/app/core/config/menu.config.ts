@@ -1,9 +1,10 @@
-﻿import { NavGroup, NavItem } from '../layout/nav-item.model';
+import { NavGroup, NavItem } from '../layout/nav-item.model';
 
 export const MENU_GROUPS: NavGroup[] = [
   {
     name: 'Inicio', icon: 'home', children: [
       { name: 'Mi Dashboard', path: '/dashboard', icon: 'dashboard', roles: ['Administrador', 'Operador'], description: 'Vista general del estado de operaciones y métricas principales' },
+      { name: 'Centro de Alertas', path: '/alertas', icon: 'notifications', roles: ['Administrador', 'Operador'], description: 'Bandeja de alertas pendientes y notificaciones del sistema' },
       { name: 'Dashboard Operativo', path: '/dashboard/operativo', icon: 'insights', roles: ['Administrador'], description: 'Seguimiento en tiempo real de órdenes de servicio activas' },
       { name: 'Dashboard Financiero', path: '/dashboard/financiero', icon: 'query_stats', roles: ['Administrador'], description: 'Resumen financiero: ingresos, costos y resultados del período' },
       { name: 'Dashboard Cliente', path: '/dashboard/cliente', icon: 'person', roles: ['Administrador', 'Cliente'], description: 'Vista personalizada del estado de servicios para el cliente' }

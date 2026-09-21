@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, computed, inject } from '@angular/core';
+import { Component, Output, EventEmitter, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -12,6 +12,7 @@ import { EmpresaConfigService } from '../../services/empresa-config.service';
 import { DomSanitizer } from '@angular/platform-browser';
 import { AuthService } from '../../services/auth.service';
 import { MenuFavoritesService } from '../../services/menu-favorites.service';
+import { AlertCenterService } from '../../services/alert-center.service';
 import { NavItem } from '../nav-item.model';
 import { Router } from '@angular/router';
 
@@ -22,6 +23,7 @@ import { Router } from '@angular/router';
     CommonModule,
     RouterModule,
     AsyncPipe,
+
     MatToolbarModule,
     MatIconModule,
     MatButtonModule,
@@ -32,7 +34,7 @@ import { Router } from '@angular/router';
   templateUrl: './header.component.html',
   styleUrl: './header.component.css'
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit {
   @Output() toggleSidebar = new EventEmitter<void>();
 
   private authService = inject(AuthService);
@@ -40,6 +42,11 @@ export class HeaderComponent {
   private router = inject(Router);
   public empresaConfig = inject(EmpresaConfigService);
   public favoritesService = inject(MenuFavoritesService);
+  public alertCenter = inject(AlertCenterService);
+
+  ngOnInit() {
+    this.alertCenter.refreshSummary();
+  }
 
   safeLogoSvg = computed(() => {
     const svg = this.empresaConfig.empresaActual()?.logoSvg;

@@ -37,6 +37,7 @@ export const routes: Routes = [
         canActivate: [dashboardRoleGuard],
         data: { roles: ['Administrador', 'Cliente'] }
       },
+      { path: 'alertas', loadComponent: () => import('./features/alert-center/alert-center.component').then(m => m.AlertCenterComponent) },
       { path: 'en-construccion', loadComponent: () => import('./shared/components/under-construction/under-construction.component').then(m => m.UnderConstructionComponent) },
       { path: 'acerca-de', loadComponent: () => import('./features/about/about.component').then(m => m.AboutComponent) },
       { path: 'inventario', loadComponent: () => import('./features/inventario/inventario.component').then(m => m.InventarioComponent) },

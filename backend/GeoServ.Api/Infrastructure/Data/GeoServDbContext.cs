@@ -48,6 +48,7 @@ public class GeoServDbContext : DbContext
     public DbSet<FixedCostPayment> FixedCostPayments { get; set; } = null!;
     public DbSet<UserMenuFavorite> UserMenuFavorites { get; set; } = null!;
     public DbSet<PasswordResetToken> PasswordResetTokens { get; set; } = null!;
+    public DbSet<AlertState> AlertStates { get; set; } = null!;
 
     // Vistas
     public DbSet<AccountingMovementDetail> AccountingMovementDetails { get; set; } = null!;
@@ -338,6 +339,17 @@ public class GeoServDbContext : DbContext
             b.HasOne(t => t.User)
              .WithMany()
              .HasForeignKey(t => t.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AlertState>(b =>
+        {
+            b.Property(s => s.AlertKey).HasMaxLength(180).IsRequired();
+            b.Property(s => s.State).HasMaxLength(24).IsRequired();
+            b.HasIndex(s => new { s.UserId, s.AlertKey }).IsUnique();
+            b.HasOne(s => s.User)
+             .WithMany()
+             .HasForeignKey(s => s.UserId)
              .OnDelete(DeleteBehavior.Cascade);
         });
     }

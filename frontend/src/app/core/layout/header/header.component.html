@@ -21,6 +21,21 @@
   </div>
   <span class="spacer"></span>
 
+  <!-- Botón de Centro de Alertas -->
+  <button
+    mat-icon-button
+    class="alert-btn"
+    routerLink="/alertas"
+    aria-label="Centro de Alertas"
+    matTooltip="Alertas y Notificaciones"
+  >
+    <mat-icon [matBadge]="(alertCenter.summary$ | async)?.actionableCount || 0"
+              matBadgeColor="warn"
+              [matBadgeHidden]="!((alertCenter.summary$ | async)?.actionableCount)">
+      notifications
+    </mat-icon>
+  </button>
+
   <!-- Botón de Favoritos con dropdown -->
   <button
     mat-button

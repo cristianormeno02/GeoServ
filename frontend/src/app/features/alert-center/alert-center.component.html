@@ -1,0 +1,159 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="mat-headline-5 mb-0">Centro de Alertas</h1>
+      <p class="text-muted">Gestiona las notificaciones y tareas pendientes de la empresa.</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="loadAlerts()">
+        <mat-icon>refresh</mat-icon>
+        Actualizar
+      </button>
+    </div>
+  </div>
+
+  <mat-card class="content-card">
+    <mat-card-header class="filters-header">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Buscar alertas</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [ngModel]="query().search" (ngModelChange)="query.update(q => ({...q, search: $event}))" (keyup.enter)="onSearch()" placeholder="Título, origen, etc.">
+        <button *ngIf="query().search" matSuffix mat-icon-button aria-label="Clear" (click)="query.update(q => ({...q, search: ''})); onSearch()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>Prioridad</mat-label>
+        <mat-select [ngModel]="query().priority" (ngModelChange)="query.update(q => ({...q, priority: $event})); onFilterChange()">
+          <mat-option value="">Todas</mat-option>
+          <mat-option value="Critical">Crítica</mat-option>
+          <mat-option value="High">Alta</mat-option>
+          <mat-option value="Medium">Media</mat-option>
+          <mat-option value="Low">Baja</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </mat-card-header>
+
+    <mat-tab-group (selectedIndexChange)="setTabFilter($event)">
+      <mat-tab label="Pendientes"></mat-tab>
+      <mat-tab label="Nuevas"></mat-tab>
+      <mat-tab label="Leídas"></mat-tab>
+      <mat-tab label="Pospuestas"></mat-tab>
+      <mat-tab label="Resueltas"></mat-tab>
+    </mat-tab-group>
+
+    <div class="table-container">
+      <div class="loading-shade" *ngIf="loading()">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+
+      <table mat-table [dataSource]="alerts()" class="mat-elevation-z0 w-100">
+
+        <!-- Priority Column -->
+        <ng-container matColumnDef="priority">
+          <th mat-header-cell *matHeaderCellDef> Prioridad </th>
+          <td mat-cell *matCellDef="let element">
+            <mat-icon [color]="getPriorityColor(element.priority)" [matTooltip]="element.priority">
+              {{ getPriorityIcon(element.priority) }}
+            </mat-icon>
+          </td>
+        </ng-container>
+
+        <!-- Title Column -->
+        <ng-container matColumnDef="title">
+          <th mat-header-cell *matHeaderCellDef> Alerta </th>
+          <td mat-cell *matCellDef="let element">
+            <div class="alert-title">{{ element.title }}</div>
+            <div class="alert-desc text-muted">{{ element.description }}</div>
+            <div class="alert-source">
+              <mat-chip-set>
+                <mat-chip highlighted="true" color="accent" size="small">{{ element.sourceLabel }}</mat-chip>
+              </mat-chip-set>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- DueDate Column -->
+        <ng-container matColumnDef="dueDate">
+          <th mat-header-cell *matHeaderCellDef> Vencimiento </th>
+          <td mat-cell *matCellDef="let element">
+            {{ element.dueDate | date:'shortDate' || '-' }}
+          </td>
+        </ng-container>
+
+        <!-- Amount Column -->
+        <ng-container matColumnDef="amount">
+          <th mat-header-cell *matHeaderCellDef> Monto </th>
+          <td mat-cell *matCellDef="let element">
+            {{ element.amount ? (element.amount | currency) : '-' }}
+          </td>
+        </ng-container>
+        
+        <!-- State Column -->
+        <ng-container matColumnDef="state">
+          <th mat-header-cell *matHeaderCellDef> Estado </th>
+          <td mat-cell *matCellDef="let element">
+            <span class="state-badge" [ngClass]="'state-' + element.state.toLowerCase()">
+              {{ getStateLabel(element.state) }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="text-right"> Acciones </th>
+          <td mat-cell *matCellDef="let element" class="text-right">
+            <!-- Acciones directas -->
+            <button mat-icon-button *ngFor="let action of element.actions" 
+                    [matTooltip]="action.label" 
+                    [disabled]="!action.enabled"
+                    (click)="executeAction(element, action)"
+                    color="primary">
+              <mat-icon>{{ action.icon }}</mat-icon>
+            </button>
+            
+            <!-- Menú de estado -->
+            <button mat-icon-button [matMenuTriggerFor]="stateMenu" matTooltip="Cambiar estado">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #stateMenu="matMenu">
+              <button mat-menu-item *ngIf="element.state !== 'Read'" (click)="markAs(element, 'Read')">
+                <mat-icon>mark_email_read</mat-icon>
+                <span>Marcar como Leída</span>
+              </button>
+              <button mat-menu-item *ngIf="element.state !== 'Resolved'" (click)="markAs(element, 'Resolved')">
+                <mat-icon>check_circle</mat-icon>
+                <span>Resolver Alerta</span>
+              </button>
+              <button mat-menu-item *ngIf="element.state !== 'Snoozed'" (click)="markAs(element, 'Snoozed')"> <!-- TODO: add specific date for snooze -->
+                <mat-icon>snooze</mat-icon>
+                <span>Posponer 1 día</span>
+              </button>
+            </mat-menu>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" [class.is-new]="row.state === 'New'"></tr>
+
+        <!-- Row shown when there is no matching data. -->
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell text-center py-4" colspan="6">
+            <mat-icon class="text-muted" style="font-size: 48px; width: 48px; height: 48px;">notifications_off</mat-icon>
+            <p class="text-muted mt-2">No se encontraron alertas que coincidan con los filtros.</p>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      [length]="totalCount()"
+      [pageSize]="query().pageSize"
+      [pageIndex]="query().page! - 1"
+      [pageSizeOptions]="[10, 25, 50, 100]"
+      (page)="onPageChange($event)"
+      showFirstLastButtons>
+    </mat-paginator>
+  </mat-card>
+</div>

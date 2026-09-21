@@ -16,6 +16,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 });
 builder.Services.AddScoped<GeoServ.Api.Infrastructure.Services.ITenantService, GeoServ.Api.Infrastructure.Services.TenantService>();
 builder.Services.AddScoped<GeoServ.Api.Infrastructure.Services.IEmpresaConfiguracionService, GeoServ.Api.Infrastructure.Services.EmpresaConfiguracionService>();
+builder.Services.AddScoped<GeoServ.Api.Infrastructure.Services.IAlertCenterService, GeoServ.Api.Infrastructure.Services.AlertCenterService>();
 builder.Services.AddSingleton<GeoServ.Api.Infrastructure.Services.IPasswordRecoveryRateLimiter, GeoServ.Api.Infrastructure.Services.PasswordRecoveryRateLimiter>();
 builder.Services.AddScoped<GeoServ.Api.Infrastructure.Services.IMailerService, GeoServ.Api.Infrastructure.Services.MailerService>();
 builder.Services.AddSingleton<GeoServ.Api.Infrastructure.Services.SmtpEmailSender>();
@@ -155,6 +156,7 @@ GeoServ.Api.Endpoints.InventoryMovementEndpoints.MapInventoryMovementEndpoints(a
 GeoServ.Api.Endpoints.FixedCostItemEndpoints.MapFixedCostItemEndpoints(app);
 GeoServ.Api.Endpoints.FixedCostCategoryEndpoints.MapFixedCostCategoryEndpoints(app);
 GeoServ.Api.Endpoints.OperationalDashboardEndpoints.MapOperationalDashboardEndpoints(app);
+GeoServ.Api.Endpoints.AlertCenterEndpoints.MapAlertCenterEndpoints(app);
 GeoServ.Api.Endpoints.FinancialDashboardEndpoints.MapFinancialDashboardEndpoints(app);
 GeoServ.Api.Endpoints.GeneralDashboardEndpoints.MapGeneralDashboardEndpoints(app);
 GeoServ.Api.Endpoints.FinancialSummaryEndpoints.MapFinancialSummaryEndpoints(app);

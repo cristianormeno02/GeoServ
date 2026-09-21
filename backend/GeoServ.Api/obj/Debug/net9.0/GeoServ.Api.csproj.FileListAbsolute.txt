@@ -140,3 +140,4 @@ E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\bin\Debug\net9.0\runtimes\win\l
 E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\bin\Debug\net9.0\BouncyCastle.Cryptography.dll
 E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\bin\Debug\net9.0\MailKit.dll
 E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\bin\Debug\net9.0\MimeKit.dll
+E:\Proyectos Propios\GeoServ\backend\GeoServ.Api\obj\Debug\net9.0\swae.build.ex.cache
