@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.1](https://github.com/cristianormeno02/GeoServ/compare/v1.1.0...v1.1.1) (2026-09-21)
+
+### Correcciones
+
+* **about:** mostrar novedades del changelog generado por release (vinetas con asterisco y enlaces) ([4133d11](https://github.com/cristianormeno02/GeoServ/commit/4133d11d0190436e79ccb7a9ef058205d8ac10fa))
+* **version:** subir la version automaticamente con un hook post-commit segun el prefijo ([dd7a0ca](https://github.com/cristianormeno02/GeoServ/commit/dd7a0ca3a957750ec449c783edd3253edb813649))
+
 ## [1.1.0](https://github.com/cristianormeno02/GeoServ/compare/v1.0.0...v1.1.0) (2026-09-21)
 
 ### Nuevas funcionalidades
